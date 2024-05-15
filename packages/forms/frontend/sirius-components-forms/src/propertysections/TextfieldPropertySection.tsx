@@ -15,6 +15,7 @@ import { getCSSColor, useMultiToast } from '@eclipse-sirius/sirius-components-co
 import TextField from '@mui/material/TextField';
 import { useMachine } from '@xstate/react';
 import React, { FocusEvent, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { makeStyles } from 'tss-react/mui';
 import { StateMachine } from 'xstate';
 import { PropertySectionComponent, PropertySectionComponentProps } from '../form/Form.types';
@@ -144,6 +145,7 @@ export const TextfieldPropertySection: PropertySectionComponent<GQLTextfield | G
     strikeThrough: widget.style?.strikeThrough ?? null,
   };
   const { classes } = useStyle(props);
+  const { t: coreT } = useTranslation('siriusComponentsCore');
 
   const [{ value: schemaValue, context }, dispatch] = useMachine<
     StateMachine<TextfieldPropertySectionContext, TextfieldPropertySectionStateSchema, TextfieldPropertySectionEvent>
@@ -184,7 +186,7 @@ export const TextfieldPropertySection: PropertySectionComponent<GQLTextfield | G
     if (!updateTextfieldLoading) {
       let hasError = false;
       if (updateTextfieldError) {
-        addErrorMessage('An unexpected error has occurred, please refresh the page');
+        addErrorMessage(coreT('errors.unexpected'));
 
         hasError = true;
       }
@@ -207,7 +209,7 @@ export const TextfieldPropertySection: PropertySectionComponent<GQLTextfield | G
         dispatch(event);
       }
     }
-  }, [updateTextfieldLoading, updateTextfieldData, updateTextfieldError, dispatch]);
+  }, [coreT, updateTextfieldLoading, updateTextfieldData, updateTextfieldError, dispatch]);
 
   useEffect(() => {
     if (textfieldPropertySection === 'sent') {
