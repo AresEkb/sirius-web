@@ -163,6 +163,7 @@ Note that you may need to encode special characters like `[`(by `%5B`) and `]` (
 To achieve that a new concept, `ProjectSemanticData` has been added along with a dedicated table to keep the information previously contained in `SemanticData`
 - https://github.com/eclipse-sirius/sirius-web/issues/4501[#4501] [browser] Extract the model browser into reusable modules
 - https://github.com/eclipse-sirius/sirius-web/issues/4514[#4514] [sirius-web] Added support for Ctrl+Shift+Z (Linux/macOS) to trigger redo in addition to Ctrl+Y (Windows)
+- https://github.com/eclipse-sirius/sirius-web/issues/4208[#4208] [form] Improve performance of details view rendering on selection change
 
 == v2025.1.0
 
