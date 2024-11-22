@@ -10,12 +10,20 @@
   <profiles>
     <profile>
       <id>github</id>
+      <properties>
+        <altReleaseDeploymentRepository>sirius-web::https://maven.pkg.github.com/AresEkb/sirius-web</altReleaseDeploymentRepository>
+      </properties>
       <repositories>
         <repository>
           <id>central</id>
           <url>https://repo1.maven.org/maven2</url>
           <releases><enabled>true</enabled></releases>
           <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>sirius-web</id>
+          <name>Sirius Web</name>
+          <url>https://maven.pkg.github.com/AresEkb/sirius-web</url>
         </repository>
         <repository>
           <id>github-sirius-emfjson</id>
@@ -31,6 +39,11 @@
   </profiles>
 
   <servers>
+    <server>
+      <id>sirius-web</id>
+      <username>${env.USERNAME}</username>
+      <password>${env.PASSWORD}</password>
+    </server>
     <server>
       <id>github-sirius-emfjson</id>
       <username>${env.USERNAME}</username>

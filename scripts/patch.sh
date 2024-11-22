@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -Eeuo pipefail
+
+git switch metamodel
+git reset --hard origin/master
+git cherry-pick den/fix/scripts
+git cherry-pick den/enh/frontend-i18n
+git cherry-pick den/fix/tooltip-fullscreen
+git cherry-pick den/fix/refresh-exception --strategy-option theirs
+git cherry-pick den/enh/diagram-drag-performance
+git cherry-pick den/fix/details-render-performance --strategy-option theirs
+git cherry-pick den/enh/edit-plugins-localization
+git cherry-pick den/enh/form-enum-localization --strategy-option theirs
+git cherry-pick den/enh/custom-numeric-types --strategy-option theirs
+git cherry-pick den/fix/change-panel-size
+git cherry-pick den/enh/image-cache --strategy-option theirs
+git cherry-pick den/fix/palette-size
+git cherry-pick den/fix/resource-load-exception
+
+
+# Publish frontend
+
+# find -type f -regextype egrep -iregex '.*\.(json|ts|tsx)' -not -path '*/node_modules/*' -not -path '*/dist/*' -not -path '*/backend/*' -exec sed -i 's/@eclipse-sirius/@AresEkb/' {} \;
+# npm ci
+# npx turbo run format
+# npm run build
+# ./scripts/package-delete-npm.sh
+# npm publish --workspaces
+
+
+# Publish backend
+
+# JAVA_HOME=/usr/lib/jvm/java-1.17.0-openjdk-amd64 USERNAME=$GITHUB_USERNAME PASSWORD=$GITHUB_TOKEN mvn clean verify -DargLine="-Duser.country=US -Duser.language=en" -f packages/pom.xml -s settings.xml
+# rm -R ~/.m2/repository/org/eclipse/sirius/
+# JAVA_HOME=/usr/lib/jvm/java-1.17.0-openjdk-amd64 USERNAME=$GITHUB_USERNAME PASSWORD=$GITHUB_TOKEN mvn install -f packages/pom.xml -s ~/workspaces/sirius-web/settings.xml -DskipTests -Dcheckstyle.skip
+# ./scripts/package-delete-maven.sh
+# JAVA_HOME=/usr/lib/jvm/java-1.17.0-openjdk-amd64 USERNAME=$GITHUB_USERNAME PASSWORD=$GITHUB_PUBLISH_TOKEN mvn deploy -f packages/pom.xml -s ~/workspaces/sirius-web/settings.xml -DskipTests -Dcheckstyle.skip
