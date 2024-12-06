@@ -71,7 +71,7 @@ public class ResourceLoader implements IResourceLoader {
             resource.load(inputStream, options);
 
             optionalResource = Optional.of(resource);
-        } catch (IOException | IllegalArgumentException exception) {
+        } catch (IOException | RuntimeException exception) {
             this.logger.warn("An error occured while loading document {}: {}.", id, exception.getMessage());
             resourceSet.getResources().remove(resource);
         }
