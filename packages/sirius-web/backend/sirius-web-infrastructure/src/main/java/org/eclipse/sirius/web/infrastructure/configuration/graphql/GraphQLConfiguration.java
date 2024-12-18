@@ -30,6 +30,7 @@ import graphql.execution.AsyncExecutionStrategy;
 import graphql.execution.AsyncSerialExecutionStrategy;
 import graphql.execution.DataFetcherExceptionHandler;
 import graphql.execution.ExecutionStrategy;
+import graphql.execution.SubscriptionExecutionStrategy;
 import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
@@ -65,10 +66,12 @@ public class GraphQLConfiguration {
         // @see https://www.graphql-java.com/documentation/v11/execution/ The graphql specification says that mutations
         // MUST be executed serially and in the order in which the query fields occur.
         ExecutionStrategy mutationExecutionStrategy = new AsyncSerialExecutionStrategy(exceptionHandler);
+        ExecutionStrategy subscriptionExecutionStrategy = new SubscriptionExecutionStrategy(exceptionHandler);
         // @formatter:off
         return GraphQL.newGraphQL(graphQLSchema)
                 .queryExecutionStrategy(queryExecutionStrategy)
                 .mutationExecutionStrategy(mutationExecutionStrategy)
+                .subscriptionExecutionStrategy(subscriptionExecutionStrategy)
                 .build();
         // @formatter:on
     }
