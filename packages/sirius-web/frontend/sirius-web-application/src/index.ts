@@ -113,3 +113,8 @@ export {
   type ProjectSettingTabProps,
 } from './views/project-settings/ProjectSettingsView.types';
 export * from './views/project-settings/ProjectSettingsViewExtensionPoints';
+
+// Metamodel
+export { defaultExtensionRegistry } from './extension/DefaultExtensionRegistry';
+export { ProjectContext } from './views/edit-project/ProjectContext';
+export { useRepresentationsViewSubscription } from './views/edit-project/workbench-views/representations/useRepresentationsViewSubscription';
