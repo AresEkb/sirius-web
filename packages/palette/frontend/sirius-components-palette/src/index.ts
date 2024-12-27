@@ -53,3 +53,5 @@ export { PaletteToolSection } from './tool-section/PaletteToolSection';
 export { ToolSectionEntry } from './tool-section/ToolSectionEntry';
 export { ToolSectionHeader } from './tool-section/ToolSectionHeader';
 export { usePalette } from './usePalette';
+
+export { fuzzyMatch } from './search/fuzzyMatch';
