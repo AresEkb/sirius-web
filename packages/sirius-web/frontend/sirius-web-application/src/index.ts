@@ -177,3 +177,14 @@ export {
 } from './views/project-settings/ProjectSettingsView.types';
 export * from './views/project-settings/ProjectSettingsViewExtensionPoints';
 export { UploadProjectView } from './views/upload-project/UploadProjectView';
+
+// Metamodel
+export { checkboxCellDocumentTransform } from './extension/CheckboxCelllDocumentTransform';
+export { defaultExtensionRegistry } from './extension/DefaultExtensionRegistry';
+export { tableWidgetDocumentTransform } from './extension/TableWidgetDocumentTransform';
+export { ApolloLinkUndoRedoStack } from './graphql/ApolloLinkUndoRedoStack';
+export { ProjectContext } from './views/edit-project/ProjectContext';
+export { SelectionSynchronizer } from './views/edit-project/SelectionSynchronizer';
+export { UndoRedo } from './views/edit-project/UndoRedo';
+export { useDetailsViewSubscription } from './views/edit-project/workbench-views/details/useDetailsViewSubscription';
+export type { UseDetailsViewSubscriptionValue } from './views/edit-project/workbench-views/details/useDetailsViewSubscription.types';

@@ -98,3 +98,37 @@ export { svgExportIElementSVGExportHandlerExtensionPoint } from './renderer/tool
 export type { GQLToolVariable, GQLToolVariableType } from './renderer/tools/useInvokePaletteTool.types';
 export { DiagramRepresentation } from './representation/DiagramRepresentation';
 export type { GQLDiagramDescription } from './representation/DiagramRepresentation.types';
+
+// Metamodel
+export { DialogContextProvider } from './dialog/DialogContext';
+export type { GQLLabelLayoutData } from './graphql/subscription/diagramFragment.types';
+export type * from './graphql/subscription/labelFragment.types';
+export type {
+  FreeFormLayoutStrategy,
+  ILayoutStrategy,
+  ListLayoutStrategy,
+} from './graphql/subscription/nodeFragment.types';
+export { useConnector } from './renderer/connector/useConnector';
+export type {
+  EdgeLabel,
+  HeaderPosition,
+  InsideLabel,
+  LabelAppearanceData,
+  LabelOverflowStrategy,
+  OutsideLabel,
+} from './renderer/DiagramRenderer.types';
+export { ConnectionLine } from './renderer/edge/ConnectionLine';
+export type { MultiLabelEdgeData } from './renderer/edge/MultiLabelEdge.types';
+export { ObliqueEdgeWrapper } from './renderer/edge/ObliqueEdgeWrapper';
+export { SmartStepEdgeWrapper } from './renderer/edge/SmartStepEdgeWrapper';
+export { SmoothStepEdgeWrapper } from './renderer/edge/SmoothStepEdgeWrapper';
+export type { RawDiagram } from './renderer/layout/layout.types';
+export { useSynchronizeLayoutData } from './renderer/layout/useSynchronizeLayoutData';
+export { useLabelMove } from './renderer/move/useLabelMove';
+export { useLabelResize } from './renderer/move/useLabelResize';
+export { DraggableResizableOutsideLabel } from './renderer/node/DraggableResizableOutsideLabel';
+export type {
+  DraggableResizableOutsideLabelProps,
+  LabelSize,
+} from './renderer/node/DraggableResizableOutsideLabel.types';
+export type { ResizerProps } from './renderer/node/Resizer.types';
