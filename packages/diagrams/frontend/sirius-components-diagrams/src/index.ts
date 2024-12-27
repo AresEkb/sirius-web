@@ -97,3 +97,30 @@ export type { ActionsContainerProps } from './renderer/actions/ActionsContainer.
 export { Action } from './renderer/actions/Action';
 export type { ActionProps } from './renderer/actions/Action.types';
 export { useActions } from './renderer/actions/useActions';
+
+// Metamodel
+export { DialogContextProvider } from './dialog/DialogContext';
+export type * from './graphql/subscription/labelFragment.types';
+export type {
+  FreeFormLayoutStrategy,
+  ILayoutStrategy,
+  ListLayoutStrategy,
+} from './graphql/subscription/nodeFragment.types';
+export { useConnector } from './renderer/connector/useConnector';
+export type {
+  EdgeLabel,
+  HeaderPosition,
+  InsideLabel,
+  LabelAppearanceData,
+  LabelOverflowStrategy,
+  OutsideLabel,
+} from './renderer/DiagramRenderer.types';
+export { ConnectionLine } from './renderer/edge/ConnectionLine';
+export type { MultiLabelEdgeData } from './renderer/edge/MultiLabelEdge.types';
+export { SmartStepEdgeWrapper } from './renderer/edge/SmartStepEdgeWrapper';
+export { SmoothStepEdgeWrapper } from './renderer/edge/SmoothStepEdgeWrapper';
+export type { RawDiagram } from './renderer/layout/layout.types';
+export { useSynchronizeLayoutData } from './renderer/layout/useSynchronizeLayoutData';
+export { useLabelMove } from './renderer/move/useLabelMove';
+export { Resizer } from './renderer/node/Resizer';
+export type { ResizerProps } from './renderer/node/Resizer.types';
