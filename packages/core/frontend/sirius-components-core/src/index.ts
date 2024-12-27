@@ -67,3 +67,6 @@ export { type UseWorkbenchValue } from './workbench/useWorkbench.types';
 export * from './workbench/Workbench';
 export type * from './workbench/Workbench.types';
 export * from './workbench/WorkbenchExtensionPoints';
+
+// Metamodel
+export { ExtensionContext } from './extension/ExtensionProvider';
