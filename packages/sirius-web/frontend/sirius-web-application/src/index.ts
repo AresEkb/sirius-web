@@ -155,3 +155,13 @@ export {
 } from './onboarding/NewRepresentationArea.types';
 export { RepresentationsArea } from './onboarding/RepresentationsArea';
 export { type RepresentationAreaProps } from './onboarding/RepresentationsArea.types';
+
+// Metamodel
+export { checkboxCellDocumentTransform } from './extension/CheckboxCelllDocumentTransform';
+export { defaultExtensionRegistry } from './extension/DefaultExtensionRegistry';
+export { tableWidgetDocumentTransform } from './extension/TableWidgetDocumentTransform';
+export { ApolloLinkUndoRedoStack } from './graphql/ApolloLinkUndoRedoStack';
+export { ProjectContext } from './views/edit-project/ProjectContext';
+export { useDetailsViewSubscription } from './views/edit-project/workbench-views/details/useDetailsViewSubscription';
+export type { UseDetailsViewSubscriptionValue } from './views/edit-project/workbench-views/details/useDetailsViewSubscription.types';
+export { useRepresentationsViewSubscription } from './views/edit-project/workbench-views/representations/useRepresentationsViewSubscription';
