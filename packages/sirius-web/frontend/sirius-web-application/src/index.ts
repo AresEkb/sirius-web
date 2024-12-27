@@ -114,3 +114,8 @@ export { NewRepresentationModal } from './modals/new-representation/NewRepresent
 export { type NewRepresentationModalProps } from './modals/new-representation/NewRepresentationModal.types';
 export { NewRootObjectModal } from './modals/new-root-object/NewRootObjectModal';
 export { type NewRootObjectModalProps } from './modals/new-root-object/NewRootObjectModal.types';
+
+// Metamodel
+export { defaultExtensionRegistry } from './extension/DefaultExtensionRegistry';
+export { ProjectContext } from './views/edit-project/ProjectContext';
+export { useRepresentationsViewSubscription } from './views/edit-project/workbench-views/useRepresentationsViewSubscription';

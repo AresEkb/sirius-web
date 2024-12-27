@@ -70,3 +70,34 @@ export type { DiagramPanelActionProps } from './renderer/panel/DiagramPanel.type
 export { diagramPanelActionExtensionPoint } from './renderer/panel/DiagramPanelExtensionPoints';
 export { DiagramRepresentation } from './representation/DiagramRepresentation';
 export type { GQLDiagramDescription } from './representation/DiagramRepresentation.types';
+
+// Metamodel
+export { DiagramDescriptionContext } from './contexts/DiagramDescriptionContext';
+export { DialogContextProvider } from './dialog/DialogContext';
+export { diagramEventSubscription } from './graphql/subscription/diagramEventSubscription';
+export { PinIcon } from './icons/PinIcon';
+export { UnpinIcon } from './icons/UnpinIcon';
+export { useAdjustSize } from './renderer/adjust-size/useAdjustSize';
+export { ConnectorContextProvider } from './renderer/connector/ConnectorContext';
+export { DiagramRenderer } from './renderer/DiagramRenderer';
+export { DiagramDirectEditContextProvider } from './renderer/direct-edit/DiagramDirectEditContext';
+export { useDiagramDirectEdit } from './renderer/direct-edit/useDiagramDirectEdit';
+export { DropNodeContextProvider } from './renderer/dropNode/DropNodeContext';
+export { MarkerDefinitions } from './renderer/edge/MarkerDefinitions';
+export { useEditableEdgePath } from './renderer/edge/useEditableEdgePath';
+export { useFadeDiagramElements } from './renderer/fade/useFadeDiagramElements';
+export { FullscreenContextProvider } from './renderer/fullscreen/FullscreenContext';
+export { NodeContextProvider } from './renderer/node/NodeContext';
+export {
+  DiagramElementPaletteContext,
+  DiagramElementPaletteContextProvider,
+} from './renderer/palette/contexts/DiagramElementPaletteContext';
+export type { DiagramElementPaletteContextValue } from './renderer/palette/contexts/DiagramElementPaletteContext.types';
+export { DiagramPaletteContextProvider } from './renderer/palette/contexts/DiagramPaletteContext';
+export { useGroupPalette } from './renderer/palette/group-tool/useGroupPalette';
+export { useDiagramElementPalette } from './renderer/palette/useDiagramElementPalette';
+export { useDiagramPalette } from './renderer/palette/useDiagramPalette';
+export { usePalette } from './renderer/palette/usePalette';
+export { usePinDiagramElements } from './renderer/pin/usePinDiagramElements';
+export { StoreContextProvider } from './representation/StoreContext';
+export { useStore } from './representation/useStore';
