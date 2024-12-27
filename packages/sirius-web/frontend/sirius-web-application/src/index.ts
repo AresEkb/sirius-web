@@ -137,3 +137,10 @@ export {
 } from './views/project-settings/ProjectSettingsView.types';
 export * from './views/project-settings/ProjectSettingsViewExtensionPoints';
 export { UploadProjectView } from './views/upload-project/UploadProjectView';
+
+// Metamodel
+export { defaultExtensionRegistry } from './extension/DefaultExtensionRegistry';
+export { ProjectContext } from './views/edit-project/ProjectContext';
+export { useDetailsViewSubscription } from './views/edit-project/workbench-views/details/useDetailsViewSubscription';
+export type { UseDetailsViewSubscriptionValue } from './views/edit-project/workbench-views/details/useDetailsViewSubscription.types';
+export { useRepresentationsViewSubscription } from './views/edit-project/workbench-views/representations/useRepresentationsViewSubscription';
