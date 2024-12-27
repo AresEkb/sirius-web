@@ -18,3 +18,20 @@ export * from './cells/TableCellExtensionPoints';
 export { TableRepresentation } from './representation/TableRepresentation';
 export { TableContent } from './table/TableContent';
 export * from './table/TableContent.types';
+
+// Metamodel
+export { SettingsButton } from './actions/SettingsButton';
+export { getColumnFilters, useTableColumnFiltering } from './columns/useTableColumnFiltering';
+export { useTableColumnOrdering } from './columns/useTableColumnOrdering';
+export { useTableColumnSizing } from './columns/useTableColumnSizing';
+export { useTableColumnSorting } from './columns/useTableColumnSorting';
+export { useTableColumnVisibility } from './columns/useTableColumnVisibility';
+export { tableIdProvider } from './representation/tableIdProvider';
+export { useTableSubscription } from './representation/useTableSubscription';
+export { RowFiltersMenu } from './rows/filters/RowFiltersMenu';
+export { useTableRowFilters } from './rows/filters/useTableRowFilters';
+export { RowAction } from './rows/RowAction';
+export { useResetRowsMutation } from './rows/useResetRows';
+export { CursorBasedPagination } from './table/CursorBasedPagination';
+export { useGlobalFilter } from './table/useGlobalFilter';
+export { useTableColumns } from './table/useTableColumns';
