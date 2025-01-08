@@ -64,6 +64,7 @@ export interface NodeData extends Record<string, unknown> {
   nodeAppearanceData: NodeAppearanceData;
   minComputedWidth: number | null;
   minComputedHeight: number | null;
+  isFake?: boolean;
 }
 
 export type ConnectionLinePositionOnNode = 'none' | 'center' | 'border';
