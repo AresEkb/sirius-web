@@ -57,6 +57,7 @@ export interface NodeData extends Record<string, unknown> {
   isDropNodeCandidate: boolean;
   isHovered: boolean;
   nodeAppearanceData: NodeAppearanceData;
+  isFake?: boolean;
 }
 
 export interface NodeAppearanceData {
