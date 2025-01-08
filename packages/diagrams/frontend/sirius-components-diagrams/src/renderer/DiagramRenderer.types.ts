@@ -70,6 +70,7 @@ export interface NodeData extends Record<string, unknown> {
   minComputedHeight: number | null;
   moving: boolean;
   decorators: GQLNodeDecorator[];
+  isFake?: boolean;
 }
 
 export type ConnectionLinePositionOnNode = 'none' | 'center' | 'border';
