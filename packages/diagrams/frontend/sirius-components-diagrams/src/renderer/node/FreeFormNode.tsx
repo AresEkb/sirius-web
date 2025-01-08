@@ -168,8 +168,10 @@ export const FreeFormNode: NodeComponentsMap['freeFormNode'] = memo(
             {actionsSection}
           </div>
           {selected ? <ConnectionCreationHandles nodeId={id} /> : null}
-          <ConnectionTargetHandle nodeId={id} nodeDescription={data.nodeDescription} isHovered={data.isHovered} />
-          <ConnectionHandles connectionHandles={data.connectionHandles} />
+          {!data.isFake && (
+            <ConnectionTargetHandle nodeId={id} nodeDescription={data.nodeDescription} isHovered={data.isHovered} />
+          )}
+          {!data.isFake && <ConnectionHandles connectionHandles={data.connectionHandles} />}
         </div>
         {data.outsideLabels.BOTTOM_MIDDLE &&
           (!data.outsideLabels.BOTTOM_MIDDLE.style.visibility ||
