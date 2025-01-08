@@ -58,6 +58,7 @@ export interface NodeData extends Record<string, unknown> {
   isHovered: boolean;
   connectionLinePositionOnNode: ConnectionLinePositionOnNode;
   nodeAppearanceData: NodeAppearanceData;
+  isFake?: boolean;
 }
 
 export type ConnectionLinePositionOnNode = 'none' | 'center' | 'border';
