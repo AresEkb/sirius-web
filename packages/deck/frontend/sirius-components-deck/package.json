@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-deck.umd.js",
       "import": "./dist/sirius-components-deck.es.js"
     }
