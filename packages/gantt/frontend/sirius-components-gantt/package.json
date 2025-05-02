@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-gantt.umd.js",
       "import": "./dist/sirius-components-gantt.es.js"
     }
