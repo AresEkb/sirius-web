@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-impactanalysis.cjs.js",
       "import": "./dist/sirius-components-impactanalysis.es.js"
     }

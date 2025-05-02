@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-omnibox.cjs.js",
       "import": "./dist/sirius-components-omnibox.es.js"
     }

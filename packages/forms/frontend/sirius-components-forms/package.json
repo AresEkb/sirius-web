@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-forms.cjs.js",
       "import": "./dist/sirius-components-forms.es.js"
     }
