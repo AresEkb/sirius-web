@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-widget-table.umd.js",
       "import": "./dist/sirius-components-widget-table.es.js"
     }

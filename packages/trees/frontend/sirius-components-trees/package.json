@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-trees.umd.js",
       "import": "./dist/sirius-components-trees.es.js"
     }
