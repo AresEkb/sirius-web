@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-validation.umd.js",
       "import": "./dist/sirius-components-validation.es.js"
     }
