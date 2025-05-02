@@ -12,12 +12,13 @@
   },
   "main": "./dist/sirius-components-validation.umd.js",
   "module": "./dist/sirius-components-validation.es.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
+      "types": "./dist/src/index.d.ts",
       "require": "./dist/sirius-components-validation.umd.js",
       "import": "./dist/sirius-components-validation.es.js"
     }

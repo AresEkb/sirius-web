@@ -12,12 +12,13 @@
   },
   "main": "./dist/sirius-components-charts.umd.js",
   "module": "./dist/sirius-components-charts.es.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
+      "types": "./dist/src/index.d.ts",
       "require": "./dist/sirius-components-charts.umd.js",
       "import": "./dist/sirius-components-charts.es.js"
     }

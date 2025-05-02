@@ -24,7 +24,17 @@ import {
 } from './NavigationBarExtensionPoints';
 import { NavigationBarMenu } from './NavigationBarMenu';
 
-export const useNavigationBarStyles = makeStyles()((theme: Theme) => ({
+export const useNavigationBarStyles: (
+  params: void,
+  muiStyleOverridesParams?:
+    | {
+        props: Record<string, unknown>;
+        ownerState?: Record<string, unknown> | undefined;
+      }
+    | undefined
+) => {
+  classes: Record<'navbar' | 'left' | 'right' | 'appBarHeader' | 'toolbar', string>;
+} = makeStyles()((theme: Theme) => ({
   navbar: {
     display: 'flex',
     flexDirection: 'column',

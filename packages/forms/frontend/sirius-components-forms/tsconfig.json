@@ -3,7 +3,8 @@
   "extends": "@eclipse-sirius/sirius-components-tsconfig/react-library.json",
   "compilerOptions": {
     "emitDeclarationOnly": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "."
   },
   "include": ["./src/index.ts"],
   "exclude": ["dist", "build", "node_modules"]

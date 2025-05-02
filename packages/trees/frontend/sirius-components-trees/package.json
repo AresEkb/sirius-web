@@ -12,12 +12,13 @@
   },
   "main": "./dist/sirius-components-trees.umd.js",
   "module": "./dist/sirius-components-trees.es.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
+      "types": "./dist/src/index.d.ts",
       "require": "./dist/sirius-components-trees.umd.js",
       "import": "./dist/sirius-components-trees.es.js"
     }

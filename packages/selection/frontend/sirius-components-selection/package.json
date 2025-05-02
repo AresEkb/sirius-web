@@ -12,12 +12,13 @@
   },
   "main": "./dist/sirius-components-selection.umd.js",
   "module": "./dist/sirius-components-selection.es.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
+      "types": "./dist/src/index.d.ts",
       "require": "./dist/sirius-components-selection.umd.js",
       "import": "./dist/sirius-components-selection.es.js"
     }

@@ -11,7 +11,7 @@
     "inlineSources": false,
     "isolatedModules": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "preserveWatchOutput": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,

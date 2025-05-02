@@ -12,12 +12,13 @@
   },
   "main": "./dist/sirius-components-gantt.umd.js",
   "module": "./dist/sirius-components-gantt.es.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
+      "types": "./dist/src/index.d.ts",
       "require": "./dist/sirius-components-gantt.umd.js",
       "import": "./dist/sirius-components-gantt.es.js"
     }

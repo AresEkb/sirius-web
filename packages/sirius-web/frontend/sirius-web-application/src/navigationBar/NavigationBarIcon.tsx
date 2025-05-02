@@ -20,7 +20,17 @@ import { makeStyles } from 'tss-react/mui';
 import { SiriusIcon } from '../core/SiriusIcon';
 import { NavigationBarIconProps } from './NavigationBar.types';
 
-export const useNavigationBarIconStyles = makeStyles()((theme: Theme) => ({
+export const useNavigationBarIconStyles: (
+  params: void,
+  muiStyleOverridesParams?:
+    | {
+        props: Record<string, unknown>;
+        ownerState?: Record<string, unknown> | undefined;
+      }
+    | undefined
+) => {
+  classes: Record<'link' | 'onDarkBackground', string>;
+} = makeStyles()((theme: Theme) => ({
   link: {
     display: 'flex',
     alignItems: 'center',

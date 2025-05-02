@@ -20,7 +20,7 @@ import {
   useSelection,
 } from '@eclipse-sirius/sirius-components-core';
 import { GQLWidget, widgetContributionExtensionPoint } from '@eclipse-sirius/sirius-components-forms';
-import { GroupStyleProps } from '@eclipse-sirius/sirius-components-forms/src/groups/Group.types';
+import { GroupStyleProps } from '@eclipse-sirius/sirius-components-forms';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
