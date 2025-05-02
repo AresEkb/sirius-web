@@ -18,6 +18,7 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/sirius-components-formdescriptioneditors.umd.js",
       "import": "./dist/sirius-components-formdescriptioneditors.es.js"
     }
