@@ -209,7 +209,7 @@ export const ValuedReferenceAutocomplete = ({
       data-testid={widget.label}
       multiple
       filterSelectedOptions
-      disabled={readOnly || widget.readOnly}
+      readOnly={readOnly || widget.readOnly}
       open={state.open}
       onOpen={() =>
         setState((prevState) => {
