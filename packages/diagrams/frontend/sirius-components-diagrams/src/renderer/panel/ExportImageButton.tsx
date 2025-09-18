@@ -116,16 +116,6 @@ export const ExportImageButton = () => {
             data-testid="export-diagram-to-png">
             <ListItemText primary="PNG" />
           </MenuItem>
-          <MenuItem
-            data-testid="experimental-export-diagram-to-svg"
-            onClick={() =>
-              protoExportToSvg((dataUrl: string) => {
-                downloadImage(dataUrl, 'diagram.svg');
-                onCloseExportImageMenu();
-              })
-            }>
-            <ListItemText primary={`SVG (${t('experimentalFeature')})`} />
-          </MenuItem>
         </Menu>
       ) : null}
     </>
