@@ -38,14 +38,13 @@ import { useFitView } from '../fit-to-screen/useFitView';
 import { useFullscreen } from '../fullscreen/useFullscreen';
 import { useHideDiagramElements } from '../hide/useHideDiagramElements';
 import { usePinDiagramElements } from '../pin/usePinDiagramElements';
-import { ArrangeAllButton } from './ArrangeAllButton';
 import { DiagramPanelActionProps, DiagramPanelProps, DiagramPanelState } from './DiagramPanel.types';
 import { diagramPanelActionExtensionPoint } from './DiagramPanelExtensionPoints';
 import { ExportImageButton } from './ExportImageButton';
 import { RevealSelectionInDiagramButton } from './RevealSelectionInDiagramButton';
 
 export const DiagramPanel = memo(
-  ({ snapToGrid, onSnapToGrid, helperLines, onHelperLines, reactFlowWrapper }: DiagramPanelProps) => {
+  ({ snapToGrid, onSnapToGrid, helperLines, onHelperLines }: DiagramPanelProps) => {
     const [state, setState] = useState<DiagramPanelState>({
       dialogOpen: null,
       arrangeAllDone: false,
@@ -176,7 +175,6 @@ export const DiagramPanel = memo(
                 </span>
               </Tooltip>
             )}
-            <ArrangeAllButton reactFlowWrapper={reactFlowWrapper} disabled={readOnly} />
             <Tooltip title="Reveal hidden elements">
               <span>
                 <IconButton
