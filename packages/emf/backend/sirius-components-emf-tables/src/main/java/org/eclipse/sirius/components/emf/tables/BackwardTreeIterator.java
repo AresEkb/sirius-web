@@ -14,12 +14,12 @@ package org.eclipse.sirius.components.emf.tables;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 
 /**
@@ -35,16 +35,19 @@ public class BackwardTreeIterator implements Iterator<EObject> {
 
     private final boolean includeRoot;
 
+    private final Comparator<EObject> comparator;
+
     private List<Iterator<EObject>> iterators;
 
     private Iterator<EObject> nextPruneIterator;
 
     private Iterator<EObject> nextRemoveIterator;
 
-    public BackwardTreeIterator(EObject rootEObject, boolean includeRoot, Predicate<EObject> filterPredicate) {
+    public BackwardTreeIterator(EObject rootEObject, boolean includeRoot, Predicate<EObject> filterPredicate, Comparator<EObject> comparator) {
         this.rootEObject = Objects.requireNonNull(rootEObject);
         this.includeRoot = includeRoot;
         this.filterPredicate = Objects.requireNonNull(filterPredicate);
+        this.comparator = comparator;
     }
 
     @Override
@@ -70,7 +73,7 @@ public class BackwardTreeIterator implements Iterator<EObject> {
         var currentEObject = eObject;
         while (iterator == null && currentEObject != null) {
             if (currentEObject.eContainer() != null) {
-                var siblings = currentEObject.eContainer().eContents();
+                var siblings = this.getSortedContents(currentEObject.eContainer());
                 var index = siblings.indexOf(currentEObject);
                 if (index >= 1) {
                     var previousSibling = siblings.get(index - 1);
@@ -96,14 +99,14 @@ public class BackwardTreeIterator implements Iterator<EObject> {
     }
 
     private EObject getLastChild(EObject eObject) {
-        EList<EObject> nextChildren = eObject.eContents();
+        List<EObject> nextChildren = this.getSortedContents(eObject);
         if (nextChildren.isEmpty()) {
             return eObject;
         }
         EObject lastChild = nextChildren.get(nextChildren.size() - 1);
 
         while (!lastChild.eContents().isEmpty()) {
-            nextChildren = lastChild.eContents();
+            nextChildren = this.getSortedContents(lastChild);
             lastChild = nextChildren.get(nextChildren.size() - 1);
         }
         return lastChild;
@@ -147,6 +150,13 @@ public class BackwardTreeIterator implements Iterator<EObject> {
         }
 
         return result;
+    }
+
+    private List<EObject> getSortedContents(EObject parent) {
+        if (this.comparator == null) {
+            return parent.eContents();
+        }
+        return parent.eContents().stream().sorted(this.comparator).toList();
     }
 
     @Override

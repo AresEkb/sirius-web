@@ -14,6 +14,7 @@ package org.eclipse.sirius.components.emf.tables;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -29,10 +30,14 @@ import org.eclipse.sirius.components.tables.descriptions.PaginatedData;
 public class CursorBasedNavigationServices {
 
     public PaginatedData collect(EObject self, EObject cursor, String direction, int size) {
-        return this.collect(self, cursor, direction, size, object -> true);
+        return this.collect(self, cursor, direction, size, object -> true, null);
     }
 
     public PaginatedData collect(EObject self, EObject cursor, String direction, int size, Predicate<EObject> filterPredicate) {
+        return this.collect(self, cursor, direction, size, filterPredicate, null);
+    }
+
+    public PaginatedData collect(EObject self, EObject cursor, String direction, int size, Predicate<EObject> filterPredicate, Comparator<EObject> comparator) {
         var rootEObject = self;
         if (cursor != null) {
             rootEObject = cursor;
@@ -40,9 +45,9 @@ public class CursorBasedNavigationServices {
 
         boolean isPrevDirection = "PREV".equalsIgnoreCase(direction);
 
-        Iterator<EObject> iterator = new ForwardTreeIterator(rootEObject, cursor == null, filterPredicate);
+        Iterator<EObject> iterator = new ForwardTreeIterator(rootEObject, cursor == null, filterPredicate, comparator);
         if (isPrevDirection) {
-            iterator = new BackwardTreeIterator(rootEObject, false, filterPredicate);
+            iterator = new BackwardTreeIterator(rootEObject, false, filterPredicate, comparator);
         }
 
         int count = 0;
