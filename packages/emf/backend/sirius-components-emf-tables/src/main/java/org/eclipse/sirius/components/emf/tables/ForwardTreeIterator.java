@@ -14,6 +14,7 @@ package org.eclipse.sirius.components.emf.tables;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -29,9 +30,12 @@ import org.eclipse.emf.ecore.EObject;
 public class ForwardTreeIterator implements Iterator<EObject> {
 
     private final Predicate<EObject> filterPredicate;
+
     private EObject rootEObject;
 
     private boolean includeRoot;
+
+    private final Comparator<EObject> comparator;
 
     private List<Iterator<EObject>> iterators;
 
@@ -39,10 +43,11 @@ public class ForwardTreeIterator implements Iterator<EObject> {
 
     private Iterator<EObject> nextRemoveIterator;
 
-    public ForwardTreeIterator(EObject rootEObject, boolean includeRoot, Predicate<EObject> filterPredicate) {
+    public ForwardTreeIterator(EObject rootEObject, boolean includeRoot, Predicate<EObject> filterPredicate, Comparator<EObject> comparator) {
         this.rootEObject = Objects.requireNonNull(rootEObject);
         this.filterPredicate = Objects.requireNonNull(filterPredicate);
         this.includeRoot = includeRoot && filterPredicate.test(rootEObject);
+        this.comparator = comparator;
     }
 
     @Override
@@ -72,7 +77,7 @@ public class ForwardTreeIterator implements Iterator<EObject> {
     private Iterator<EObject> getNextChild(EObject eObject) {
         Iterator<EObject> nextChildIterator = null;
 
-        for (EObject child : eObject.eContents()) {
+        for (EObject child : this.getSortedContents(eObject)) {
             var nextMatchingEObject = this.findNextMatchingEObjectRecursive(child);
             if (nextMatchingEObject != null) {
                 nextChildIterator = List.of(nextMatchingEObject).iterator();
@@ -92,7 +97,7 @@ public class ForwardTreeIterator implements Iterator<EObject> {
         var currentEObject = eObject;
         while (nextRelativesIterator == null && currentEObject != null) {
             if (currentEObject.eContainer() != null) {
-                var siblings = currentEObject.eContainer().eContents();
+                var siblings = this.getSortedContents(currentEObject.eContainer());
                 var index = siblings.indexOf(currentEObject);
                 if (index + 1 < siblings.size()) {
                     for (int i = index + 1; i < siblings.size(); i++) {
@@ -127,7 +132,7 @@ public class ForwardTreeIterator implements Iterator<EObject> {
         if (this.filterPredicate.test(current)) {
             result = current;
         } else {
-            for (EObject child : current.eContents()) {
+            for (EObject child : this.getSortedContents(current)) {
                 result = this.findNextMatchingEObjectRecursive(child);
                 if (result != null) {
                     break;
@@ -199,6 +204,13 @@ public class ForwardTreeIterator implements Iterator<EObject> {
         }
 
         return result;
+    }
+
+    private List<EObject> getSortedContents(EObject parent) {
+        if (this.comparator == null) {
+            return parent.eContents();
+        }
+        return parent.eContents().stream().sorted(this.comparator).toList();
     }
 
     @Override
