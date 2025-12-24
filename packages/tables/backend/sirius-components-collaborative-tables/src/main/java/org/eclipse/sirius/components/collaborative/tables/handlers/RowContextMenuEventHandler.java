@@ -13,7 +13,6 @@
 
 package org.eclipse.sirius.components.collaborative.tables.handlers;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,7 +25,6 @@ import org.eclipse.sirius.components.collaborative.tables.api.ITableEventHandler
 import org.eclipse.sirius.components.collaborative.tables.api.ITableInput;
 import org.eclipse.sirius.components.collaborative.tables.api.ITableQueryService;
 import org.eclipse.sirius.components.collaborative.tables.dto.RowContextMenuEntriesInput;
-import org.eclipse.sirius.components.collaborative.tables.dto.RowContextMenuEntry;
 import org.eclipse.sirius.components.collaborative.tables.dto.RowContextMenuSuccessPayload;
 import org.eclipse.sirius.components.collaborative.tables.messages.ICollaborativeTableMessageService;
 import org.eclipse.sirius.components.core.api.ErrorPayload;
@@ -89,7 +87,6 @@ public class RowContextMenuEventHandler implements ITableEventHandler {
                 var entries = this.contextMenuEntryProviders.stream()
                         .filter(provider -> provider.canHandle(editingContext, tableDescription, tableContext.getTable(), row))
                         .flatMap(provider -> provider.getRowContextMenuEntries(editingContext, tableDescription, tableContext.getTable(), row).stream())
-                        .sorted(Comparator.comparing(RowContextMenuEntry::label))
                         .toList();
 
                 payload = new RowContextMenuSuccessPayload(tableInput.id(), entries);

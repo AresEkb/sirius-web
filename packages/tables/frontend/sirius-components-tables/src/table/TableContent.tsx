@@ -179,8 +179,15 @@ export const TableContent = memo(
       isMultiSortEvent: () => true,
       onSortingChange: setSorting,
       initialState: {
+        density: 'compact',
         showGlobalFilter: enableGlobalFilter,
         columnPinning: { left: ['mrt-row-expand-header', 'mrt-row-header'], right: ['mrt-row-actions'] },
+      },
+      displayColumnDefOptions: {
+        'mrt-row-actions': {
+          header: '',
+          size: 50,
+        },
       },
       onColumnSizingChange: setColumnSizing,
       onColumnVisibilityChange: setColumnVisibility,
@@ -240,13 +247,15 @@ export const TableContent = memo(
       ),
       renderToolbarInternalActions: ({ table }) => (
         <Box>
-          <IconButton
-            aria-label={t('resetRowHeights')}
-            title={t('resetRowHeights')}
-            data-testid="reset-row-heights"
-            onClick={() => resetRowsHeight()}>
-            <FormatLineSpacingIcon />
-          </IconButton>
+          {enableRowSizing && (
+            <IconButton
+              aria-label={t('resetRowHeights')}
+              title={t('resetRowHeights')}
+              data-testid="reset-row-heights"
+              onClick={() => resetRowsHeight()}>
+              <FormatLineSpacingIcon />
+            </IconButton>
+          )}
           <RowFiltersMenu
             data-testid="row-filters-menu-button"
             readOnly={readOnly}
