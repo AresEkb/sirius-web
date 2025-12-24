@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
   GQLTableColumnFilterPayload,
+  GQLTableColumnSortPayload,
   GQLTableEventData,
   GQLTableEventInput,
   GQLTableEventPayload,
@@ -24,7 +25,6 @@ import {
   GQLTableRefreshedEventPayload,
   UseTableSubscriptionState,
   UseTableSubscriptionValue,
-  GQLTableColumnSortPayload,
 } from './useTableSubscription.types';
 
 export const getTableEventSubscription = `
@@ -49,6 +49,7 @@ export const getTableEventSubscription = `
       ... on TableRefreshedEventPayload {
         table {
           id
+          targetObjectId
           paginationData {
             hasPreviousPage
             hasNextPage
