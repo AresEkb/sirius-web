@@ -121,7 +121,7 @@ export const prepareLayoutArea = (
         id: `${outsideLabel.id}-label`,
         key: `${outsideLabel.id}-label`,
         role: 'button', // role applied by react flow
-        style: { maxWidth: outsideLabel.overflowStrategy === 'NONE' ? undefined : node.width },
+        style: { maxWidth: outsideLabel.overflowStrategy === 'NONE' ? undefined : '200px' },
         children,
       });
       labelElements.push(element);
