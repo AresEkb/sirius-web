@@ -14,10 +14,7 @@ import { Node, NodeChange, NodePositionChange } from '@xyflow/react';
 import { useCallback } from 'react';
 import { useStore } from '../../representation/useStore';
 import { NodeData } from '../DiagramRenderer.types';
-import { ListNodeData } from '../node/ListNode.types';
 import { UseMoveChangeValue } from './useMoveChange.types';
-
-const isListData = (node: Node): node is Node<ListNodeData> => node.type === 'listNode';
 
 const applyPositionChangeToParentIfUndraggable = (
   movedNode: Node<NodeData>,
@@ -25,7 +22,7 @@ const applyPositionChangeToParentIfUndraggable = (
   change: NodePositionChange
 ): NodeChange<Node<NodeData>> => {
   const parentNode = nodes.find((node) => movedNode?.parentId === node.id);
-  if (parentNode && change.position && isListData(parentNode) && !parentNode.data.areChildNodesDraggable) {
+  if (parentNode && change.position && parentNode.data.areChildNodesDraggable === false) {
     if (change.dragging) {
       change.id = parentNode.id;
       change.position.x = parentNode.position.x + (change.position.x - movedNode.position.x);

@@ -23,7 +23,6 @@ import { GQLDropNodeCompatibility } from '../../representation/DiagramRepresenta
 import { useStore } from '../../representation/useStore';
 import { EdgeData, NodeData } from '../DiagramRenderer.types';
 import { isDescendantOf } from '../layout/layoutNode';
-import { ListNodeData } from '../node/ListNode.types';
 import { evaluateAbsolutePosition } from '../node/NodeUtils';
 import { DropNodeContext } from './DropNodeContext';
 import { DropNodeContextValue } from './DropNodeContext.types';
@@ -61,8 +60,6 @@ const isErrorPayload = (payload: GQLDropNodesPayload): payload is GQLErrorPayloa
   payload.__typename === 'ErrorPayload';
 const isSuccessPayload = (payload: GQLDropNodesPayload): payload is GQLSuccessPayload =>
   payload.__typename === 'SuccessPayload';
-
-const isListData = (node: Node): node is Node<ListNodeData> => node.type === 'listNode';
 
 const getNodeDepth = (node: Node<NodeData>, intersections: Node<NodeData>[]): number => {
   let nodeDepth = 0;
@@ -142,7 +139,7 @@ export const useDropNodes = (): UseDropNodesValue => {
   const getDraggableNode = (node: Node<NodeData>): Node<NodeData> => {
     if (node.parentId) {
       const parentNode = getNodeById(node.parentId);
-      if (parentNode && isListData(parentNode) && !parentNode.data.areChildNodesDraggable) {
+      if (parentNode && parentNode.data.areChildNodesDraggable === false) {
         return getDraggableNode(parentNode);
       }
     }
