@@ -456,6 +456,7 @@ type DiagramDescription implements RepresentationDescription {
   manageVisibilityActions(diagramElementId: ID!): [ManageVisibilityAction!]!
   connectorTools(sourceDiagramElementId: ID!, targetDiagramElementId: ID!): [Tool!]!
   dropNodeCompatibility: [DropNodeCompatibilityEntry!]!
+  dropDialog(diagramTargetElementId: ID, objectIds: [String!]!): DropDialogDescriptor
   initialDirectEditElementLabel(labelId: ID!): String!
   diagramImpactAnalysisReport(toolId: ID!, diagramElementId: ID!, variables: [ToolVariable!]!): ImpactAnalysisReport!
   debug: Boolean
@@ -546,6 +547,7 @@ input DropNodesInput {
   droppedElementIds: [ID!]!
   targetElementId: ID
   dropPositions: [PositionInput!]!
+  variables: [ToolVariable!]
 }
 
 input ArrangeAllInput {
@@ -653,6 +655,7 @@ input DropOnDiagramInput {
   objectIds: [String!]!
   startingPositionX: Float!
   startingPositionY: Float!
+  variables: [ToolVariable!]
 }
 
 union DropOnDiagramPayload = ErrorPayload | DropOnDiagramSuccessPayload
@@ -661,6 +664,17 @@ type DropOnDiagramSuccessPayload {
   id: ID!
   diagram: Diagram!
   messages: [Message]!
+}
+
+type DropDialogDescriptor {
+  dialogDescriptionId: String!
+  initialVariables: [DropDialogVariable!]!
+}
+
+type DropDialogVariable {
+  name: String!
+  value: String!
+  type: String!
 }
 
 union DropNodesPayload = ErrorPayload | SuccessPayload

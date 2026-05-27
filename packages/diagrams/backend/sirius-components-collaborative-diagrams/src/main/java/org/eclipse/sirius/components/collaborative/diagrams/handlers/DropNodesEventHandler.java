@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2025 Obeo.
+ * Copyright (c) 2023, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.sirius.components.collaborative.diagrams.handlers;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -24,12 +25,14 @@ import org.eclipse.sirius.components.collaborative.diagrams.api.IDiagramDescript
 import org.eclipse.sirius.components.collaborative.diagrams.api.IDiagramEventHandler;
 import org.eclipse.sirius.components.collaborative.diagrams.api.IDiagramInput;
 import org.eclipse.sirius.components.collaborative.diagrams.dto.DropNodesInput;
+import org.eclipse.sirius.components.collaborative.diagrams.dto.ToolVariable;
 import org.eclipse.sirius.components.collaborative.diagrams.handlers.api.IDropNodesVariableManagerProvider;
 import org.eclipse.sirius.components.collaborative.diagrams.messages.ICollaborativeDiagramMessageService;
 import org.eclipse.sirius.components.collaborative.diagrams.variables.DiagramVariables;
 import org.eclipse.sirius.components.core.api.ErrorPayload;
 import org.eclipse.sirius.components.core.api.IEditingContext;
 import org.eclipse.sirius.components.core.api.IFeedbackMessageService;
+import org.eclipse.sirius.components.core.api.IObjectSearchService;
 import org.eclipse.sirius.components.core.api.IPayload;
 import org.eclipse.sirius.components.core.api.IRepresentationDescriptionSearchService;
 import org.eclipse.sirius.components.core.api.SuccessPayload;
@@ -65,15 +68,18 @@ public class DropNodesEventHandler implements IDiagramEventHandler {
 
     private final IDropNodesVariableManagerProvider dropNodesVariableManagerProvider;
 
+    private final IObjectSearchService objectSearchService;
+
     private final Counter counter;
 
     public DropNodesEventHandler(IDiagramDescriptionService diagramDescriptionService, IRepresentationDescriptionSearchService representationDescriptionSearchService, ICollaborativeDiagramMessageService messageService,
-                                 IFeedbackMessageService feedbackMessageService, IDropNodesVariableManagerProvider dropNodesVariableManagerProvider, MeterRegistry meterRegistry) {
+                                 IFeedbackMessageService feedbackMessageService, IDropNodesVariableManagerProvider dropNodesVariableManagerProvider, IObjectSearchService objectSearchService, MeterRegistry meterRegistry) {
         this.diagramDescriptionService = Objects.requireNonNull(diagramDescriptionService);
         this.representationDescriptionSearchService = Objects.requireNonNull(representationDescriptionSearchService);
         this.messageService = Objects.requireNonNull(messageService);
         this.feedbackMessageService = Objects.requireNonNull(feedbackMessageService);
         this.dropNodesVariableManagerProvider = Objects.requireNonNull(dropNodesVariableManagerProvider);
+        this.objectSearchService = Objects.requireNonNull(objectSearchService);
         this.counter = Counter.builder(Monitoring.EVENT_HANDLER)
                 .tag(Monitoring.NAME, this.getClass().getSimpleName())
                 .register(meterRegistry);
@@ -96,6 +102,7 @@ public class DropNodesEventHandler implements IDiagramEventHandler {
             var optionalVariableManager = this.dropNodesVariableManagerProvider.getVariableManager(editingContext, diagramContext, input.targetElementId(), input.droppedElementIds());
             if (optionalVariableManager.isPresent()) {
                 var variableManager = optionalVariableManager.get();
+                this.addToolVariables(editingContext, variableManager, input.variables());
 
                 Optional<Node> optionalDropTargetNode = variableManager.get(DiagramVariables.TARGET_NODE.name(), Node.class);
                 var optionalHandler = this.findDropNodeHandler(editingContext, diagramContext.diagram(), optionalDropTargetNode);
@@ -135,5 +142,31 @@ public class DropNodesEventHandler implements IDiagramEventHandler {
     private Optional<NodeDescription> findNodeDescription(Node node, Diagram diagram, IEditingContext editingContext) {
         return this.findDiagramDescription(diagram, editingContext)
                 .flatMap(diagramDescription -> this.diagramDescriptionService.findNodeDescriptionById(diagramDescription, node.getDescriptionId()));
+    }
+
+    private void addToolVariables(IEditingContext editingContext, VariableManager variableManager, List<ToolVariable> variables) {
+        for (ToolVariable variable : variables) {
+            switch (variable.type()) {
+                case STRING -> variableManager.put(variable.name(), variable.value());
+                case OBJECT_ID -> {
+                    Object object = this.objectSearchService.getObject(editingContext, variable.value()).orElse(null);
+                    variableManager.put(variable.name(), object);
+                }
+                case OBJECT_ID_ARRAY -> {
+                    String value = variable.value();
+                    List<String> ids = List.of();
+                    if (!value.isBlank()) {
+                        ids = List.of(value.split(","));
+                    }
+                    List<Object> objects = ids.stream()
+                            .map(id -> this.objectSearchService.getObject(editingContext, id).orElse(null))
+                            .toList();
+                    variableManager.put(variable.name(), objects);
+                }
+                default -> {
+                    // Unsupported variable type — ignore.
+                }
+            }
+        }
     }
 }

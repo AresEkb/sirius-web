@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2025 Obeo.
+ * Copyright (c) 2023, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { GQLMessage } from '@eclipse-sirius/sirius-components-core';
+import { ToolVariable } from '../../dialog/DialogContext.types';
 
 export interface UseDropValue {
   onDrop: (event: React.DragEvent, diagramElementId?: string) => void;
@@ -33,6 +34,7 @@ export interface GQLDropOnDiagramInput {
   startingPositionX: number;
   startingPositionY: number;
   diagramTargetElementId: string;
+  variables: ToolVariable[];
 }
 
 export interface GQLDropOnDiagramVariables {
@@ -45,4 +47,37 @@ export interface GQLErrorPayload extends GQLDropOnDiagramPayload {
 
 export interface GQLDropOnDiagramSuccessPayload extends GQLDropOnDiagramPayload {
   messages: GQLMessage[];
+}
+
+export interface GQLGetDropDialogVariables {
+  editingContextId: string;
+  representationId: string;
+  diagramTargetElementId: string | null;
+  objectIds: string[];
+}
+
+export interface GQLGetDropDialogData {
+  viewer: {
+    editingContext: {
+      representation: {
+        description: GQLRepresentationDescriptionWithDropDialog;
+      } | null;
+    } | null;
+  };
+}
+
+export interface GQLRepresentationDescriptionWithDropDialog {
+  __typename: string;
+  dropDialog?: GQLDropDialogDescriptor | null;
+}
+
+export interface GQLDropDialogDescriptor {
+  dialogDescriptionId: string;
+  initialVariables: GQLDropDialogVariable[];
+}
+
+export interface GQLDropDialogVariable {
+  name: string;
+  value: string;
+  type: string;
 }
