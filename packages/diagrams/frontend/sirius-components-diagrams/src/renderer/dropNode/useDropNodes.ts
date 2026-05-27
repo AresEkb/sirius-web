@@ -10,7 +10,7 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-import { gql, useMutation } from '@apollo/client';
+import { gql, useApolloClient, useMutation } from '@apollo/client';
 import { useMultiToast } from '@eclipse-sirius/sirius-components-core';
 import { Edge, Node, OnNodeDrag, XYPosition, useReactFlow, useStoreApi } from '@xyflow/react';
 import { Rect } from '@xyflow/system';
@@ -19,9 +19,12 @@ import { useTranslation } from 'react-i18next';
 import { DiagramContext } from '../../contexts/DiagramContext';
 import { DiagramContextValue } from '../../contexts/DiagramContext.types';
 import { useDiagramDescription } from '../../contexts/useDiagramDescription';
+import { ToolVariable } from '../../dialog/DialogContext.types';
+import { useDialog } from '../../dialog/useDialog';
 import { GQLDropNodeCompatibility } from '../../representation/DiagramRepresentation.types';
 import { useStore } from '../../representation/useStore';
 import { EdgeData, NodeData } from '../DiagramRenderer.types';
+import { GQLDropDialogDescriptor, GQLGetDropDialogData, GQLGetDropDialogVariables } from '../drop/useDrop.types';
 import { isDescendantOf } from '../layout/layoutNode';
 import { ListNodeData } from '../node/ListNode.types';
 import { evaluateAbsolutePosition } from '../node/NodeUtils';
@@ -51,6 +54,34 @@ const dropNodesMutation = gql`
         messages {
           body
           level
+        }
+      }
+    }
+  }
+`;
+
+const getDropDialogQuery = gql`
+  query getDropDialog(
+    $editingContextId: ID!
+    $representationId: ID!
+    $diagramTargetElementId: ID
+    $objectIds: [String!]!
+  ) {
+    viewer {
+      editingContext(editingContextId: $editingContextId) {
+        representation(representationId: $representationId) {
+          description {
+            ... on DiagramDescription {
+              dropDialog(diagramTargetElementId: $diagramTargetElementId, objectIds: $objectIds) {
+                dialogDescriptionId
+                initialVariables {
+                  name
+                  value
+                  type
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -104,6 +135,7 @@ const useDropNodesMutation = () => {
       droppedNodes: Node<NodeData>[],
       targetElementId: string | null,
       dropPositions: XYPosition[],
+      variables: ToolVariable[],
       onDragCancelled: (nodes: Node<NodeData>[]) => void
     ): void => {
       const input: GQLDropNodesInput = {
@@ -113,6 +145,7 @@ const useDropNodesMutation = () => {
         droppedElementIds: droppedNodes.map((node) => node.id),
         targetElementId,
         dropPositions,
+        variables,
       };
       if (!readOnly) {
         dropMutation({ variables: { input } }).then((result) => {
@@ -131,7 +164,49 @@ export const useDropNodes = (): UseDropNodesValue => {
     useContext<DropNodeContextValue>(DropNodeContext);
 
   const { diagramDescription } = useDiagramDescription();
-  const onDropNodes = useDropNodesMutation();
+  const onDropNodesMutate = useDropNodesMutation();
+  const { editingContextId, diagramId } = useContext<DiagramContextValue>(DiagramContext);
+  const { showDialog } = useDialog();
+  const apolloClient = useApolloClient();
+
+  const onDropNodes = useCallback(
+    (
+      droppedNodes: Node<NodeData>[],
+      targetElementId: string | null,
+      dropPositions: XYPosition[],
+      onDragCancelled: (nodes: Node<NodeData>[]) => void
+    ): void => {
+      const semanticObjectIds = droppedNodes.map((node) => node.data.targetObjectId).filter((id): id is string => !!id);
+      apolloClient
+        .query<GQLGetDropDialogData, GQLGetDropDialogVariables>({
+          query: getDropDialogQuery,
+          variables: {
+            editingContextId,
+            representationId: diagramId,
+            diagramTargetElementId: targetElementId,
+            objectIds: semanticObjectIds,
+          },
+          fetchPolicy: 'network-only',
+        })
+        .then(({ data }) => {
+          const descriptor: GQLDropDialogDescriptor | null =
+            data.viewer.editingContext?.representation?.description?.dropDialog ?? null;
+          if (descriptor) {
+            showDialog(
+              descriptor.dialogDescriptionId,
+              descriptor.initialVariables.map(({ name, value }) => ({ name, value })),
+              (returnedVariables) =>
+                onDropNodesMutate(droppedNodes, targetElementId, dropPositions, returnedVariables, onDragCancelled),
+              () => onDragCancelled(droppedNodes)
+            );
+          } else {
+            onDropNodesMutate(droppedNodes, targetElementId, dropPositions, [], onDragCancelled);
+          }
+        })
+        .catch(() => onDragCancelled(droppedNodes));
+    },
+    [apolloClient, editingContextId, diagramId, showDialog, onDropNodesMutate]
+  );
   const { getNodes, getIntersectingNodes, screenToFlowPosition } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
   const { setNodes } = useStore();
   const storeApi = useStoreApi<Node<NodeData>, Edge<EdgeData>>();

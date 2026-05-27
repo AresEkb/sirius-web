@@ -15,6 +15,7 @@ package org.eclipse.sirius.components.diagrams.description;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -83,6 +84,8 @@ public final class DiagramDescription implements IRepresentationDescription {
     private Function<VariableManager, IStatus> dropHandler;
 
     private Function<VariableManager, IStatus> dropNodeHandler;
+
+    private Function<VariableManager, Optional<DropDialogDescriptor>> dropDialogProvider;
 
     private Function<VariableManager, List<String>> iconURLsProvider;
 
@@ -250,6 +253,32 @@ public final class DiagramDescription implements IRepresentationDescription {
     }
 
     /**
+     * Provides an optional function which decides whether a dialog must be opened before the drop is executed.
+     *
+     * <p>
+     * When present, this function is invoked first when a semantic element is dropped on the diagram. If it returns a
+     * {@link DropDialogDescriptor}, the drop is not executed yet and a dialog is opened on the frontend instead. The
+     * values returned by the dialog are then forwarded to the regular drop handler in a second invocation of the drop
+     * mutation. If the function returns {@link Optional#empty()}, the drop runs immediately as before.
+     * </p>
+     *
+     * <p>
+     * The following variables will at least be available when this behavior is executed:
+     * </p>
+     *
+     * <ul>
+     *     <li><strong>droppedElements</strong> - The semantic elements being dropped on the diagram</li>
+     *     <li><strong>selectedNode</strong> - The node on which the elements are being dropped or {@code null} if they
+     *     are being dropped on the diagram directly</li>
+     * </ul>
+     *
+     * @return An optional function used to open a dialog before executing the drop.
+     */
+    public Function<VariableManager, Optional<DropDialogDescriptor>> getDropDialogProvider() {
+        return this.dropDialogProvider;
+    }
+
+    /**
      * Provides the function which will be used to retrieve the URL of the various images composing the icon of the diagram.
      *
      * <p>
@@ -314,6 +343,8 @@ public final class DiagramDescription implements IRepresentationDescription {
 
         private Function<VariableManager, IStatus> dropNodeHandler;
 
+        private Function<VariableManager, Optional<DropDialogDescriptor>> dropDialogProvider = variableManager -> Optional.empty();
+
         private Function<VariableManager, List<String>> iconURLsProvider;
 
         private Function<VariableManager, DiagramStyle> styleProvider;
@@ -336,6 +367,7 @@ public final class DiagramDescription implements IRepresentationDescription {
             this.edgeDescriptions = diagramDescription.getEdgeDescriptions();
             this.dropHandler = diagramDescription.getDropHandler();
             this.dropNodeHandler = diagramDescription.getDropNodeHandler();
+            this.dropDialogProvider = diagramDescription.getDropDialogProvider();
             this.iconURLsProvider = diagramDescription.getIconURLsProvider();
             this.styleProvider = diagramDescription.getStyleProvider();
             this.decoratorDescriptions = diagramDescription.getDecoratorDescriptions();
@@ -391,6 +423,11 @@ public final class DiagramDescription implements IRepresentationDescription {
             return this;
         }
 
+        public Builder dropDialogProvider(Function<VariableManager, Optional<DropDialogDescriptor>> dropDialogProvider) {
+            this.dropDialogProvider = Objects.requireNonNull(dropDialogProvider);
+            return this;
+        }
+
         public Builder iconURLsProvider(Function<VariableManager, List<String>> iconURLsProvider) {
             this.iconURLsProvider = Objects.requireNonNull(iconURLsProvider);
             return this;
@@ -419,6 +456,7 @@ public final class DiagramDescription implements IRepresentationDescription {
             diagramDescription.edgeDescriptions = Objects.requireNonNull(this.edgeDescriptions);
             diagramDescription.dropHandler = Objects.requireNonNull(this.dropHandler);
             diagramDescription.dropNodeHandler = this.dropNodeHandler; // Optional on purpose.
+            diagramDescription.dropDialogProvider = Objects.requireNonNull(this.dropDialogProvider);
             diagramDescription.iconURLsProvider = Objects.requireNonNull(this.iconURLsProvider);
             diagramDescription.styleProvider = Objects.requireNonNull(this.styleProvider);
             diagramDescription.decoratorDescriptions = Objects.requireNonNull(this.decoratorDescriptions);

@@ -22,9 +22,17 @@ import org.eclipse.sirius.components.diagrams.layoutdata.Position;
 /**
  * The input for the "drop nodes" mutation.
  *
+ * <p>
+ * The optional {@code variables} field carries values entered by the user in the dialog that was opened before this
+ * mutation was sent. The frontend first issues the {@code DiagramDescription.dropDialog} query to ask whether a dialog
+ * is required; if it is, the frontend opens the dialog, collects the values and includes them here. The values are
+ * passed to the drop node handler through the variable manager. When no dialog was opened (or the diagram has no
+ * dialog provider), the list is empty.
+ * </p>
+ *
  * @author pcdavid
  */
-public record DropNodesInput(UUID id, String editingContextId, String representationId, List<String> droppedElementIds, String targetElementId, List<Position> dropPositions) implements IDiagramInput {
+public record DropNodesInput(UUID id, String editingContextId, String representationId, List<String> droppedElementIds, String targetElementId, List<Position> dropPositions, List<ToolVariable> variables) implements IDiagramInput {
 
     public DropNodesInput {
         Objects.requireNonNull(id);
@@ -33,5 +41,12 @@ public record DropNodesInput(UUID id, String editingContextId, String representa
         Objects.requireNonNull(droppedElementIds);
         droppedElementIds.stream().forEach(Objects::requireNonNull);
         // targetElementId *can* be null when dropping on the diagram's background
+        if (variables == null) {
+            variables = List.of();
+        }
+    }
+
+    public DropNodesInput(UUID id, String editingContextId, String representationId, List<String> droppedElementIds, String targetElementId, List<Position> dropPositions) {
+        this(id, editingContextId, representationId, droppedElementIds, targetElementId, dropPositions, List.of());
     }
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2025 Obeo.
+ * Copyright (c) 2019, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -26,6 +26,7 @@ import org.eclipse.sirius.components.collaborative.diagrams.api.IDiagramInput;
 import org.eclipse.sirius.components.collaborative.diagrams.api.IDiagramQueryService;
 import org.eclipse.sirius.components.collaborative.diagrams.dto.DropOnDiagramInput;
 import org.eclipse.sirius.components.collaborative.diagrams.dto.DropOnDiagramSuccessPayload;
+import org.eclipse.sirius.components.collaborative.diagrams.dto.ToolVariable;
 import org.eclipse.sirius.components.collaborative.diagrams.messages.ICollaborativeDiagramMessageService;
 import org.eclipse.sirius.components.collaborative.diagrams.variables.DiagramVariables;
 import org.eclipse.sirius.components.core.api.Environment;
@@ -99,7 +100,7 @@ public class DropOnDiagramEventHandler implements IDiagramEventHandler {
 
             payload = new ErrorPayload(diagramInput.id(), this.messageService.invalidDrop());
             if (!objects.isEmpty()) {
-                IStatus status = this.executeTool(editingContext, diagramContext, objects, input.diagramTargetElementId(), input.startingPositionX(), input.startingPositionY());
+                IStatus status = this.executeTool(editingContext, diagramContext, objects, input.diagramTargetElementId(), input.startingPositionX(), input.startingPositionY(), input.variables());
                 if (status instanceof Success) {
                     changeDescription = new ChangeDescription(ChangeKind.SEMANTIC_CHANGE, diagramInput.representationId(), diagramInput);
                     payload = new DropOnDiagramSuccessPayload(diagramInput.id(), diagram, this.feedbackMessageService.getFeedbackMessages());
@@ -113,7 +114,7 @@ public class DropOnDiagramEventHandler implements IDiagramEventHandler {
         changeDescriptionSink.tryEmitNext(changeDescription);
     }
 
-    private IStatus executeTool(IEditingContext editingContext, DiagramContext diagramContext, List<Object> objects, String diagramElementId, double startingPositionX, double startingPositionY) {
+    private IStatus executeTool(IEditingContext editingContext, DiagramContext diagramContext, List<Object> objects, String diagramElementId, double startingPositionX, double startingPositionY, List<ToolVariable> variables) {
         IStatus result = new Failure("");
         Diagram diagram = diagramContext.diagram();
         Optional<Node> node = this.diagramQueryService.findNodeById(diagram, diagramElementId);
@@ -135,6 +136,8 @@ public class DropOnDiagramEventHandler implements IDiagramEventHandler {
                 variableManager.put(DiagramVariables.DIAGRAM_CONTEXT.name(), diagramContext);
                 variableManager.put(DiagramVariables.DIAGRAM_SERVICES.name(), new DiagramService(diagramContext));
                 variableManager.put(DiagramVariables.SELECTED_NODE.name(), node.orElse(null));
+                variableManager.put(DiagramVariables.DROPPED_ELEMENTS.name(), objects);
+                this.addToolVariables(editingContext, variableManager, variables);
 
                 this.operationValidator.validate(DiagramInteractionOperations.OBJECT_DROP, variableManager.getVariables());
 
@@ -146,5 +149,31 @@ public class DropOnDiagramEventHandler implements IDiagramEventHandler {
             }
         }
         return result;
+    }
+
+    private void addToolVariables(IEditingContext editingContext, VariableManager variableManager, List<ToolVariable> variables) {
+        for (ToolVariable variable : variables) {
+            switch (variable.type()) {
+                case STRING -> variableManager.put(variable.name(), variable.value());
+                case OBJECT_ID -> {
+                    Object object = this.objectSearchService.getObject(editingContext, variable.value()).orElse(null);
+                    variableManager.put(variable.name(), object);
+                }
+                case OBJECT_ID_ARRAY -> {
+                    String value = variable.value();
+                    List<String> ids = List.of();
+                    if (!value.isBlank()) {
+                        ids = List.of(value.split(","));
+                    }
+                    List<Object> objects = ids.stream()
+                            .map(id -> this.objectSearchService.getObject(editingContext, id).orElse(null))
+                            .toList();
+                    variableManager.put(variable.name(), objects);
+                }
+                default -> {
+                    // Unsupported variable type — ignore.
+                }
+            }
+        }
     }
 }

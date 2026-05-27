@@ -13,6 +13,7 @@
 
 import { GQLMessage } from '@eclipse-sirius/sirius-components-core';
 import { Node, OnNodeDrag, XYPosition } from '@xyflow/react';
+import { ToolVariable } from '../../dialog/DialogContext.types';
 import { NodeData } from '../DiagramRenderer.types';
 
 export interface UseDropNodesValue {
@@ -40,6 +41,7 @@ export interface GQLDropNodesInput {
   droppedElementIds: string[];
   targetElementId: string | null;
   dropPositions: XYPosition[];
+  variables: ToolVariable[];
 }
 
 export interface GQLErrorPayload extends GQLDropNodesPayload {
