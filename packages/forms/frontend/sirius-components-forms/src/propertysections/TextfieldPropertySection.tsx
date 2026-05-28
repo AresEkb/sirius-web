@@ -330,7 +330,13 @@ export const TextfieldPropertySection: PropertySectionComponent<GQLTextfield | G
   return (
     <div
       onBlur={(event: FocusEvent<HTMLDivElement, Element>) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
+        // Moving focus into the textfield's own completion popup must not
+        // commit the value: the popup is rendered in a portal, so it is not a
+        // DOM descendant of this section and would otherwise be treated as a
+        // value-committing blur.
+        const toCompletionProposals =
+          event.relatedTarget instanceof Element && event.relatedTarget.closest('#completion-proposals') !== null;
+        if (!event.currentTarget.contains(event.relatedTarget) && !toCompletionProposals) {
           onBlur();
         }
       }}
