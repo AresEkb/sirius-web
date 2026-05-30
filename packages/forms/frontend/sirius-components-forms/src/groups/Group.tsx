@@ -15,7 +15,7 @@ import { useTheme } from '@mui/material/styles';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { PropertySection } from '../propertysections/PropertySection';
 import { ToolbarAction } from '../toolbaraction/ToolbarAction';
@@ -79,16 +79,18 @@ export const Group = ({ editingContextId, formId, group, readOnly }: GroupProps)
 
   const { classes } = useGroupStyles(props);
   const theme = useTheme();
-  const [visibleWidgetIds, setVisibleWidgetIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    setVisibleWidgetIds(group.widgets.map((widget) => widget.id));
-  }, [group]);
+  const initialVisibility = () => ({ group, ids: group.widgets.map((widget) => widget.id) });
+  const [visibility, setVisibility] = useState(initialVisibility);
+  // Reset before React commits so a new group shows all its widgets in the first render.
+  if (visibility.group !== group) {
+    setVisibility(initialVisibility());
+  }
+  const visibleWidgetIds = visibility.ids;
 
   let widgetSelector: JSX.Element | null = null;
   if (group.displayMode === 'TOGGLEABLE_AREAS') {
     widgetSelector = (
-      <ToggleButtonGroup value={visibleWidgetIds} onChange={(_, newVisibleIds) => setVisibleWidgetIds(newVisibleIds)}>
+      <ToggleButtonGroup value={visibleWidgetIds} onChange={(_, ids) => setVisibility({ group, ids })}>
         {group.widgets.map((widget) => {
           return (
             <ToggleButton className={classes.button} value={widget.id} key={widget.id}>
@@ -137,13 +139,13 @@ export const Group = ({ editingContextId, formId, group, readOnly }: GroupProps)
       <div className={group.displayMode === 'LIST' ? classes.verticalSections : classes.adaptableSections}>
         {group.widgets
           .filter((widget) => visibleWidgetIds.includes(widget.id))
-          .map((widget, index) => (
+          .map((widget) => (
             <PropertySection
               editingContextId={editingContextId}
               formId={formId}
               widget={widget}
               readOnly={readOnly}
-              key={`${widget.id}#${index}`}
+              key={widget.id}
             />
           ))}
       </div>
