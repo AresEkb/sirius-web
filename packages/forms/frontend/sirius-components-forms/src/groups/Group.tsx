@@ -137,13 +137,13 @@ export const Group = ({ editingContextId, formId, group, readOnly }: GroupProps)
       <div className={group.displayMode === 'LIST' ? classes.verticalSections : classes.adaptableSections}>
         {group.widgets
           .filter((widget) => visibleWidgetIds.includes(widget.id))
-          .map((widget, index) => (
+          .map((widget) => (
             <PropertySection
               editingContextId={editingContextId}
               formId={formId}
               widget={widget}
               readOnly={readOnly}
-              key={`${widget.id}#${index}`}
+              key={widget.id}
             />
           ))}
       </div>
