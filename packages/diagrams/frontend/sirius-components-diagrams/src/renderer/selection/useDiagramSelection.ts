@@ -11,6 +11,8 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
+import { publishedByADiagram } from './diagramOriginatedSelection';
+
 import { SelectionEntry, useSelection } from '@eclipse-sirius/sirius-components-core';
 import { Edge, Node, OnSelectionChangeFunc } from '@xyflow/react';
 import { useCallback, useState } from 'react';
@@ -65,6 +67,7 @@ export const useDiagramSelection = (): UseDiagramSelectionValue => {
 
     // Publish semantic selection globally (if any)
     if (entries.length > 0) {
+      publishedByADiagram({ entries });
       setSelection({ entries });
     }
   }, []); // The dependency array must stay empty, otherwise XYFlow will call this function if one dependency changes.
