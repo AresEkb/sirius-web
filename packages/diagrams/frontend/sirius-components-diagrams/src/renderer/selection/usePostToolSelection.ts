@@ -11,6 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
+import { SelectionEntry, useSelection } from '@eclipse-sirius/sirius-components-core';
 import { Edge, Node, useStoreApi } from '@xyflow/react';
 import { useContext, useEffect } from 'react';
 import { DiagramContext } from '../../contexts/DiagramContext';
@@ -18,11 +19,13 @@ import { DiagramContextValue } from '../../contexts/DiagramContext.types';
 import { GQLDiagramRefreshedEventPayload } from '../../graphql/subscription/diagramEventSubscription.types';
 import { useStore } from '../../representation/useStore';
 import { EdgeData, NodeData } from '../DiagramRenderer.types';
+import { publishedByADiagram } from './diagramOriginatedSelection';
 
 export const usePostToolSelection = (diagramRefreshedEventPayload: GQLDiagramRefreshedEventPayload) => {
   const { toolSelections, consumePostToolSelection } = useContext<DiagramContextValue>(DiagramContext);
   const { setNodes, getNodes, getEdges, setEdges } = useStore();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
+  const { setSelection } = useSelection();
 
   useEffect(() => {
     const { id } = diagramRefreshedEventPayload;
@@ -110,7 +113,59 @@ export const usePostToolSelection = (diagramRefreshedEventPayload: GQLDiagramRef
             return previousEdge;
           })
         );
+
+        // What the tool asked to be selected is published to the rest of the editor, the
+        // way a selection made by hand is. The flags written above only paint it on the
+        // diagram: XYFlow is told of the nodes, and tells the editor through the
+        // selection change it raises, but nothing tells it of an edge - so an edge a tool
+        // created came out drawn as selected while the properties of whatever was
+        // selected before it went on being shown, and pressing the edge changed nothing,
+        // it being selected already. It is noted as published by a diagram, since the
+        // modeller is looking at what the tool has just made and the view is not to be
+        // taken to it.
+        const entries = selectionEntriesOf(getNodes(), getEdges(), nodesToSelect, edgesToSelect);
+        if (entries.length > 0) {
+          publishedByADiagram({ entries });
+          setSelection({ entries });
+        }
+
+        // Focus the diagram so the user can direct edit the created element by
+        // typing - but never steal focus from an editable field (a form / inline
+        // rename input), or the user's keystrokes would be dropped.
+        const active = document.activeElement;
+        const isEditingField =
+          active instanceof HTMLInputElement ||
+          active instanceof HTMLTextAreaElement ||
+          (active instanceof HTMLElement && active.isContentEditable);
+        if (!isEditingField) {
+          store.getState().domNode?.focus();
+        }
       }
     }
   }, [diagramRefreshedEventPayload, toolSelections, getNodes, getEdges]);
+};
+
+/**
+ * The objects the selected nodes and edges stand for, in the order the diagram holds them, so that
+ * what a tool selected is published as the elements it created rather than as the shapes drawn for
+ * them.
+ */
+const selectionEntriesOf = (
+  nodes: Node<NodeData>[],
+  edges: Edge<EdgeData>[],
+  nodesToSelect: string[],
+  edgesToSelect: string[]
+): SelectionEntry[] => {
+  const entries: SelectionEntry[] = [];
+  nodes
+    .filter((node) => nodesToSelect.includes(node.id))
+    .forEach((node) => entries.push({ id: node.data.targetObjectId }));
+  edges
+    .filter((edge) => edgesToSelect.includes(edge.id))
+    .forEach((edge) => {
+      if (edge.data) {
+        entries.push({ id: edge.data.targetObjectId });
+      }
+    });
+  return entries;
 };

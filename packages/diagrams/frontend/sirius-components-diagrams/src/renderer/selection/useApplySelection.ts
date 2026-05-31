@@ -11,13 +11,14 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { Selection } from '@eclipse-sirius/sirius-components-core';
-import { Edge, Node, useReactFlow, useStoreApi } from '@xyflow/react';
+import { Edge, Node, useStoreApi } from '@xyflow/react';
+import { useStore } from '../../representation/useStore';
 import { EdgeData, NodeData } from '../DiagramRenderer.types';
 import { UseApplySelectionValue } from './useApplySelection.types';
 import { useRevealNodes } from './useRevealNodes';
 
 export const useApplySelection = (): UseApplySelectionValue => {
-  const { getNodes, getEdges } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
+  const { getNodes, getEdges, setNodes, setEdges } = useStore();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
   const { nodeLookup } = store.getState();
   const { revealNodes } = useRevealNodes();
@@ -82,10 +83,15 @@ export const useApplySelection = (): UseApplySelectionValue => {
       }
     });
 
-    const edgeIds = newEdges.filter((edge) => edge.selected).map((edge) => edge.id);
-    store.getState().addSelectedEdges(edgeIds);
-    const nodeIds = newNodes.filter((node) => node.selected).map((node) => node.id);
-    store.getState().addSelectedNodes(nodeIds);
+    /*
+     * The nodes and the edges are written in one go rather than through addSelectedNodes and
+     * addSelectedEdges: outside of a multi-selection those two unselect each other's elements, so
+     * applying a selection holding both a node and an edge would leave one of them out, publish
+     * that back as the diagram's selection, and be asked to apply it again - a highlight the user
+     * sees flickering for as long as the diagram is open.
+     */
+    setNodes(newNodes);
+    setEdges(newEdges);
 
     if (fitSelection && nodesToReveal.size > 0) {
       revealNodes(getNodes().filter((node) => nodesToReveal.has(node.id)));

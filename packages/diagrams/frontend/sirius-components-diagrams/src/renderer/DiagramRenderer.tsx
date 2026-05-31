@@ -30,6 +30,7 @@ import {
   SelectionMode,
   applyNodeChanges,
   useReactFlow,
+  useStore as useReactFlowStore,
   useStoreApi,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -81,6 +82,7 @@ import { DiagramPalette } from './palette/DiagramPalette';
 import { useReconnectEdge } from './reconnect-edge/useReconnectEdge';
 import { useMultiSelectResizeChange } from './resize/useMultiSelectResizeChange';
 import { useResizeChange } from './resize/useResizeChange';
+import { useApplySelection } from './selection/useApplySelection';
 import { useDiagramSelection } from './selection/useDiagramSelection';
 import { useLastElementSelectedChange } from './selection/useLastElementSelectedChange';
 import { useOnRightClickElement } from './selection/useOnRightClickElement';
@@ -88,6 +90,7 @@ import { usePostToolSelection } from './selection/usePostToolSelection';
 import { SnapToGridContext } from './snap-to-grid/SnapToGridContext';
 import { SnapToGridContextValue } from './snap-to-grid/SnapToGridContext.types';
 import { DiagramToolbar } from './toolbar/DiagramToolbar';
+import { wasPublishedByADiagram } from './selection/diagramOriginatedSelection';
 
 const GRID_STEP: number = 10;
 
@@ -112,7 +115,14 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
   const { onNodesDragStart, onNodesDrag, onNodesDragStop } = useDropNodes();
   const { background, setBackground, largeGridColor, smallGridColor } = useDropDiagramStyle();
   const { nodeTypes } = useNodeType();
-  const { setSelection } = useSelection();
+  const { selection, setSelection } = useSelection();
+  const { applySelection } = useApplySelection();
+  // Starts null (not the current selection) so a selection set BEFORE this
+  // diagram mounted - e.g. a properties-form navigation that opens another view
+  // and selects the revealed element before its renderer exists - still gets
+  // reflected onto the freshly loaded nodes. Initialising it to the current
+  // selection made the edge-trigger below short-circuit that case forever.
+  const previousSelectionRef = useRef<typeof selection | null>(null);
 
   const { nodeConverters } = useContext<NodeTypeContextValue>(NodeTypeContext);
   const { isMiniMapVisible } = useContext<MiniMapContextValue>(MiniMapContext);
@@ -124,6 +134,62 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
   usePostToolSelection(diagramRefreshedEventPayload);
   const { getNode } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
+
+  // The number of loaded nodes and edges; used to re-evaluate the selection
+  // reflection once the diagram has actually rendered its content (the refresh
+  // payload arrives before react flow holds the nodes).
+  const loadedElementCount = useReactFlowStore((state) => state.nodeLookup.size + state.edgeLookup.size);
+
+  // Reflect a workbench selection CHANGE onto this diagram once (navigation,
+  // explorer or properties-form reveal). This is edge triggered: it applies a
+  // given workbench selection a single time, when its targets are present on the
+  // diagram, and then never re-imposes it. A mere diagram refresh therefore does
+  // not fight a selection the diagram makes itself (e.g. an element just created
+  // and selected by its creation tool); such selections survive refreshes
+  // through the diagram's own preserved selection in the converter. The retry on
+  // loadedElementCount is only so a selection requested before the diagram had
+  // loaded its elements (opening a diagram to reveal something) still applies
+  // once those elements arrive.
+  useEffect(() => {
+    if (previousSelectionRef.current === selection) {
+      return;
+    }
+    const requestedTargetObjectIds = selection.entries
+      .map((entry) => entry.id)
+      .filter(
+        (id) =>
+          getNodes().some((node) => node.data.targetObjectId === id) ||
+          getEdges().some((edge) => edge.data?.targetObjectId === id)
+      );
+    if (requestedTargetObjectIds.length === 0) {
+      // The targets are not on the diagram yet; keep this selection pending so a
+      // later loadedElementCount change retries it once they have loaded.
+      return;
+    }
+    previousSelectionRef.current = selection;
+    const selectedTargetObjectIds = new Set<string>();
+    getNodes().forEach((node) => {
+      if (node.selected && node.data.targetObjectId) {
+        selectedTargetObjectIds.add(node.data.targetObjectId);
+      }
+    });
+    getEdges().forEach((edge) => {
+      if (edge.selected && edge.data?.targetObjectId) {
+        selectedTargetObjectIds.add(edge.data.targetObjectId);
+      }
+    });
+    const alreadyReflected =
+      requestedTargetObjectIds.length === selectedTargetObjectIds.size &&
+      requestedTargetObjectIds.every((id) => selectedTargetObjectIds.has(id));
+    if (!alreadyReflected) {
+      // A selection the diagram itself has just published is applied without being revealed: the
+      // modeller is looking at what they have just pressed, and bringing it into the middle of the
+      // view would take the canvas away from a gesture they may still be making. Revealing is for a
+      // selection made away from the diagram - in the model tree, or through a link - which the
+      // modeller has no way of seeing.
+      applySelection(selection, !wasPublishedByADiagram(selection));
+    }
+  }, [selection, loadedElementCount]);
 
   useEffect(() => {
     const { diagram, cause, referencePosition } = diagramRefreshedEventPayload;
@@ -163,17 +229,55 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
         return convertedNode;
       }
     });
-    const { nodeLookup, edgeLookup } = store.getState();
+    const { nodeLookup } = store.getState();
+    // A navigation reveal selects its target through the workbench selection.
+    // Nodes keep that selection on their own (node ids are stable across
+    // refreshes, so the diagram preserves it), but edge ids are NOT stable, so a
+    // revealed edge would be dropped on the first refresh. Honour the workbench
+    // selection for an EDGE so an edge reveal survives - but ONLY when the
+    // selected element is not also drawn as a node on the diagram. Otherwise a
+    // stale workbench selection left on an element that is shown as a node and
+    // was just deselected (e.g. the base relationship class after creating an
+    // element next to it) would re-select that element's edge occurrence, and
+    // the lingering edge selection makes React Flow drop the freshly created
+    // node's selection.
+    const isEdgeRevealedBySelection = (targetObjectId: string | undefined): boolean =>
+      !!targetObjectId &&
+      selection.entries.some((entry) => entry.id === targetObjectId) &&
+      !getNodes().some((node) => node.data.targetObjectId === targetObjectId);
     if (cause === 'layout') {
-      setEdges((previousEdges) => {
-        return convertedDiagram.edges.map((convertedEdge) => {
-          const previousEdge = previousEdges.find((edge) => edge.id === convertedEdge.id);
-          if (previousEdge) {
-            convertedEdge.selected = previousEdge.selected;
-          }
-          return convertedEdge;
-        });
+      // Preserve edge selection by target object id, not by edge id: edge ids
+      // are not stable across refreshes, so keying on the id drops the selection
+      // of any selected edge (including one a navigation just revealed) on the
+      // first refresh. A given semantic element is selected on only the first
+      // edge depicting it.
+      const previouslySelectedEdgeTargetObjectIds = new Set<string>();
+      getEdges().forEach((edge) => {
+        if (edge.selected && edge.data?.targetObjectId) {
+          previouslySelectedEdgeTargetObjectIds.add(edge.data.targetObjectId);
+        }
       });
+      const selectedEdgeTargetObjectIds = new Set<string>();
+      const shouldSelectEdge = (edge: Edge<EdgeData>) => {
+        if (edge.hidden || !edge.data?.targetObjectId) {
+          return false;
+        }
+        const targetObjectId = edge.data.targetObjectId;
+        if (
+          !selectedEdgeTargetObjectIds.has(targetObjectId) &&
+          (previouslySelectedEdgeTargetObjectIds.has(targetObjectId) || isEdgeRevealedBySelection(targetObjectId))
+        ) {
+          selectedEdgeTargetObjectIds.add(targetObjectId);
+          return true;
+        }
+        return false;
+      };
+      setEdges(
+        convertedDiagram.edges.map((convertedEdge) => {
+          convertedEdge.selected = shouldSelectEdge(convertedEdge);
+          return convertedEdge;
+        })
+      );
 
       setNodes((previousNodes) => {
         return convertedDiagram.nodes.map((convertedNode) => {
@@ -224,15 +328,23 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
             return node;
           });
 
-          laidOutDiagram.edges = laidOutDiagram.edges.map((edge) => {
-            if (edgeLookup.get(edge.id)) {
-              return {
-                ...edge,
-                selected: !!edgeLookup.get(edge.id)?.selected,
-              };
+          // Preserve edge selection by target object id, not by edge id: edge
+          // ids are not stable across refreshes, so keying on the id drops the
+          // selection of any selected edge (including one a navigation just
+          // revealed) on the first refresh.
+          const selectedEdgeTargetObjectIds = new Set<string>();
+          getEdges().forEach((edge) => {
+            if (edge.selected && edge.data?.targetObjectId) {
+              selectedEdgeTargetObjectIds.add(edge.data.targetObjectId);
             }
-            return edge;
           });
+          laidOutDiagram.edges = laidOutDiagram.edges.map((edge) =>
+            edge.data?.targetObjectId &&
+            (selectedEdgeTargetObjectIds.has(edge.data.targetObjectId) ||
+              isEdgeRevealedBySelection(edge.data.targetObjectId))
+              ? { ...edge, selected: true }
+              : edge
+          );
 
           setEdges(laidOutDiagram.edges);
           setNodes(laidOutDiagram.nodes);
