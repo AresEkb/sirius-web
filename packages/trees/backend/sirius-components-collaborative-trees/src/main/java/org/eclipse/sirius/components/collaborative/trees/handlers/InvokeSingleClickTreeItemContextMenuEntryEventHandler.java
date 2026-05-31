@@ -22,14 +22,15 @@ import org.eclipse.sirius.components.collaborative.trees.api.ISingleClickTreeIte
 import org.eclipse.sirius.components.collaborative.trees.api.ITreeEventHandler;
 import org.eclipse.sirius.components.collaborative.trees.api.ITreeInput;
 import org.eclipse.sirius.components.collaborative.trees.dto.InvokeSingleClickTreeItemContextMenuEntryInput;
+import org.eclipse.sirius.components.collaborative.trees.dto.InvokeSingleClickTreeItemContextMenuEntrySuccessPayload;
 import org.eclipse.sirius.components.collaborative.trees.services.api.ICollaborativeTreeMessageService;
 import org.eclipse.sirius.components.collaborative.trees.services.api.ITreeQueryService;
 import org.eclipse.sirius.components.core.api.ErrorPayload;
 import org.eclipse.sirius.components.core.api.IEditingContext;
 import org.eclipse.sirius.components.core.api.IPayload;
-import org.eclipse.sirius.components.core.api.SuccessPayload;
 import org.eclipse.sirius.components.representations.Failure;
 import org.eclipse.sirius.components.representations.Success;
+import org.eclipse.sirius.components.representations.WorkbenchSelection;
 import org.eclipse.sirius.components.trees.Tree;
 import org.eclipse.sirius.components.trees.TreeItem;
 import org.eclipse.sirius.components.trees.description.TreeDescription;
@@ -94,7 +95,18 @@ public class InvokeSingleClickTreeItemContextMenuEntryEventHandler implements IT
 
                 if (status instanceof Success success) {
                     changeDescription = new ChangeDescription(success.getChangeKind(), treeInput.representationId(), treeInput, success.getParameters());
-                    payload = new SuccessPayload(treeInput.id(), success.getMessages());
+
+                    WorkbenchSelection newSelection = null;
+                    if (success.getParameters().get(Success.NEW_SELECTION) instanceof WorkbenchSelection workbenchSelection) {
+                        newSelection = workbenchSelection;
+                    }
+
+                    List<String> treeItemIdsToExpand = List.of();
+                    if (success.getParameters().get(InvokeSingleClickTreeItemContextMenuEntrySuccessPayload.TREE_ITEM_IDS_TO_EXPAND) instanceof List<?> ids) {
+                        treeItemIdsToExpand = ids.stream().filter(String.class::isInstance).map(String.class::cast).toList();
+                    }
+
+                    payload = new InvokeSingleClickTreeItemContextMenuEntrySuccessPayload(treeInput.id(), newSelection, treeItemIdsToExpand, success.getMessages());
                 } else if (status instanceof Failure failure) {
                     payload = new ErrorPayload(treeInput.id(), failure.getMessages());
                 }

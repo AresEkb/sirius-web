@@ -17,6 +17,7 @@ import { GQLTreeItemContextMenuEntry } from './useContextMenuEntries.types';
 import { UseInvokeContextMenuEntryValue } from './useInvokeContextMenuEntry.types';
 import { useInvokeFetchContextMenuEntry } from './useInvokeFetchContextMenuEntry';
 import { useInvokeSingleClickContextMenuEntry } from './useInvokeSingleClickContextMenuEntry';
+import { GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload } from './useInvokeSingleClickContextMenuEntry.types';
 
 export const useInvokeContextMenuEntry = (): UseInvokeContextMenuEntryValue => {
   const { data: treeItemContextMenuOverrideContributions } = useData<TreeItemContextMenuOverrideContribution[]>(
@@ -31,12 +32,13 @@ export const useInvokeContextMenuEntry = (): UseInvokeContextMenuEntryValue => {
     treeId: string,
     treeItemId: string,
     menuEntry: GQLTreeItemContextMenuEntry,
-    onClick: () => void
+    onClick: () => void,
+    onSuccess?: (payload: GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload) => void
   ) => {
     if (menuEntry.__typename === 'FetchTreeItemContextMenuEntry') {
       invokeFetchContextMenuEntry(editingContextId, treeId, treeItemId, menuEntry, onClick);
     } else if (menuEntry.__typename === 'SingleClickTreeItemContextMenuEntry') {
-      invokeSingleClickContextMenuEntry(editingContextId, treeId, treeItemId, menuEntry, onClick);
+      invokeSingleClickContextMenuEntry(editingContextId, treeId, treeItemId, menuEntry, onClick, onSuccess);
     }
   };
 
@@ -45,7 +47,8 @@ export const useInvokeContextMenuEntry = (): UseInvokeContextMenuEntryValue => {
     treeId: string,
     treeItemId: string,
     menuEntry: GQLTreeItemContextMenuEntry,
-    onClick: () => void
+    onClick: () => void,
+    onSuccess?: (payload: GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload) => void
   ) => {
     const menuEntryIsOverridden = treeItemContextMenuOverrideContributions.some((contribution) =>
       contribution.canHandle(menuEntry)
@@ -56,7 +59,7 @@ export const useInvokeContextMenuEntry = (): UseInvokeContextMenuEntryValue => {
       // overridden entries define their own behavior and we cannot assume they rely on these mutations.
       return;
     }
-    invokeEntry(editingContextId, treeId, treeItemId, menuEntry, onClick);
+    invokeEntry(editingContextId, treeId, treeItemId, menuEntry, onClick, onSuccess);
   };
   return { invokeContextMenuEntry };
 };

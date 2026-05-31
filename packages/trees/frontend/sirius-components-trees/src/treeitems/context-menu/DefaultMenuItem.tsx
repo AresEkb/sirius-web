@@ -10,7 +10,7 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-import { IconOverlay, KeyBinding } from '@eclipse-sirius/sirius-components-core';
+import { IconOverlay, KeyBinding, useSelection } from '@eclipse-sirius/sirius-components-core';
 import Box from '@mui/material/Box';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
@@ -18,6 +18,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { makeStyles } from 'tss-react/mui';
 import { DefaultMenuItemProps } from './DefaultMenuItem.types';
 import { useInvokeContextMenuEntry } from './useInvokeContextMenuEntry';
+import { GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload } from './useInvokeSingleClickContextMenuEntry.types';
 
 const useDefaultMenuItemStyle = makeStyles()((theme) => ({
   entryLabelItem: {
@@ -25,13 +26,37 @@ const useDefaultMenuItemStyle = makeStyles()((theme) => ({
   },
 }));
 
-export const DefaultMenuItem = ({ editingContextId, treeId, item, entry, readOnly, onClick }: DefaultMenuItemProps) => {
+export const DefaultMenuItem = ({
+  editingContextId,
+  treeId,
+  item,
+  entry,
+  readOnly,
+  selectTreeItems,
+  expandTreeItems,
+  onClick,
+}: DefaultMenuItemProps) => {
   const { classes } = useDefaultMenuItemStyle();
   const { invokeContextMenuEntry } = useInvokeContextMenuEntry();
+  const { setSelection } = useSelection();
+
+  // When the executor asks to reveal and select the tree items it created (for
+  // example a folder it just grouped), expand the requested items and select the
+  // new ones so they are immediately visible and configurable.
+  const onSuccess = (payload: GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload) => {
+    if (payload.treeItemIdsToExpand.length > 0) {
+      expandTreeItems(payload.treeItemIdsToExpand);
+    }
+    if (payload.newSelection && payload.newSelection.entries.length > 0) {
+      const entries = payload.newSelection.entries.map((selectionEntry) => ({ id: selectionEntry.id }));
+      setSelection({ entries });
+      selectTreeItems(entries.map((selectionEntry) => selectionEntry.id));
+    }
+  };
 
   return (
     <MenuItem
-      onClick={() => invokeContextMenuEntry(editingContextId, treeId, item.id, entry, onClick)}
+      onClick={() => invokeContextMenuEntry(editingContextId, treeId, item.id, entry, onClick, onSuccess)}
       data-testid={`context-menu-entry-${entry.label}`}
       disabled={readOnly}>
       <ListItemIcon>

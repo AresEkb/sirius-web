@@ -70,6 +70,11 @@ export const TreeItemContextMenu = ({
     }
   };
 
+  const expandTreeItems = (treeItemIds: string[]) => {
+    const newExpanded = [...new Set([...expanded, ...treeItemIds])];
+    onExpandedElementChange(newExpanded, Math.max(depth, maxDepth));
+  };
+
   const { selectionTargets } = useSelectionTargets();
 
   const { loading, contextMenuEntries } = useContextMenuEntries(editingContextId, treeId, item.id, false);
@@ -184,6 +189,8 @@ export const TreeItemContextMenu = ({
               item={item}
               entry={entry}
               readOnly={readOnly}
+              selectTreeItems={selectTreeItems}
+              expandTreeItems={expandTreeItems}
               onClick={onClose}
               key={entry.id}
             />

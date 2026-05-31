@@ -28,8 +28,8 @@ import java.util.function.Consumer;
 
 import org.eclipse.sirius.components.collaborative.trees.dto.FetchTreeItemContextMenuEntry;
 import org.eclipse.sirius.components.collaborative.trees.dto.InvokeSingleClickTreeItemContextMenuEntryInput;
+import org.eclipse.sirius.components.collaborative.trees.dto.InvokeSingleClickTreeItemContextMenuEntrySuccessPayload;
 import org.eclipse.sirius.components.collaborative.trees.dto.SingleClickTreeItemContextMenuEntry;
-import org.eclipse.sirius.components.core.api.SuccessPayload;
 import org.eclipse.sirius.web.AbstractIntegrationTests;
 import org.eclipse.sirius.web.application.views.explorer.ExplorerEventInput;
 import org.eclipse.sirius.web.application.views.explorer.services.ExplorerDescriptionProvider;
@@ -255,7 +255,7 @@ public class TreeItemContextMenuControllerTests extends AbstractIntegrationTests
             );
             var result = this.singleClickTreeItemContexteMenuEntryMutationRunner.run(toggleAbstractActionParameters);
             String typename = JsonPath.read(result.data(), "$.data.invokeSingleClickTreeItemContextMenuEntry.__typename");
-            assertThat(typename).isEqualTo(SuccessPayload.class.getSimpleName());
+            assertThat(typename).isEqualTo(InvokeSingleClickTreeItemContextMenuEntrySuccessPayload.class.getSimpleName());
         };
 
         StepVerifier.create(flux)

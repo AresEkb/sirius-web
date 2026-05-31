@@ -186,4 +186,11 @@ input InvokeSingleClickTreeItemContextMenuEntryInput {
   menuEntryId: ID!
 }
 
-union InvokeSingleClickTreeItemContextMenuEntryPayload = SuccessPayload | ErrorPayload
+union InvokeSingleClickTreeItemContextMenuEntryPayload = ErrorPayload | InvokeSingleClickTreeItemContextMenuEntrySuccessPayload
+
+type InvokeSingleClickTreeItemContextMenuEntrySuccessPayload {
+  id: ID!
+  newSelection: WorkbenchSelection
+  treeItemIdsToExpand: [ID!]!
+  messages: [Message!]!
+}
