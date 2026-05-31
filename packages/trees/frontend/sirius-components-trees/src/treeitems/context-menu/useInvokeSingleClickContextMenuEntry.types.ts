@@ -19,7 +19,8 @@ export interface UseInvokeSingleClickContextMenuEntryValue {
     treeId: string,
     treeItemId: string,
     menuEntry: GQLTreeItemContextMenuEntry,
-    onClick: () => void
+    onClick: () => void,
+    onSuccess?: (payload: GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload) => void
   ) => void;
 }
 
@@ -66,7 +67,18 @@ export interface GQLInvokeSingleClickTreeItemContextMenuEntryPayload {
   __typename: string;
 }
 
-export interface GQLSuccessPayload extends GQLInvokeSingleClickTreeItemContextMenuEntryPayload {
+export interface GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload
+  extends GQLInvokeSingleClickTreeItemContextMenuEntryPayload {
+  id: string;
+  newSelection: GQLWorkbenchSelection | null;
+  treeItemIdsToExpand: string[];
+}
+
+export interface GQLWorkbenchSelection {
+  entries: GQLWorkbenchSelectionEntry[];
+}
+
+export interface GQLWorkbenchSelectionEntry {
   id: string;
 }
 

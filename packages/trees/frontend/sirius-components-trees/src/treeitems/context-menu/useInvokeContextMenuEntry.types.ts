@@ -11,6 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { GQLTreeItemContextMenuEntry } from './useContextMenuEntries.types';
+import { GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload } from './useInvokeSingleClickContextMenuEntry.types';
 
 export interface UseInvokeContextMenuEntryValue {
   invokeContextMenuEntry: (
@@ -18,6 +19,7 @@ export interface UseInvokeContextMenuEntryValue {
     treeId: string,
     treeItemId: string,
     menuEntry: GQLTreeItemContextMenuEntry,
-    onClick: () => void
+    onClick: () => void,
+    onSuccess?: (payload: GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload) => void
   ) => void;
 }

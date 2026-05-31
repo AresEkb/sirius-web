@@ -21,6 +21,7 @@ import {
   GQLInvokeSingleClickTreeItemContextMenuEntryData,
   GQLInvokeSingleClickTreeItemContextMenuEntryInput,
   GQLInvokeSingleClickTreeItemContextMenuEntryPayload,
+  GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload,
   GQLInvokeSingleClickTreeItemContextMenuEntryVariables,
   UseInvokeSingleClickContextMenuEntryState,
   UseInvokeSingleClickContextMenuEntryValue,
@@ -33,12 +34,25 @@ const invokeSingleClickTreeItemContextMenuEntryMutation = gql`
       ... on ErrorPayload {
         message
       }
+      ... on InvokeSingleClickTreeItemContextMenuEntrySuccessPayload {
+        newSelection {
+          entries {
+            id
+          }
+        }
+        treeItemIdsToExpand
+      }
     }
   }
 `;
 
 const isErrorPayload = (payload: GQLInvokeSingleClickTreeItemContextMenuEntryPayload): payload is GQLErrorPayload =>
   payload.__typename === 'ErrorPayload';
+
+const isSuccessPayload = (
+  payload: GQLInvokeSingleClickTreeItemContextMenuEntryPayload
+): payload is GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload =>
+  payload.__typename === 'InvokeSingleClickTreeItemContextMenuEntrySuccessPayload';
 
 export const useInvokeSingleClickContextMenuEntry = (): UseInvokeSingleClickContextMenuEntryValue => {
   const { addMessages, addErrorMessage } = useMultiToast();
@@ -70,7 +84,8 @@ export const useInvokeSingleClickContextMenuEntry = (): UseInvokeSingleClickCont
     treeId: string,
     treeItemId: string,
     menuEntryId: string,
-    onClick: () => void
+    onClick: () => void,
+    onSuccess?: (payload: GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload) => void
   ) => {
     const input: GQLInvokeSingleClickTreeItemContextMenuEntryInput = {
       id: crypto.randomUUID(),
@@ -79,7 +94,12 @@ export const useInvokeSingleClickContextMenuEntry = (): UseInvokeSingleClickCont
       treeItemId,
       menuEntryId,
     };
-    invokeSingleClickTreeItemContextMenuEntry({ variables: { input } });
+    invokeSingleClickTreeItemContextMenuEntry({ variables: { input } }).then((result) => {
+      const payload = result.data?.invokeSingleClickTreeItemContextMenuEntry;
+      if (payload && isSuccessPayload(payload) && onSuccess) {
+        onSuccess(payload);
+      }
+    });
     onClick();
   };
 
@@ -107,13 +127,14 @@ export const useInvokeSingleClickContextMenuEntry = (): UseInvokeSingleClickCont
     treeId: string,
     treeItemId: string,
     menuEntry: GQLTreeItemContextMenuEntry,
-    onClick: () => void
+    onClick: () => void,
+    onSuccess?: (payload: GQLInvokeSingleClickTreeItemContextMenuEntrySuccessPayload) => void
   ) => {
     if (menuEntry.withImpactAnalysis) {
       setState((prevState) => ({
         ...prevState,
         currentEntry: menuEntry,
-        onEntryExecution: () => invokeEntry(editingContextId, treeId, treeItemId, menuEntry.id, onClick),
+        onEntryExecution: () => invokeEntry(editingContextId, treeId, treeItemId, menuEntry.id, onClick, onSuccess),
       }));
       getImpactAnalysisReport({
         variables: {
@@ -124,7 +145,7 @@ export const useInvokeSingleClickContextMenuEntry = (): UseInvokeSingleClickCont
         },
       });
     } else {
-      invokeEntry(editingContextId, treeId, treeItemId, menuEntry.id, onClick);
+      invokeEntry(editingContextId, treeId, treeItemId, menuEntry.id, onClick, onSuccess);
       onClick();
     }
   };
