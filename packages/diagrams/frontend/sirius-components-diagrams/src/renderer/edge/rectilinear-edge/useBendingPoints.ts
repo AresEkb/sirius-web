@@ -12,7 +12,7 @@
  *******************************************************************************/
 
 import { InternalNode, Node, Position, XYPosition } from '@xyflow/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DraggableData } from 'react-draggable';
 import { NodeData } from '../../DiagramRenderer.types';
 import { XYPositionSetter } from './MultiLabelRectilinearEditableEdge.types';
@@ -50,28 +50,34 @@ export const useBendingPoints = (
     isTargetSegment: false,
     dragInProgress: false,
   });
+  // Whether the pointer actually moved during the current gesture; a bare click
+  // on a bend point must not persist a (re)layout. Read synchronously via a ref.
+  const draggedRef = useRef(false);
 
   useEffect(() => {
     setLocalBendingPoints(originalBendingPoints.map((bendingPoint, index) => ({ ...bendingPoint, pathOrder: index })));
   }, [originalBendingPoints.map((point) => point.x + point.y).join()]);
 
   const onBendingPointDragStop = (_eventData: DraggableData) => {
-    handleDragStop(
-      edgeId,
-      source,
-      setSource,
-      sourceNode,
-      sourceHandleId,
-      sourcePosition,
-      target,
-      setTarget,
-      targetNode,
-      targetHandleId,
-      targetPosition,
-      state.isSourceSegment,
-      state.isTargetSegment,
-      localBendingPoints
-    );
+    if (draggedRef.current) {
+      handleDragStop(
+        edgeId,
+        source,
+        setSource,
+        sourceNode,
+        sourceHandleId,
+        sourcePosition,
+        target,
+        setTarget,
+        targetNode,
+        targetHandleId,
+        targetPosition,
+        state.isSourceSegment,
+        state.isTargetSegment,
+        localBendingPoints
+      );
+    }
+    draggedRef.current = false;
     setState((prevState) => ({ ...prevState, isSourceSegment: false, isTargetSegment: false, dragInProgress: false }));
   };
 
@@ -202,6 +208,7 @@ export const useBendingPoints = (
         }
       }
 
+      draggedRef.current = true;
       setState((prevState) => ({ ...prevState, dragInProgress: true }));
       setLocalBendingPoints(newPoints);
     }

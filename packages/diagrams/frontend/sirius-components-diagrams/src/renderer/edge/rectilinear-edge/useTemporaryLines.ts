@@ -11,7 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { InternalNode, Node, Position, XYPosition } from '@xyflow/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DraggableData } from 'react-draggable';
 import { useStore } from '../../../representation/useStore';
 import { NodeData } from '../../DiagramRenderer.types';
@@ -53,8 +53,15 @@ export const useTemporaryLines = (
     isTargetSegment: false,
     dragInProgress: false,
   });
+  // Whether the pointer actually moved during the current gesture. A bare click
+  // (e.g. selecting or double-clicking the edge to edit its label) fires
+  // onStart/onStop with no onDrag, and must not persist a (re)layout - otherwise
+  // an auto-routed edge would be turned into a customised one. A ref is used so
+  // the value is read synchronously within the gesture (no stale closure).
+  const draggedRef = useRef(false);
 
   const onDragStart = () => {
+    draggedRef.current = false;
     setNodes((previousNodes) =>
       previousNodes.map((previousNode) => {
         if (previousNode.id === sourceNode.id || previousNode.id === targetNode.id) {
@@ -80,22 +87,25 @@ export const useTemporaryLines = (
   };
 
   const onTemporaryLineDragStop = (_eventData: DraggableData, _index: number) => {
-    handleDragStop(
-      edgeId,
-      source,
-      setSource,
-      sourceNode,
-      sourceHandleId,
-      sourcePosition,
-      target,
-      setTarget,
-      targetNode,
-      targetHandleId,
-      targetPosition,
-      state.isSourceSegment,
-      state.isTargetSegment,
-      localBendingPoints
-    );
+    if (draggedRef.current) {
+      handleDragStop(
+        edgeId,
+        source,
+        setSource,
+        sourceNode,
+        sourceHandleId,
+        sourcePosition,
+        target,
+        setTarget,
+        targetNode,
+        targetHandleId,
+        targetPosition,
+        state.isSourceSegment,
+        state.isTargetSegment,
+        localBendingPoints
+      );
+    }
+    draggedRef.current = false;
     setState((prevState) => ({ ...prevState, isSourceSegment: false, isTargetSegment: false, dragInProgress: false }));
   };
 
@@ -196,6 +206,7 @@ export const useTemporaryLines = (
         }
       }
     }
+    draggedRef.current = true;
     setLocalBendingPoints(newPoints);
     setState((prevState) => ({ ...prevState, dragInProgress: true }));
   };
