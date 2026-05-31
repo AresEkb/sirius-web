@@ -13,6 +13,8 @@
 
 export { DiagramContext } from './contexts/DiagramContext';
 export type { DiagramContextValue } from './contexts/DiagramContext.types';
+export { DiagramNavigationContext } from './contexts/DiagramNavigationContext';
+export type { DiagramNavigationContextValue } from './contexts/DiagramNavigationContext.types';
 export { NodeTypeContext } from './contexts/NodeContext';
 export type { NodeTypeContextValue, NodeTypeContributionElement } from './contexts/NodeContext.types';
 export { convertBorderNodePosition } from './converter/convertBorderNodes';

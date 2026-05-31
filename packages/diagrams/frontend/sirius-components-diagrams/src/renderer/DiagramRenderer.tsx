@@ -36,6 +36,8 @@ import '@xyflow/react/dist/style.css';
 import React, { MouseEvent as ReactMouseEvent, memo, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { DiagramContext } from '../contexts/DiagramContext';
 import { DiagramContextValue } from '../contexts/DiagramContext.types';
+import { DiagramNavigationContext } from '../contexts/DiagramNavigationContext';
+import { DiagramNavigationContextValue } from '../contexts/DiagramNavigationContext.types';
 import { NodeTypeContext } from '../contexts/NodeContext';
 import { NodeTypeContextValue } from '../contexts/NodeContext.types';
 import { useDiagramDescription } from '../contexts/useDiagramDescription';
@@ -93,6 +95,7 @@ const GRID_STEP: number = 10;
 
 export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRendererProps) => {
   const { readOnly } = useContext<DiagramContextValue>(DiagramContext);
+  const { navigateOnActivation } = useContext<DiagramNavigationContextValue>(DiagramNavigationContext);
   const { diagramDescription } = useDiagramDescription();
   const { getEdges, onEdgesChange, getNodes, setEdges, setNodes } = useStore();
   const nodes = getNodes();
@@ -100,7 +103,7 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
   useEdgeCrossingFades();
   useDynamicEdgeSelectionArea();
 
-  const { onDirectEdit } = useDiagramDirectEdit();
+  const { onDirectEdit, setCurrentlyEditedLabelId } = useDiagramDirectEdit();
   const { onKeyBinding } = useDiagramKeyBinding(diagramRefreshedEventPayload.diagram.targetObjectId);
 
   const ref = useRef<HTMLDivElement | null>(null);
@@ -345,6 +348,43 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
   const { onEdgeContextMenu, onNodeContextMenu, onPaneContextMenu, onSelectionContextMenu } =
     useOnRightClickElement(selectedElementsIds);
 
+  const onNodeDoubleClick = useCallback(
+    (_event: ReactMouseEvent, node: Node<NodeData>) => {
+      // A node that links to another representation navigates to it; otherwise
+      // a double-click starts editing the node label.
+      navigateOnActivation(node.data.targetObjectId)
+        .then((navigated) => {
+          if (!navigated && !readOnly && node.data.labelEditable) {
+            const labelId = node.data.insideLabel?.id ?? node.data.outsideLabels.BOTTOM_MIDDLE?.id;
+            if (labelId) {
+              setCurrentlyEditedLabelId('doubleClick', labelId, null);
+            }
+          }
+        })
+        .catch(() => {});
+    },
+    [navigateOnActivation, readOnly, setCurrentlyEditedLabelId]
+  );
+
+  const onEdgeDoubleClick = useCallback(
+    (_event: ReactMouseEvent, edge: Edge<EdgeData>) => {
+      const data = edge.data;
+      if (!data) {
+        return;
+      }
+      // An edge that links to another representation navigates to it; otherwise
+      // a double-click starts editing the edge label.
+      navigateOnActivation(data.targetObjectId)
+        .then((navigated) => {
+          if (!navigated && !readOnly && data.centerLabelEditable && data.label) {
+            setCurrentlyEditedLabelId('doubleClick', data.label.id, null);
+          }
+        })
+        .catch(() => {});
+    },
+    [navigateOnActivation, readOnly, setCurrentlyEditedLabelId]
+  );
+
   let reactFlowProps: ReactFlowProps<Node<NodeData>, Edge<EdgeData>> = {
     nodes: nodes,
     nodeTypes: nodeTypes,
@@ -374,6 +414,8 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
     onNodeDrag: handleNodeDrag,
     onNodeDragStart: onNodesDragStart,
     onNodeDragStop: onNodesDragStop,
+    onNodeDoubleClick: onNodeDoubleClick,
+    onEdgeDoubleClick: onEdgeDoubleClick,
     onNodeMouseEnter: onNodeMouseEnter,
     onNodeMouseLeave: onNodeMouseLeave,
     onEdgeMouseEnter: onEdgeMouseEnter,
