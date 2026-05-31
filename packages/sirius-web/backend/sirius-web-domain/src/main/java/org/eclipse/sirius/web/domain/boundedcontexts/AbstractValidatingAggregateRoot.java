@@ -20,6 +20,7 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
 import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 
 /**
  * Used to validate all the domain events sent by the aggregate root.
@@ -29,22 +30,24 @@ import jakarta.validation.Validation;
  * @author sbegaudeau
  */
 public class AbstractValidatingAggregateRoot<AGGREGATE_ROOT_TYPE extends AbstractValidatingAggregateRoot<AGGREGATE_ROOT_TYPE>> extends AbstractAggregateRoot<AGGREGATE_ROOT_TYPE> {
+    // Building a validator factory runs a full classpath ServiceLoader scan, so it is built once and
+    // shared. Validator instances are thread-safe and meant to live for the lifetime of the application.
+    private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
+
     @Transient
     private final Logger logger = LoggerFactory.getLogger(AbstractValidatingAggregateRoot.class);
 
     @Override
     protected <EVENT_TYPE> EVENT_TYPE registerEvent(EVENT_TYPE event) {
-        try (var factory = Validation.buildDefaultValidatorFactory()) {
-            var violations = factory.getValidator().validate(event);
-            if (!violations.isEmpty()) {
-                var message = violations.stream()
-                        .map(violation -> violation.getPropertyPath().toString() + " " + violation.getMessage())
-                        .collect(Collectors.joining(", "));
+        var violations = VALIDATOR.validate(event);
+        if (!violations.isEmpty()) {
+            var message = violations.stream()
+                    .map(violation -> violation.getPropertyPath().toString() + " " + violation.getMessage())
+                    .collect(Collectors.joining(", "));
 
-                this.logger.atWarn()
-                        .setMessage(message)
-                        .log();
-            }
+            this.logger.atWarn()
+                    .setMessage(message)
+                    .log();
         }
         return super.registerEvent(event);
     }
