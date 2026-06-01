@@ -21,22 +21,24 @@ export const computePreviousPosition = (
   node: Node<NodeData, DiagramNodeType>
 ): XYPosition | null => {
   let previousPosition: XYPosition | null = null;
-  if (node.data.isNew) {
+  if (previousNode) {
     /*
-      We don't have any layout data for the node, the node brand new.
-      The node may have some position since the position is required by ReactFlow but the converter was forced to put {x: 0, y: 0}.
-      We won't consider this position as relevant since the node is new.
-      */
-
-    previousPosition = null;
-  } else if (previousNode) {
-    /*
-      We have some layout data returned from the server and the node already exists in memory.
-      We are in the case of a refreshed diagram which we had already in our memory.
-      We will thus use the data from the previousNode from our memory.
+      The node already exists in memory, so we have already laid it out and the user sees it at that position.
+      We keep that position even when the node is still flagged as new (its layout has not yet been persisted
+      to the server, e.g. a node just created from the palette whose layout sync is still in flight). Otherwise
+      an unrelated refresh arriving in that window would discard the placed position and the node would jump
+      to a default location.
       */
 
     previousPosition = previousNode.position;
+  } else if (node.data.isNew) {
+    /*
+      The node is brand new and we have never seen it.
+      The node may have some position since the position is required by ReactFlow but the converter was forced to put {x: 0, y: 0}.
+      We won't consider this position as relevant since the node is new; it will be placed from the reference position instead.
+      */
+
+    previousPosition = null;
   } else {
     /*
       We have a node with some layout data from the server but we do not have a previous node in memory.
@@ -58,15 +60,18 @@ export const computePreviousSize = (
   const nodeDefaultHeight: number = node.data.defaultHeight ?? defaultHeight;
   const nodeDefaultWidth: number = node.data.defaultWidth ?? defaultWidth;
 
-  if (node.data.isNew) {
-    previousDimensions = {
-      height: nodeDefaultHeight,
-      width: nodeDefaultWidth,
-    };
-  } else if (previousNode) {
+  if (previousNode) {
+    // Keep the size the node already has in memory even when it is still flagged as new (its layout has not
+    // yet been persisted), for the same reason as computePreviousPosition: an unrelated refresh in that window
+    // must not reset a just-created node to its default size.
     previousDimensions = {
       height: previousNode.height ?? nodeDefaultHeight,
       width: previousNode.width ?? nodeDefaultWidth,
+    };
+  } else if (node.data.isNew) {
+    previousDimensions = {
+      height: nodeDefaultHeight,
+      width: nodeDefaultWidth,
     };
   } else {
     previousDimensions = {
