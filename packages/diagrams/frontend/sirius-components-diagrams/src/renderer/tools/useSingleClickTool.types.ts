@@ -108,3 +108,36 @@ export interface GQLToolVariable {
  * @since v2024.9.0
  */
 export type GQLToolVariableType = 'STRING' | 'OBJECT_ID' | 'OBJECT_ID_ARRAY';
+
+export interface GQLGetSingleClickToolDialogVariables {
+  editingContextId: string;
+  representationId: string;
+  toolId: string;
+  diagramTargetElementId: string | null;
+}
+
+export interface GQLGetSingleClickToolDialogData {
+  viewer: {
+    editingContext: {
+      representation: {
+        description: GQLRepresentationDescriptionWithSingleClickToolDialog;
+      } | null;
+    } | null;
+  };
+}
+
+export interface GQLRepresentationDescriptionWithSingleClickToolDialog {
+  __typename: string;
+  singleClickToolDialog?: GQLSingleClickToolDialogDescriptor | null;
+}
+
+export interface GQLSingleClickToolDialogDescriptor {
+  dialogDescriptionId: string;
+  initialVariables: GQLSingleClickToolDialogVariable[];
+}
+
+export interface GQLSingleClickToolDialogVariable {
+  name: string;
+  value: string;
+  type: string;
+}
