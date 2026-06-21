@@ -10,7 +10,7 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-import { gql, useMutation } from '@apollo/client';
+import { gql, useApolloClient, useMutation } from '@apollo/client';
 import { GQLErrorPayload, useDeletionConfirmationDialog, useMultiToast } from '@eclipse-sirius/sirius-components-core';
 import { useImpactAnalysisDialog } from '@eclipse-sirius/sirius-components-impactanalysis';
 import { GQLSingleClickOnDiagramElementTool, GQLTool } from '@eclipse-sirius/sirius-components-palette';
@@ -21,11 +21,14 @@ import { useDialog } from '../../dialog/useDialog';
 import { useInvokeImpactAnalysis } from '../palette/impact-analysis/useDiagramImpactAnalysis';
 import { GQLInvokeImpactAnalysisToolVariables } from '../palette/impact-analysis/useDiagramImpactAnalysis.types';
 import {
+  GQLGetSingleClickToolDialogData,
+  GQLGetSingleClickToolDialogVariables,
   GQLInvokeSingleClickOnDiagramElementToolData,
   GQLInvokeSingleClickOnDiagramElementToolInput,
   GQLInvokeSingleClickOnDiagramElementToolPayload,
   GQLInvokeSingleClickOnDiagramElementToolSuccessPayload,
   GQLInvokeSingleClickOnDiagramElementToolVariables,
+  GQLSingleClickToolDialogDescriptor,
   GQLToolVariable,
   UseSingleClickToolState,
   UseSingleClickToolValue,
@@ -57,6 +60,34 @@ const invokeSingleClickOnDiagramElementToolMutation = gql`
   }
 `;
 
+const getSingleClickToolDialogQuery = gql`
+  query getSingleClickToolDialog(
+    $editingContextId: ID!
+    $representationId: ID!
+    $toolId: ID!
+    $diagramTargetElementId: ID
+  ) {
+    viewer {
+      editingContext(editingContextId: $editingContextId) {
+        representation(representationId: $representationId) {
+          description {
+            ... on DiagramDescription {
+              singleClickToolDialog(toolId: $toolId, diagramTargetElementId: $diagramTargetElementId) {
+                dialogDescriptionId
+                initialVariables {
+                  name
+                  value
+                  type
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 const isErrorPayload = (payload: GQLInvokeSingleClickOnDiagramElementToolPayload): payload is GQLErrorPayload =>
   payload.__typename === 'ErrorPayload';
 
@@ -74,6 +105,7 @@ export const useSingleClickTool = (): UseSingleClickToolValue => {
   const { showDialog } = useDialog();
   const { showImpactAnalysisDialog } = useImpactAnalysisDialog();
   const { showDeletionConfirmation } = useDeletionConfirmationDialog();
+  const apolloClient = useApolloClient();
 
   const [invokeSingleClickOnDiagramElementTool, { loading, data, error }] = useMutation<
     GQLInvokeSingleClickOnDiagramElementToolData,
@@ -177,6 +209,38 @@ export const useSingleClickTool = (): UseSingleClickToolValue => {
       const executeTool = (variables: GQLToolVariable[]) =>
         invokeTool(editingContextId, diagramId, tool, diagramElementIds, variables, x, y);
 
+      const openToolDialog = (onConfirm: (variables: GQLToolVariable[]) => void) => {
+        apolloClient
+          .query<GQLGetSingleClickToolDialogData, GQLGetSingleClickToolDialogVariables>({
+            query: getSingleClickToolDialogQuery,
+            variables: {
+              editingContextId,
+              representationId: diagramId,
+              toolId: tool.id,
+              diagramTargetElementId: diagramElementIds[0] ?? null,
+            },
+            fetchPolicy: 'network-only',
+          })
+          .then(({ data }) => {
+            const descriptor: GQLSingleClickToolDialogDescriptor | null =
+              data.viewer.editingContext?.representation?.description?.singleClickToolDialog ?? null;
+            if (descriptor) {
+              showDialog(
+                descriptor.dialogDescriptionId,
+                [
+                  { name: 'targetObjectId', value: targetObjectId },
+                  ...descriptor.initialVariables.map(({ name, value }) => ({ name, value })),
+                ],
+                onConfirm,
+                () => {}
+              );
+            } else {
+              onConfirm([]);
+            }
+          })
+          .catch(() => addErrorMessage('An unexpected error has occurred, please refresh the page'));
+      };
+
       let executeProcess: (variables: GQLToolVariable[]) => void = executeTool;
       if (tool.withDeletionConfirmationDialog) {
         executeProcess = (variables: GQLToolVariable[]) => {
@@ -192,22 +256,10 @@ export const useSingleClickTool = (): UseSingleClickToolValue => {
         executeProcess = executeToolWithImpactAnalysis;
 
         if (tool.dialogDescriptionId) {
-          executeProcess = () =>
-            showDialog(
-              tool.dialogDescriptionId,
-              [{ name: 'targetObjectId', value: targetObjectId }],
-              executeToolWithImpactAnalysis,
-              () => {}
-            );
+          executeProcess = () => openToolDialog(executeToolWithImpactAnalysis);
         }
       } else if (tool.dialogDescriptionId) {
-        executeProcess = () =>
-          showDialog(
-            tool.dialogDescriptionId,
-            [{ name: 'targetObjectId', value: targetObjectId }],
-            executeTool,
-            () => {}
-          );
+        executeProcess = () => openToolDialog(executeTool);
       }
 
       executeProcess([]);

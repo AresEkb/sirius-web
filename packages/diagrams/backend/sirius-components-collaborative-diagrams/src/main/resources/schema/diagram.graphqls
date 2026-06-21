@@ -458,7 +458,19 @@ type DiagramDescription implements RepresentationDescription {
   dropNodeCompatibility: [DropNodeCompatibilityEntry!]!
   initialDirectEditElementLabel(labelId: ID!): String!
   diagramImpactAnalysisReport(toolId: ID!, diagramElementId: ID!, variables: [ToolVariable!]!): ImpactAnalysisReport!
+  singleClickToolDialog(toolId: ID!, diagramTargetElementId: ID): SingleClickToolDialogDescriptor
   debug: Boolean
+}
+
+type SingleClickToolDialogDescriptor {
+  dialogDescriptionId: String!
+  initialVariables: [SingleClickToolDialogVariable!]!
+}
+
+type SingleClickToolDialogVariable {
+  name: String!
+  value: String!
+  type: String!
 }
 
 type DiagramToolbar {

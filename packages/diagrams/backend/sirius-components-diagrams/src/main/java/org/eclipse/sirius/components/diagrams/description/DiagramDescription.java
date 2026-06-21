@@ -80,6 +80,8 @@ public final class DiagramDescription implements IRepresentationDescription {
 
     private List<EdgeDescription> edgeDescriptions;
 
+    private Function<VariableManager, Optional<SingleClickToolDialogDescriptor>> singleClickToolDialogProvider;
+
     private Function<VariableManager, IStatus> dropHandler;
 
     private Function<VariableManager, IStatus> dropNodeHandler;
@@ -192,6 +194,17 @@ public final class DiagramDescription implements IRepresentationDescription {
      */
     public List<EdgeDescription> getEdgeDescriptions() {
         return this.edgeDescriptions;
+    }
+
+    /**
+     * Provides an optional function which decides whether a dialog must be opened before a single click tool that
+     * declares a dialog description id is executed. The frontend invokes it first, and when it returns a
+     * {@link SingleClickToolDialogDescriptor} the dialog is opened with the returned variables before the tool runs.
+     *
+     * @return An optional function used to open a dialog before executing a single click tool.
+     */
+    public Function<VariableManager, Optional<SingleClickToolDialogDescriptor>> getSingleClickToolDialogProvider() {
+        return this.singleClickToolDialogProvider;
     }
 
     /**
@@ -310,6 +323,8 @@ public final class DiagramDescription implements IRepresentationDescription {
 
         private List<EdgeDescription> edgeDescriptions;
 
+        private Function<VariableManager, Optional<SingleClickToolDialogDescriptor>> singleClickToolDialogProvider = variableManager -> Optional.empty();
+
         private Function<VariableManager, IStatus> dropHandler;
 
         private Function<VariableManager, IStatus> dropNodeHandler;
@@ -334,6 +349,7 @@ public final class DiagramDescription implements IRepresentationDescription {
             this.labelProvider = diagramDescription.getLabelProvider();
             this.nodeDescriptions = diagramDescription.getNodeDescriptions();
             this.edgeDescriptions = diagramDescription.getEdgeDescriptions();
+            this.singleClickToolDialogProvider = diagramDescription.getSingleClickToolDialogProvider();
             this.dropHandler = diagramDescription.getDropHandler();
             this.dropNodeHandler = diagramDescription.getDropNodeHandler();
             this.iconURLsProvider = diagramDescription.getIconURLsProvider();
@@ -381,6 +397,11 @@ public final class DiagramDescription implements IRepresentationDescription {
             return this;
         }
 
+        public Builder singleClickToolDialogProvider(Function<VariableManager, Optional<SingleClickToolDialogDescriptor>> singleClickToolDialogProvider) {
+            this.singleClickToolDialogProvider = Objects.requireNonNull(singleClickToolDialogProvider);
+            return this;
+        }
+
         public Builder dropHandler(Function<VariableManager, IStatus> dropHandler) {
             this.dropHandler = Objects.requireNonNull(dropHandler);
             return this;
@@ -417,6 +438,7 @@ public final class DiagramDescription implements IRepresentationDescription {
             diagramDescription.labelProvider = Objects.requireNonNull(this.labelProvider);
             diagramDescription.nodeDescriptions = Objects.requireNonNull(this.nodeDescriptions);
             diagramDescription.edgeDescriptions = Objects.requireNonNull(this.edgeDescriptions);
+            diagramDescription.singleClickToolDialogProvider = Objects.requireNonNull(this.singleClickToolDialogProvider);
             diagramDescription.dropHandler = Objects.requireNonNull(this.dropHandler);
             diagramDescription.dropNodeHandler = this.dropNodeHandler; // Optional on purpose.
             diagramDescription.iconURLsProvider = Objects.requireNonNull(this.iconURLsProvider);
