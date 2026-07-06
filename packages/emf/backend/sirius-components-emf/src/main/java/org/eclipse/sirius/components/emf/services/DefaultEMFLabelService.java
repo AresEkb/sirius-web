@@ -21,6 +21,7 @@ import java.util.Objects;
 import org.eclipse.emf.common.notify.AdapterFactory;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.edit.domain.AdapterFactoryEditingDomain;
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory;
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory.Descriptor;
 import org.eclipse.emf.edit.provider.ComposedImage;
@@ -66,19 +67,40 @@ public class DefaultEMFLabelService implements IDefaultEMFLabelService {
 
     @Override
     public List<String> getImagePaths(EObject self) {
-        List<String> result = List.of("/icons/svg/Default.svg");
-
+        if (AdapterFactoryEditingDomain.getEditingDomainFor(self) instanceof AdapterFactoryEditingDomain editingDomain) {
+            return this.imagePaths(editingDomain.getAdapterFactory(), self);
+        }
+        // No editing domain (e.g. a transient object): fall back to a throwaway
+        // factory, disposed straight away so its item providers do not stay
+        // attached to the object.
         List<AdapterFactory> adapterFactories = this.composedAdapterFactoryDescriptors.stream()
                 .map(Descriptor::createAdapterFactory)
                 .toList();
         var composedAdapterFactory = new ComposedAdapterFactory(adapterFactories);
-        var adapter = composedAdapterFactory.adapt(self, IItemLabelProvider.class);
+        try {
+            return this.imagePaths(composedAdapterFactory, self);
+        } finally {
+            composedAdapterFactory.dispose();
+        }
+    }
+
+    /**
+     * Resolves the item-provider icon of the object through the given adapter
+     * factory. Reusing the editing domain's own factory - rather than building
+     * one per call - keeps this off the per-object allocation path that dominates
+     * navigation over a large model.
+     *
+     * @param adapterFactory the adapter factory to resolve the item provider with
+     * @param self the object to get the icon of
+     * @return the icon paths, or the default icon when none applies
+     */
+    private List<String> imagePaths(AdapterFactory adapterFactory, EObject self) {
+        var adapter = adapterFactory.adapt(self, IItemLabelProvider.class);
         if (adapter instanceof IItemLabelProvider labelProvider && !(adapter instanceof ReflectiveItemProvider)) {
             try {
-                Object image = labelProvider.getImage(self);
-                List<String> imageFullPath = this.findImagePath(image);
+                List<String> imageFullPath = this.findImagePath(labelProvider.getImage(self));
                 if (imageFullPath != null) {
-                    result = imageFullPath.stream().map(this::getImageRelativePath).toList();
+                    return imageFullPath.stream().map(this::getImageRelativePath).toList();
                 }
             } catch (MissingResourceException exception) {
                 this.logger.atWarn()
@@ -87,8 +109,7 @@ public class DefaultEMFLabelService implements IDefaultEMFLabelService {
                         .log();
             }
         }
-        composedAdapterFactory.dispose();
-        return result;
+        return List.of("/icons/svg/Default.svg");
     }
 
     private List<String> findImagePath(Object image) {

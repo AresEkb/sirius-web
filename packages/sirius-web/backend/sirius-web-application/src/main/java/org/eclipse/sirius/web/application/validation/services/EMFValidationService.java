@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2025 Obeo.
+ * Copyright (c) 2021, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -118,24 +118,46 @@ public class EMFValidationService implements IValidationService {
         return new Diagnostician(this.eValidatorRegistry) {
             @Override
             public String getObjectLabel(EObject eObject) {
-                String objectLabel = "";
-
-                List<AdapterFactory> adapterFactories = EMFValidationService.this.composedAdapterFactoryDescriptors.stream()
-                        .map(ComposedAdapterFactory.Descriptor::createAdapterFactory)
-                        .toList();
-                var composedAdapterFactory = new ComposedAdapterFactory(adapterFactories);
-
-                var adapter = composedAdapterFactory.adapt(eObject, IItemLabelProvider.class);
-                if (adapter instanceof IItemLabelProvider itemLabelProvider) {
-                    objectLabel = itemLabelProvider.getText(eObject);
-                } else {
-                    objectLabel = super.getObjectLabel(eObject);
+                String label = EMFValidationService.this.itemLabel(eObject);
+                if (label != null) {
+                    return label;
                 }
-
-                composedAdapterFactory.dispose();
-
-                return objectLabel;
+                return super.getObjectLabel(eObject);
             }
         };
+    }
+
+    /**
+     * Resolves the item-provider label of the object through the adapter factory
+     * of its editing domain, so no throwaway composed adapter factory - holding
+     * every registered item provider - is built and disposed per validated
+     * object. Only an object detached from any editing domain falls back to a
+     * short-lived factory, disposed straight away so its item providers do not
+     * stay attached to the object.
+     *
+     * @param eObject the object to label
+     * @return the item-provider label, or {@code null} when none applies
+     */
+    private String itemLabel(EObject eObject) {
+        if (AdapterFactoryEditingDomain.getEditingDomainFor(eObject) instanceof AdapterFactoryEditingDomain editingDomain) {
+            return this.itemLabel(editingDomain.getAdapterFactory(), eObject);
+        }
+        List<AdapterFactory> adapterFactories = this.composedAdapterFactoryDescriptors.stream()
+                .map(ComposedAdapterFactory.Descriptor::createAdapterFactory)
+                .toList();
+        var composedAdapterFactory = new ComposedAdapterFactory(adapterFactories);
+        try {
+            return this.itemLabel(composedAdapterFactory, eObject);
+        } finally {
+            composedAdapterFactory.dispose();
+        }
+    }
+
+    private String itemLabel(AdapterFactory adapterFactory, EObject eObject) {
+        var adapter = adapterFactory.adapt(eObject, IItemLabelProvider.class);
+        if (adapter instanceof IItemLabelProvider itemLabelProvider) {
+            return itemLabelProvider.getText(eObject);
+        }
+        return null;
     }
 }
