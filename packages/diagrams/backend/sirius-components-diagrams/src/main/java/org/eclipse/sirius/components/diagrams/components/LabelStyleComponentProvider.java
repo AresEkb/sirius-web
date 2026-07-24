@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025 Obeo.
+ * Copyright (c) 2025, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.sirius.components.diagrams.LabelRotation;
 import org.eclipse.sirius.components.diagrams.LabelStyle;
 import org.eclipse.sirius.components.diagrams.LabelVisibility;
 import org.eclipse.sirius.components.diagrams.LineStyle;
@@ -108,6 +109,12 @@ public class LabelStyleComponentProvider {
             newCustomizedStyleProperties.add(LabelAppearanceHandler.VISIBILITY);
         }
 
+        LabelAppearanceProperty<LabelRotation> rotationAppearance = labelAppearanceHandler.getRotation(() -> labelStyleDescription.getRotationProvider().apply(variableManager));
+        LabelRotation rotation = rotationAppearance.value();
+        if (rotationAppearance.customized()) {
+            newCustomizedStyleProperties.add(LabelAppearanceHandler.ROTATION);
+        }
+
         List<String> iconURL = labelStyleDescription.getIconURLProvider().apply(variableManager);
         String maxWidth = labelStyleDescription.getMaxWidthProvider().apply(variableManager);
 
@@ -126,6 +133,7 @@ public class LabelStyleComponentProvider {
                 .borderStyle(borderLineStyle)
                 .maxWidth(maxWidth)
                 .visibility(visibility)
+                .rotation(rotation)
                 .build();
     }
 }

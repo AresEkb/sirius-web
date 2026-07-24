@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2025 Obeo.
+ * Copyright (c) 2019, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -52,6 +52,8 @@ public final class LabelStyle {
     private String maxWidth;
 
     private LabelVisibility visibility;
+
+    private LabelRotation rotation;
 
     private LabelStyle() {
         // Prevent instantiation
@@ -117,6 +119,10 @@ public final class LabelStyle {
         return this.visibility;
     }
 
+    public LabelRotation getRotation() {
+        return this.rotation;
+    }
+
     /**
      * The builder used to create the label style.
      *
@@ -152,6 +158,8 @@ public final class LabelStyle {
         private String maxWidth;
 
         private LabelVisibility visibility;
+
+        private LabelRotation rotation = LabelRotation.NONE;
 
         private Builder() {
         }
@@ -226,6 +234,11 @@ public final class LabelStyle {
             return this;
         }
 
+        public Builder rotation(LabelRotation rotation) {
+            this.rotation = Objects.requireNonNull(rotation);
+            return this;
+        }
+
         public LabelStyle build() {
             LabelStyle labelDescription = new LabelStyle();
             labelDescription.color = Objects.requireNonNull(this.color);
@@ -242,6 +255,7 @@ public final class LabelStyle {
             labelDescription.borderStyle = Objects.requireNonNull(this.borderStyle);
             labelDescription.maxWidth = this.maxWidth;
             labelDescription.visibility = Objects.requireNonNull(this.visibility);
+            labelDescription.rotation = Objects.requireNonNull(this.rotation);
 
             return labelDescription;
         }

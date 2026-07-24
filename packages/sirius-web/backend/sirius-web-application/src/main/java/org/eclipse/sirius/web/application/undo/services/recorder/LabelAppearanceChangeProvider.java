@@ -28,6 +28,7 @@ import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelBorde
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelColorAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelFontSizeAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelItalicAppearanceChange;
+import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelRotationAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelStrikeThroughAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelUnderlineAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelVisibilityAppearanceChange;
@@ -131,6 +132,13 @@ public class LabelAppearanceChangeProvider implements ILabelAppearanceChangeProv
                 appearanceChanges.add(new ResetLabelAppearanceChange(change.labelId(), LabelAppearanceHandler.VISIBILITY));
             }
         }
+        if (change instanceof LabelRotationAppearanceChange) {
+            if (previousCustomizedStyleProperties.contains(LabelAppearanceHandler.ROTATION)) {
+                appearanceChanges.add(new LabelRotationAppearanceChange(change.labelId(), previousLabelStyle.getRotation()));
+            } else {
+                appearanceChanges.add(new ResetLabelAppearanceChange(change.labelId(), LabelAppearanceHandler.ROTATION));
+            }
+        }
         if (change instanceof ResetLabelAppearanceChange) {
             appearanceChanges.addAll(this.getResetLabelAppearanceChange(change.labelId(), previousCustomizedStyleProperties, previousLabelStyle));
         }
@@ -154,6 +162,7 @@ public class LabelAppearanceChangeProvider implements ILabelAppearanceChangeProv
                 case LabelAppearanceHandler.BORDER_RADIUS -> appearanceChanges.add(new LabelBorderRadiusAppearanceChange(labelId, previousLabelStyle.getBorderRadius()));
                 case LabelAppearanceHandler.BORDER_STYLE -> appearanceChanges.add(new LabelBorderStyleAppearanceChange(labelId, previousLabelStyle.getBorderStyle()));
                 case LabelAppearanceHandler.VISIBILITY -> appearanceChanges.add(new LabelVisibilityAppearanceChange(labelId, previousLabelStyle.getVisibility()));
+                case LabelAppearanceHandler.ROTATION -> appearanceChanges.add(new LabelRotationAppearanceChange(labelId, previousLabelStyle.getRotation()));
                 default -> {
                     //We do nothing, the style property is not supported
                 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025 Obeo.
+ * Copyright (c) 2025, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import FormatSizeIcon from '@mui/icons-material/FormatSize';
 import FormatStrikethroughIcon from '@mui/icons-material/FormatStrikethrough';
 import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
 import LineStyleIcon from '@mui/icons-material/LineStyle';
+import RotateRightIcon from '@mui/icons-material/RotateRight';
 import Box from '@mui/material/Box';
 import ListItem from '@mui/material/ListItem';
 import Typography from '@mui/material/Typography';
@@ -33,6 +34,7 @@ import { AppearanceNumberTextfield } from '../widget/AppearanceNumberTextfield '
 import { AppearanceSelect } from '../widget/AppearanceSelect';
 import { LabelAppearancePartProps } from './LabelAppearancePart.types';
 import { useEditLabelAppearance } from './useEditLabelAppearance';
+import { GQLLabelRotation } from '../../../../graphql/subscription/labelFragment.types';
 import { GQLLabelAppearanceInput } from './useEditLabelAppearance.types';
 import { useResetLabelAppearance } from './useResetLabelAppearance';
 
@@ -41,6 +43,13 @@ const getLineStyleOptions = (t: TFunction) => [
   { value: 'Dash', label: t('dash') },
   { value: 'Dot', label: t('dot') },
   { value: 'Dash_Dot', label: t('dashDot') },
+];
+
+const getRotationOptions = (t: TFunction) => [
+  { value: 'NONE', label: t('rotationNone') },
+  { value: 'CLOCKWISE_90', label: t('rotationClockwise90') },
+  { value: 'CLOCKWISE_180', label: t('rotationClockwise180') },
+  { value: 'CLOCKWISE_270', label: t('rotationClockwise270') },
 ];
 
 export const LabelAppearancePart = ({
@@ -56,6 +65,7 @@ export const LabelAppearancePart = ({
   const { resetLabelStyleProperties } = useResetLabelAppearance();
   const { t } = useTranslation('sirius-components-diagrams', { keyPrefix: 'labelAppearancePart' });
   const lineStyleOptions = useMemo(() => getLineStyleOptions(t), [t]);
+  const rotationOptions = useMemo(() => getRotationOptions(t), [t]);
 
   const handleResetProperty = (customizedStyleProperty: string) =>
     resetLabelStyleProperties(editingContextId, diagramId, diagramElementIds, labelIds, [customizedStyleProperty]);
@@ -78,6 +88,15 @@ export const LabelAppearancePart = ({
           onChange={(checked) => handleEditProperty({ visibility: checked ? 'hidden' : 'visible' })}
           onReset={() => handleResetProperty('VISIBILITY')}
         />
+
+        <AppearanceSelect
+          icon={<RotateRightIcon />}
+          label={t('rotation')}
+          options={rotationOptions}
+          initialValue={style.rotation}
+          disabled={isDisabled('ROTATION')}
+          onEdit={(newValue) => handleEditProperty({ rotation: newValue as GQLLabelRotation })}
+          onReset={() => handleResetProperty('ROTATION')}></AppearanceSelect>
 
         <AppearanceNumberTextfield
           icon={<FormatSizeIcon />}

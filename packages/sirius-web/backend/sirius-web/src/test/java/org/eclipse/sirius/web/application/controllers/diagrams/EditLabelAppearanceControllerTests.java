@@ -121,7 +121,7 @@ public class EditLabelAppearanceControllerTests extends AbstractIntegrationTests
         });
 
         Runnable setLabelCustomisation = () -> {
-            var appearanceInput = new LabelAppearanceInput(10, true, true, true, true, "blue", 5, 2, LineStyle.Dash, "red", "green", LabelVisibility.hidden);
+            var appearanceInput = new LabelAppearanceInput(10, true, true, true, true, "blue", 5, 2, LineStyle.Dash, "red", "green", LabelVisibility.hidden, null);
 
             var input = new EditLabelAppearanceInput(
                     UUID.randomUUID(),
@@ -224,7 +224,7 @@ public class EditLabelAppearanceControllerTests extends AbstractIntegrationTests
         });
 
         Runnable setLabelBold = () -> {
-            var appearanceInput = new LabelAppearanceInput(10, true, null, null, null, null, null, null, null, null, null, null);
+            var appearanceInput = new LabelAppearanceInput(10, true, null, null, null, null, null, null, null, null, null, null, null);
 
             var input = new EditLabelAppearanceInput(
                     UUID.randomUUID(),

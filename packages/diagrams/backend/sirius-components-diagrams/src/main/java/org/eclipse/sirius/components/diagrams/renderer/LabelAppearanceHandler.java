@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025 Obeo.
+ * Copyright (c) 2025, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.eclipse.sirius.components.diagrams.LabelRotation;
 import org.eclipse.sirius.components.diagrams.LabelStyle;
 import org.eclipse.sirius.components.diagrams.LabelVisibility;
 import org.eclipse.sirius.components.diagrams.LineStyle;
@@ -31,6 +32,7 @@ import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelBorde
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelColorAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelFontSizeAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelItalicAppearanceChange;
+import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelRotationAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelStrikeThroughAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelUnderlineAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelVisibilityAppearanceChange;
@@ -55,6 +57,7 @@ public class LabelAppearanceHandler {
     public static final String BORDER_RADIUS = "BORDER_RADIUS";
     public static final String BORDER_STYLE = "BORDER_STYLE";
     public static final String VISIBILITY = "VISIBILITY";
+    public static final String ROTATION = "ROTATION";
 
     private final Set<String> previousCustomizedStyleProperties;
 
@@ -395,6 +398,33 @@ public class LabelAppearanceHandler {
             } else if (this.previousCustomizedStyleProperties.contains(VISIBILITY) && this.optionalPreviousLabelStyle.isPresent()) {
                 LabelStyle previousLabelStyle = this.optionalPreviousLabelStyle.get();
                 result = new LabelAppearanceProperty<>(previousLabelStyle.getVisibility(), true);
+            } else {
+                result = new LabelAppearanceProperty<>(provider.get(), false);
+            }
+            return result;
+        }
+    }
+
+    public LabelAppearanceProperty<LabelRotation> getRotation(Supplier<LabelRotation> provider) {
+        boolean rotationReset = this.appearanceChanges.stream()
+                .filter(ResetLabelAppearanceChange.class::isInstance)
+                .map(ResetLabelAppearanceChange.class::cast)
+                .anyMatch(reset -> Objects.equals(reset.propertyName(), ROTATION));
+
+        if (rotationReset) {
+            return new LabelAppearanceProperty<>(provider.get(), false);
+        } else {
+            Optional<LabelRotationAppearanceChange> optionalRotationChange = this.appearanceChanges.stream()
+                    .filter(LabelRotationAppearanceChange.class::isInstance)
+                    .map(LabelRotationAppearanceChange.class::cast)
+                    .findFirst();
+
+            LabelAppearanceProperty<LabelRotation> result;
+            if (optionalRotationChange.isPresent()) {
+                result = new LabelAppearanceProperty<>(optionalRotationChange.get().rotation(), true);
+            } else if (this.previousCustomizedStyleProperties.contains(ROTATION) && this.optionalPreviousLabelStyle.isPresent()) {
+                LabelStyle previousLabelStyle = this.optionalPreviousLabelStyle.get();
+                result = new LabelAppearanceProperty<>(previousLabelStyle.getRotation(), true);
             } else {
                 result = new LabelAppearanceProperty<>(provider.get(), false);
             }

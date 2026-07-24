@@ -140,6 +140,11 @@
   },
   "labelAppearancePart": {
     "hide": "Hide",
+    "rotation": "Rotation",
+    "rotationNone": "None",
+    "rotationClockwise90": "90 degrees clockwise",
+    "rotationClockwise180": "180 degrees",
+    "rotationClockwise270": "270 degrees clockwise",
     "fontSize": "Font Size",
     "italic": "Italic",
     "bold": "Bold",

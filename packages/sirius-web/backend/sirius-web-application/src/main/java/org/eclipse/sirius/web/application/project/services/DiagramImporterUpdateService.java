@@ -67,6 +67,7 @@ import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelBorde
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelColorAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelFontSizeAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelItalicAppearanceChange;
+import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelRotationAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelStrikeThroughAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelUnderlineAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelVisibilityAppearanceChange;
@@ -319,6 +320,7 @@ public class DiagramImporterUpdateService implements IRepresentationImporterUpda
                 case LabelAppearanceHandler.BORDER_RADIUS -> diagramEvents.add(new EditAppearanceEvent(List.of(new LabelBorderRadiusAppearanceChange(labelId, labelStyle.getBorderRadius()))));
                 case LabelAppearanceHandler.BORDER_STYLE -> diagramEvents.add(new EditAppearanceEvent(List.of(new LabelBorderStyleAppearanceChange(labelId, labelStyle.getBorderStyle()))));
                 case LabelAppearanceHandler.VISIBILITY -> diagramEvents.add(new EditAppearanceEvent(List.of(new LabelVisibilityAppearanceChange(labelId, labelStyle.getVisibility()))));
+                case LabelAppearanceHandler.ROTATION -> diagramEvents.add(new EditAppearanceEvent(List.of(new LabelRotationAppearanceChange(labelId, labelStyle.getRotation()))));
                 default -> {
                     //We do nothing, the style property is not supported
                 }

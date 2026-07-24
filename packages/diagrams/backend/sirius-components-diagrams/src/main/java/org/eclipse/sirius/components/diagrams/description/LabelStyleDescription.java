@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2025 Obeo.
+ * Copyright (c) 2019, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import org.eclipse.sirius.components.annotations.Immutable;
+import org.eclipse.sirius.components.diagrams.LabelRotation;
 import org.eclipse.sirius.components.diagrams.LabelVisibility;
 import org.eclipse.sirius.components.diagrams.LineStyle;
 import org.eclipse.sirius.components.representations.VariableManager;
@@ -56,6 +57,8 @@ public final class LabelStyleDescription {
     private Function<VariableManager, String> maxWidthProvider;
 
     private Function<VariableManager, LabelVisibility> visibilityProvider;
+
+    private Function<VariableManager, LabelRotation> rotationProvider;
 
     private LabelStyleDescription() {
         // Prevent instantiation
@@ -121,6 +124,10 @@ public final class LabelStyleDescription {
         return this.visibilityProvider;
     }
 
+    public Function<VariableManager, LabelRotation> getRotationProvider() {
+        return this.rotationProvider;
+    }
+
     /**
      * The builder used to create a new label description.
      *
@@ -156,6 +163,8 @@ public final class LabelStyleDescription {
         private Function<VariableManager, String> maxWidthProvider;
 
         private Function<VariableManager, LabelVisibility> visibilityProvider;
+
+        private Function<VariableManager, LabelRotation> rotationProvider = variableManager -> LabelRotation.NONE;
 
         private Builder() {
         }
@@ -230,6 +239,11 @@ public final class LabelStyleDescription {
             return this;
         }
 
+        public Builder rotationProvider(Function<VariableManager, LabelRotation> rotationProvider) {
+            this.rotationProvider = Objects.requireNonNull(rotationProvider);
+            return this;
+        }
+
         public LabelStyleDescription build() {
             LabelStyleDescription styleDescription = new LabelStyleDescription();
             styleDescription.colorProvider = Objects.requireNonNull(this.colorProvider);
@@ -246,6 +260,7 @@ public final class LabelStyleDescription {
             styleDescription.borderStyleProvider = Objects.requireNonNull(this.borderStyleProvider);
             styleDescription.maxWidthProvider = Objects.requireNonNull(this.maxWidthProvider);
             styleDescription.visibilityProvider = Objects.requireNonNull(this.visibilityProvider);
+            styleDescription.rotationProvider = Objects.requireNonNull(this.rotationProvider);
             return styleDescription;
         }
 

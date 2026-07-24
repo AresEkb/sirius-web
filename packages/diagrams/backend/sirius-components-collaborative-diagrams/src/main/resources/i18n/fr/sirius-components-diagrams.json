@@ -140,6 +140,11 @@
   },
   "labelAppearancePart": {
     "hide": "Masquer",
+    "rotation": "Rotation",
+    "rotationNone": "Aucune",
+    "rotationClockwise90": "90 degres sens horaire",
+    "rotationClockwise180": "180 degres",
+    "rotationClockwise270": "270 degres sens horaire",
     "fontSize": "Taille de la police",
     "italic": "Italique",
     "bold": "Gras",
