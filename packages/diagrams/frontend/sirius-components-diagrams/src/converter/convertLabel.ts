@@ -201,6 +201,22 @@ export const convertLabelStyle = (gqlLabelStyle: GQLLabelStyle): React.CSSProper
     style.visibility = gqlLabelStyle.visibility;
   }
 
+  switch (gqlLabelStyle.rotation) {
+    case 'CLOCKWISE_90':
+      style.writingMode = 'vertical-rl';
+      break;
+    case 'CLOCKWISE_180':
+      style.transform = 'rotate(180deg)';
+      break;
+    case 'CLOCKWISE_270':
+      style.writingMode = 'vertical-rl';
+      style.transform = 'rotate(180deg)';
+      break;
+    case 'NONE':
+    default:
+      break;
+  }
+
   return style;
 };
 

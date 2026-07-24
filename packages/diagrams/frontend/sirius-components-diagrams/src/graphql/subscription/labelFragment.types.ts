@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2025 Obeo.
+ * Copyright (c) 2023, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -74,4 +74,7 @@ export interface GQLLabelStyle {
   borderRadius: number;
   maxWidth: string;
   visibility: 'visible' | 'hidden';
+  rotation: GQLLabelRotation;
 }
+
+export type GQLLabelRotation = 'NONE' | 'CLOCKWISE_90' | 'CLOCKWISE_180' | 'CLOCKWISE_270';

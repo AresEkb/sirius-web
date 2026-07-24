@@ -132,7 +132,7 @@ public class UndoEditEdgeLabelAppearanceControllerTests extends AbstractIntegrat
         });
 
         Runnable setLabelCustomisation = () -> {
-            var appearanceInput = new LabelAppearanceInput(10, true, true, true, true, "blue", 5, 2, LineStyle.Dash, "red", "green", LabelVisibility.hidden);
+            var appearanceInput = new LabelAppearanceInput(10, true, true, true, true, "blue", 5, 2, LineStyle.Dash, "red", "green", LabelVisibility.hidden, null);
 
             var input = new EditLabelAppearanceInput(
                     UUID.randomUUID(),

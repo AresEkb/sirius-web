@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2025 Obeo.
+ * Copyright (c) 2023, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -30,6 +30,7 @@ fragment labelFragment on Label {
     borderRadius
     maxWidth
     visibility
+    rotation
   }
   customizedStyleProperties
 }
@@ -59,6 +60,7 @@ fragment insideLabelFragment on InsideLabel {
     borderRadius
     maxWidth
     visibility
+    rotation
   }
   customizedStyleProperties
 }
@@ -85,6 +87,7 @@ fragment outsideLabelFragment on OutsideLabel {
     borderRadius
     maxWidth
     visibility
+    rotation
   }
   overflowStrategy,
   customizedStyleProperties

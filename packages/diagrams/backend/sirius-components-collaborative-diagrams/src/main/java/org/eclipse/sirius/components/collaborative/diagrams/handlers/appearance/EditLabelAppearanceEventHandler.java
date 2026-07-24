@@ -48,6 +48,7 @@ import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelBorde
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelColorAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelFontSizeAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelItalicAppearanceChange;
+import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelRotationAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelStrikeThroughAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelUnderlineAppearanceChange;
 import org.eclipse.sirius.components.diagrams.events.appearance.label.LabelVisibilityAppearanceChange;
@@ -145,6 +146,8 @@ public class EditLabelAppearanceEventHandler implements IDiagramEventHandler {
                             .ifPresent(borderStyle -> appearanceChanges.add(new LabelBorderStyleAppearanceChange(labelId, borderStyle)));
                     Optional.ofNullable(editAppearanceInput.appearance().visibility())
                             .ifPresent(visibility -> appearanceChanges.add(new LabelVisibilityAppearanceChange(labelId, visibility)));
+                    Optional.ofNullable(editAppearanceInput.appearance().rotation())
+                            .ifPresent(rotation -> appearanceChanges.add(new LabelRotationAppearanceChange(labelId, rotation)));
                 });
                 diagramContext.diagramEvents().add(new EditAppearanceEvent(appearanceChanges));
                 payload = new SuccessPayload(diagramInput.id());

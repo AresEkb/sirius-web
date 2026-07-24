@@ -65,6 +65,7 @@ input LabelAppearanceInput {
   color: String
   background: String
   visibility: LabelVisibility
+  rotation: LabelRotation
 }
 
 union EditLabelAppearancePayload = ErrorPayload | SuccessPayload

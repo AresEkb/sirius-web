@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025 Obeo.
+ * Copyright (c) 2025, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.sirius.components.collaborative.diagrams.dto;
 
+import org.eclipse.sirius.components.diagrams.LabelRotation;
 import org.eclipse.sirius.components.diagrams.LabelVisibility;
 import org.eclipse.sirius.components.diagrams.LineStyle;
 
@@ -21,6 +22,6 @@ import org.eclipse.sirius.components.diagrams.LineStyle;
  * @author nvannier
  */
 public record LabelAppearanceInput(Integer fontSize, Boolean italic, Boolean bold, Boolean underline, Boolean strikeThrough, String borderColor, Integer borderRadius, Integer borderSize,
-                                   LineStyle borderStyle, String color, String background, LabelVisibility visibility) {
+                                   LineStyle borderStyle, String color, String background, LabelVisibility visibility, LabelRotation rotation) {
 
 }
