@@ -96,6 +96,8 @@ const getMarker = (markerProps: MarkerProps) => {
       return <ClosedArrowWithDots {...markerProps} key={markerProps.id} />;
     case 'ClosedArrowWith4Dots':
       return <ClosedArrowWith4Dots {...markerProps} key={markerProps.id} />;
+    case 'Slash':
+      return <Slash {...markerProps} key={markerProps.id} />;
     default:
       return <InputFillClosedArrow {...markerProps} key={markerProps.id} />;
   }
@@ -308,6 +310,16 @@ const ClosedArrowWith4Dots = ({ id, edgeColor }: MarkerProps) => {
       <circle r={1} cx={1} cy={8} fill={strokeColor} stroke={'none'} />
       <circle r={1} cx={4} cy={2} fill={strokeColor} stroke={'none'} />
       <circle r={1} cx={4} cy={8} fill={strokeColor} stroke={'none'} />
+    </marker>
+  );
+};
+
+const Slash = ({ id, edgeColor }: MarkerProps) => {
+  const theme = useTheme();
+  const strokeColor: string = getSelectedColor(id, edgeColor, theme);
+  return (
+    <marker {...buildMarkerAttributes(id, 10, 10, 5, 5)}>
+      <path d={'m 8 1 L 2 9'} stroke={strokeColor} fill={'none'} strokeWidth={1} />
     </marker>
   );
 };

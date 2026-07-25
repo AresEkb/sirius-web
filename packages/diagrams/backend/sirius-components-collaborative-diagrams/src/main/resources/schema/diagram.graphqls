@@ -370,6 +370,7 @@ enum ArrowStyle {
   ClosedArrowWithVerticalBar
   ClosedArrowWithDots
   ClosedArrowWith4Dots
+  Slash
 }
 
 enum EdgeType {

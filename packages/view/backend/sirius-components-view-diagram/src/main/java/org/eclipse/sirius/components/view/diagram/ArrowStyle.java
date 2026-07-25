@@ -176,7 +176,15 @@ public enum ArrowStyle implements Enumerator {
      * @generated
      * @ordered
      */
-    CLOSED_ARROW_WITH4_DOTS(16, "ClosedArrowWith4Dots", "ClosedArrowWith4Dots");
+    CLOSED_ARROW_WITH4_DOTS(16, "ClosedArrowWith4Dots", "ClosedArrowWith4Dots"),
+    /**
+     * The '<em><b>Slash</b></em>' literal object. <!-- begin-user-doc --> <!-- end-user-doc -->
+     *
+     * @see #SLASH_VALUE
+     * @generated
+     * @ordered
+     */
+    SLASH(17, "Slash", "Slash");
 
     /**
      * The '<em><b>None</b></em>' literal value. <!-- begin-user-doc --> <!-- end-user-doc -->
@@ -349,13 +357,23 @@ public enum ArrowStyle implements Enumerator {
     public static final int CLOSED_ARROW_WITH4_DOTS_VALUE = 16;
 
     /**
+     * The '<em><b>Slash</b></em>' literal value. <!-- begin-user-doc --> <!-- end-user-doc -->
+     *
+     * @see #SLASH
+     * @model name="Slash"
+     * @generated
+     * @ordered
+     */
+    public static final int SLASH_VALUE = 17;
+
+    /**
      * An array of all the '<em><b>Arrow Style</b></em>' enumerators. <!-- begin-user-doc --> <!-- end-user-doc -->
      *
      * @generated
      */
     private static final ArrowStyle[] VALUES_ARRAY = new ArrowStyle[] { NONE, OUTPUT_ARROW, INPUT_ARROW, OUTPUT_CLOSED_ARROW, INPUT_CLOSED_ARROW, OUTPUT_FILL_CLOSED_ARROW, INPUT_FILL_CLOSED_ARROW,
             DIAMOND, FILL_DIAMOND, INPUT_ARROW_WITH_DIAMOND, INPUT_ARROW_WITH_FILL_DIAMOND, CIRCLE, FILL_CIRCLE, CROSSED_CIRCLE, CLOSED_ARROW_WITH_VERTICAL_BAR, CLOSED_ARROW_WITH_DOTS,
-            CLOSED_ARROW_WITH4_DOTS, };
+            CLOSED_ARROW_WITH4_DOTS, SLASH, };
 
     /**
      * A public read-only list of all the '<em><b>Arrow Style</b></em>' enumerators. <!-- begin-user-doc --> <!--
@@ -448,6 +466,8 @@ public enum ArrowStyle implements Enumerator {
                 return CLOSED_ARROW_WITH_DOTS;
             case CLOSED_ARROW_WITH4_DOTS_VALUE:
                 return CLOSED_ARROW_WITH4_DOTS;
+            case SLASH_VALUE:
+                return SLASH;
         }
         return null;
     }

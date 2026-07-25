@@ -4058,6 +4058,7 @@ public class DiagramPackageImpl extends EPackageImpl implements DiagramPackage {
         this.addEEnumLiteral(this.arrowStyleEEnum, ArrowStyle.CLOSED_ARROW_WITH_VERTICAL_BAR);
         this.addEEnumLiteral(this.arrowStyleEEnum, ArrowStyle.CLOSED_ARROW_WITH_DOTS);
         this.addEEnumLiteral(this.arrowStyleEEnum, ArrowStyle.CLOSED_ARROW_WITH4_DOTS);
+        this.addEEnumLiteral(this.arrowStyleEEnum, ArrowStyle.SLASH);
 
         this.initEEnum(this.layoutDirectionEEnum, LayoutDirection.class, "LayoutDirection");
         this.addEEnumLiteral(this.layoutDirectionEEnum, LayoutDirection.COLUMN);

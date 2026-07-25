@@ -58,6 +58,7 @@ const getArrowOption = (t: TFunction) => [
   { value: 'ClosedArrowWithVerticalBar', label: t('closedArrowWithVerticalBar') },
   { value: 'ClosedArrowWithDots', label: t('closedArrowWithDots') },
   { value: 'ClosedArrowWith4Dots', label: t('closedArrowWith4Dots') },
+  { value: 'Slash', label: t('slash') },
 ];
 
 const getEdgeTypeOptions = (t: TFunction) => [

@@ -19,6 +19,7 @@
     <eLiterals name="ClosedArrowWithVerticalBar" value="14" literal="ClosedArrowWithVerticalBar"/>
     <eLiterals name="ClosedArrowWithDots" value="15" literal="ClosedArrowWithDots"/>
     <eLiterals name="ClosedArrowWith4Dots" value="16" literal="ClosedArrowWith4Dots"/>
+    <eLiterals name="Slash" value="17" literal="Slash"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="LayoutDirection">
     <eLiterals name="Column" literal="Column"/>

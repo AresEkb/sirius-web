@@ -18,5 +18,5 @@ package org.eclipse.sirius.components.diagrams;
  * @author hmarchadour
  */
 public enum ArrowStyle {
-    None, OutputArrow, InputArrow, OutputClosedArrow, InputClosedArrow, OutputFillClosedArrow, InputFillClosedArrow, Diamond, FillDiamond, InputArrowWithDiamond, InputArrowWithFillDiamond, Circle, FillCircle, CrossedCircle, ClosedArrowWithVerticalBar, ClosedArrowWithDots, ClosedArrowWith4Dots
+    None, OutputArrow, InputArrow, OutputClosedArrow, InputClosedArrow, OutputFillClosedArrow, InputFillClosedArrow, Diamond, FillDiamond, InputArrowWithDiamond, InputArrowWithFillDiamond, Circle, FillCircle, CrossedCircle, ClosedArrowWithVerticalBar, ClosedArrowWithDots, ClosedArrowWith4Dots, Slash
 }
