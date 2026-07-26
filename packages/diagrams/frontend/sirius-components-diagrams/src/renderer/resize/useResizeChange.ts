@@ -10,8 +10,19 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-import { Edge, Node, NodeChange, NodeDimensionChange, NodePositionChange, useStoreApi } from '@xyflow/react';
-import { useCallback } from 'react';
+import {
+  Dimensions,
+  Edge,
+  Node,
+  NodeChange,
+  NodeDimensionChange,
+  NodePositionChange,
+  useStoreApi,
+  XYPosition,
+} from '@xyflow/react';
+import { useCallback, useContext } from 'react';
+import { NodeTypeContext } from '../../contexts/NodeContext';
+import { NodeTypeContextValue } from '../../contexts/NodeContext.types';
 import { useStore } from '../../representation/useStore';
 import { BorderNodePosition, EdgeData, NodeData } from '../DiagramRenderer.types';
 import { getBorderNodeExtent } from '../layout/layoutBorderNodes';
@@ -119,22 +130,47 @@ const applyMoveToListContain = (
   return change;
 };
 
-const applyMoveToBorderNodes = (resizedNode: Node<NodeData>, nodes: Node<NodeData>[], change: NodeDimensionChange) => {
+const applyMoveToBorderNodes = (
+  resizedNode: Node<NodeData>,
+  nodes: Node<NodeData>[],
+  change: NodeDimensionChange,
+  calculateCustomNodeBorderNodePosition?: (
+    node: Node<NodeData>,
+    borderNode: XYPosition & Dimensions,
+    isDragging: boolean
+  ) => XYPosition
+) => {
   const newChanges: NodeChange<Node<NodeData>>[] = [];
   if (resizedNode.width && resizedNode.height && change.dimensions) {
+    const resizedNodeNewBounds: Node<NodeData> = {
+      ...resizedNode,
+      width: change.dimensions.width,
+      height: change.dimensions.height,
+    };
     nodes
       .filter((node) => node.data.isBorderNode)
       .forEach((node) => {
         if (node.parentId === resizedNode.id) {
-          node.extent = getBorderNodeExtent(
-            {
-              ...resizedNode,
-              width: change.dimensions?.width ?? 0,
-              height: change.dimensions?.height ?? 0,
-            },
-            node
-          );
-          if (node.data.borderNodePosition === BorderNodePosition.EAST) {
+          node.extent = getBorderNodeExtent(resizedNodeNewBounds, node);
+          if (calculateCustomNodeBorderNodePosition) {
+            // The kind of the node being resized places the nodes on its borders itself, so they
+            // follow the size it is given while it is being resized the same way they do once the
+            // next full layout arrives.
+            newChanges.push({
+              id: node.id,
+              type: 'position',
+              position: calculateCustomNodeBorderNodePosition(
+                resizedNodeNewBounds,
+                {
+                  x: node.position.x,
+                  y: node.position.y,
+                  width: node.width ?? 0,
+                  height: node.height ?? 0,
+                },
+                true
+              ),
+            });
+          } else if (node.data.borderNodePosition === BorderNodePosition.EAST) {
             const eastBorderNodePositionX = (change.dimensions?.width ?? 0) - borderNodeOffset;
             newChanges.push({
               id: node.id,
@@ -199,6 +235,7 @@ const applyMoveToListChild = (
 export const useResizeChange = (): UseResizeChangeValue => {
   const { getNodes } = useStore();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
+  const { nodeLayoutHandlers } = useContext<NodeTypeContextValue>(NodeTypeContext);
 
   const transformResizeListNodeChanges = useCallback(
     (changes: NodeChange<Node<NodeData>>[]): NodeChange<Node<NodeData>>[] => {
@@ -209,9 +246,50 @@ export const useResizeChange = (): UseResizeChangeValue => {
         if (isResizing(currentChange)) {
           const resizedNode = getNodes().find((node) => currentChange.id === node.id);
           if (resizedNode) {
+            // Let the node kind's layout handler lay its neighbourhood out live
+            // during the drag - for instance pushing the siblings that follow a
+            // resized child and growing its parent, or keeping the nodes on its
+            // borders where it draws them - rather than waiting for the next full
+            // layout. The generic renderer stays unaware of any particular kind.
+            const nodeLayoutHandler = nodeLayoutHandlers.find((handler) => handler.canHandle(resizedNode));
             newResizeListContainChanges.push(...applyResizeToListContain(resizedNode, getNodes(), currentChange));
-            newBorderNodeMoveChanges.push(...applyMoveToBorderNodes(resizedNode, getNodes(), currentChange));
+            newBorderNodeMoveChanges.push(
+              ...applyMoveToBorderNodes(
+                resizedNode,
+                getNodes(),
+                currentChange,
+                nodeLayoutHandler?.calculateCustomNodeBorderNodePosition?.bind(nodeLayoutHandler)
+              )
+            );
             newResizeListContainChanges.push(...applyMoveToListChild(resizedNode, getNodes(), currentChange, zoom));
+            if (nodeLayoutHandler?.transformResizeChange) {
+              // A leading-edge resize (top or left) also moves the node's origin,
+              // so its companion position change rides in the same batch. Passing
+              // it lets the handler tell a leading-edge drag from a trailing one.
+              const companionMove = changes.find((change) => isMove(change) && change.id === currentChange.id) as
+                | NodePositionChange
+                | undefined;
+              newResizeListContainChanges.push(
+                ...nodeLayoutHandler.transformResizeChange(resizedNode, getNodes(), currentChange, companionMove)
+              );
+            }
+          }
+        }
+        if (isResizeFinished(currentChange)) {
+          // Letting go of a resize is reported on its own: a size the resize control
+          // accumulated, with no origin beside it. The node kind's layout handler is
+          // given it too, so that a kind whose drag lays out more than the node being
+          // resized can settle what it laid out - hold the neighbourhood to the sizes
+          // the drag gave it, rather than letting this last raw size land on the one
+          // node react-flow reports and undo them.
+          const resizedNode = getNodes().find((node) => currentChange.id === node.id);
+          if (resizedNode) {
+            const nodeLayoutHandler = nodeLayoutHandlers.find((handler) => handler.canHandle(resizedNode));
+            if (nodeLayoutHandler?.transformResizeChange) {
+              newResizeListContainChanges.push(
+                ...nodeLayoutHandler.transformResizeChange(resizedNode, getNodes(), currentChange)
+              );
+            }
           }
         }
         if (isMove(currentChange)) {
@@ -242,7 +320,7 @@ export const useResizeChange = (): UseResizeChangeValue => {
       });
       return [...newBorderNodeMoveChanges, ...updatedChanges, ...newResizeListContainChanges];
     },
-    [getNodes]
+    [getNodes, nodeLayoutHandlers]
   );
 
   const applyResizeByUserState = (
