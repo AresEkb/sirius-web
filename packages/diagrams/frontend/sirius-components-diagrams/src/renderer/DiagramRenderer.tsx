@@ -121,7 +121,6 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
 
   useInitialFitToScreen(diagramRefreshedEventPayload.diagram.nodes.length === 0);
   useResetXYFlowConnection();
-  usePostToolSelection(diagramRefreshedEventPayload);
   const { getNode } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
 
@@ -208,6 +207,54 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
         return previousNode;
       });
 
+      // Reconcile a semantic element that kept its identity but got a new node
+      // id. A type change (morph) gives the element a new node description, and
+      // a reparent gives it a new parent; both change the derived node id while
+      // the semantic targetObjectId is preserved. Without this the element is
+      // seen as brand new and is re-laid-out from a default or reference
+      // position, shifting it and flashing a wrong-position frame before the
+      // follow-up layout settles it. We only reconcile the unambiguous case:
+      // exactly one previous node and one converted node carry the same
+      // targetObjectId, and the previous id has disappeared from the new
+      // diagram. The matched previous node's position and size are carried over
+      // under the new id so the layout keeps the element in place.
+      const previousNodeIds = new Set(previousDiagram.nodes.map((previousNode) => previousNode.id));
+      const convertedNodeIds = new Set(convertedDiagram.nodes.map((convertedNode) => convertedNode.id));
+      const singletonPreviousNodeByTarget = new Map<string, Node<NodeData>>();
+      const duplicatedPreviousTargets = new Set<string>();
+      previousDiagram.nodes.forEach((previousNode) => {
+        const targetObjectId = previousNode.data.targetObjectId;
+        if (singletonPreviousNodeByTarget.has(targetObjectId)) {
+          duplicatedPreviousTargets.add(targetObjectId);
+        } else {
+          singletonPreviousNodeByTarget.set(targetObjectId, previousNode);
+        }
+      });
+      const convertedCountByTarget = new Map<string, number>();
+      convertedDiagram.nodes.forEach((convertedNode) => {
+        const targetObjectId = convertedNode.data.targetObjectId;
+        convertedCountByTarget.set(targetObjectId, (convertedCountByTarget.get(targetObjectId) ?? 0) + 1);
+      });
+      const carriedOverPreviousNodes: Node<NodeData>[] = [];
+      convertedDiagram.nodes.forEach((convertedNode) => {
+        const targetObjectId = convertedNode.data.targetObjectId;
+        const previousNode = singletonPreviousNodeByTarget.get(targetObjectId);
+        if (
+          convertedNode.data.isNew &&
+          !previousNodeIds.has(convertedNode.id) &&
+          !duplicatedPreviousTargets.has(targetObjectId) &&
+          convertedCountByTarget.get(targetObjectId) === 1 &&
+          previousNode &&
+          !convertedNodeIds.has(previousNode.id)
+        ) {
+          convertedNode.data.isNew = false;
+          carriedOverPreviousNodes.push({ ...previousNode, id: convertedNode.id });
+        }
+      });
+      if (carriedOverPreviousNodes.length > 0) {
+        previousDiagram.nodes = [...previousDiagram.nodes, ...carriedOverPreviousNodes];
+      }
+
       layout(
         previousDiagram,
         convertedDiagram,
@@ -247,6 +294,13 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
       setBackground(String(convertedDiagram.style.background));
     }
   }, [diagramRefreshedEventPayload, diagramDescription]);
+
+  // Applied after the refresh effect above so the post-tool selection wins.
+  // The refresh effect carries selection over by node id, but a tool such as a
+  // type change (morph) gives the same semantic element a new node id, so its
+  // id-keyed carry-over drops the selection. usePostToolSelection re-selects by
+  // semantic targetObjectId and must run last to not be overwritten.
+  usePostToolSelection(diagramRefreshedEventPayload);
 
   const { transformBorderNodeChanges } = useBorderChange();
   const { transformUndraggableListNodeChanges, applyMoveChange } = useMoveChange();
