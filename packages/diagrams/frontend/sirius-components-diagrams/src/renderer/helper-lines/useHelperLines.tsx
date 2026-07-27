@@ -21,11 +21,12 @@ import {
   useStoreApi,
 } from '@xyflow/react';
 import { NodeLookup } from '@xyflow/system';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
 import { BorderNodePosition, EdgeData, NodeData } from '../DiagramRenderer.types';
 import { getPositionAbsoluteFromNodeChange, isDescendantOf } from '../layout/layoutNode';
 import { horizontalHelperLinesSnapGap, verticalHelperLinesSnapGap } from '../layout/layoutParams';
 import { isResizing } from '../node/nodeChangePredicates';
+import { CarriedAxes, SizeAtGestureStart, axesCarriedSoFar, nothingCarriedYet } from './carriedAxes';
 import { HelperLinesContext } from './HelperLinesContext';
 import { HelperLinesContextValue } from './HelperLinesContext.types';
 import { HelperLines, UseHelperLinesState, UseHelperLinesValue } from './useHelperLines.types';
@@ -173,16 +174,56 @@ const getHelperLinesForMove = (
     }, noHelperLines);
 };
 
+// The frame a list child belongs to: the outermost node its chain of list
+// children hangs from, which for a BPMN swimlane is the pool or the lane laid on
+// the plane that frames the whole stack.
+const listFrameOf = (
+  node: Node<NodeData>,
+  nodeLookup: NodeLookup<InternalNode<Node<NodeData>>>
+): Node<NodeData> | null => {
+  let current: Node<NodeData> = node;
+  while (current.data.isListChild && current.parentId) {
+    const parent: Node<NodeData> | undefined = nodeLookup.get(current.parentId);
+    if (!parent) {
+      return current;
+    }
+    current = parent;
+  }
+  return current === node ? null : current;
+};
+
+// Every part of one swimlane is flush with every other part of it: the lanes are
+// laid end to end and each spans the frame, so their edges align at every
+// pointer position during a divider drag and never mark a genuine alignment
+// target. That holds for a sibling lane, for a lane nested any number of levels
+// away under the same frame, and for the frame itself, so the whole swimlane is
+// skipped when collecting helper-line candidates. Anything outside it is still
+// offered.
+const isFlushWithResizingListChild = (
+  resizingNode: InternalNode<Node<NodeData>>,
+  otherNode: Node<NodeData>,
+  nodeLookup: NodeLookup<InternalNode<Node<NodeData>>>
+): boolean => {
+  if (!resizingNode.data.isListChild) {
+    return false;
+  }
+  const frame: Node<NodeData> | null = listFrameOf(resizingNode, nodeLookup);
+  return !!frame && isDescendantOf(frame, otherNode, nodeLookup);
+};
+
 const getHelperLinesForResize = (
   change: NodeDimensionChange,
   resizingNode: InternalNode<Node<NodeData>>,
+  carried: CarriedAxes,
   nodes: Node<NodeData>[],
   nodeLookup: NodeLookup<InternalNode<Node<NodeData>>>
 ): HelperLines => {
   const noHelperLines: HelperLines = { horizontal: null, vertical: null, snapX: 0, snapY: 0 };
   if (change.dimensions) {
-    let verticalSnapGap: number = verticalHelperLinesSnapGap;
-    let horizontalSnapGap: number = horizontalHelperLinesSnapGap;
+    const widthCarried = carried.width;
+    const heightCarried = carried.height;
+    let verticalSnapGap: number = widthCarried ? verticalHelperLinesSnapGap : 0;
+    let horizontalSnapGap: number = heightCarried ? horizontalHelperLinesSnapGap : 0;
     const resizingNodeBounds: { x1: number; x2: number; y1: number; y2: number } = {
       x1: resizingNode.internals.positionAbsolute.x,
       x2: resizingNode.internals.positionAbsolute.x + (change.dimensions.width ?? 0),
@@ -194,6 +235,7 @@ const getHelperLinesForResize = (
       .filter((node) => node.type != 'handleNode')
       .filter((node) => node.id != resizingNode.id)
       .filter((node) => !isDescendantOf(resizingNode, node, nodeLookup))
+      .filter((node) => !isFlushWithResizingListChild(resizingNode, node, nodeLookup))
       .reduce<HelperLines>((helperLines, otherNode) => {
         const otherNodeInternal = nodeLookup.get(otherNode.id);
         if (otherNodeInternal && otherNodeInternal.internals.positionAbsolute) {
@@ -242,13 +284,16 @@ const getHelperLinesForResizeAndMove = (
   resizingChange: NodeDimensionChange,
   movingChange: NodePositionChange,
   resizingNode: InternalNode<Node<NodeData>>,
+  carried: CarriedAxes,
   nodes: Node<NodeData>[],
   nodeLookup: NodeLookup<InternalNode<Node<NodeData>>>
 ): HelperLines => {
   const noHelperLines: HelperLines = { horizontal: null, vertical: null, snapX: 0, snapY: 0 };
   if (resizingNode.internals.positionAbsolute && resizingChange.dimensions && movingChange.position) {
-    let verticalSnapGap: number = verticalHelperLinesSnapGap;
-    let horizontalSnapGap: number = horizontalHelperLinesSnapGap;
+    const widthCarried = carried.width;
+    const heightCarried = carried.height;
+    let verticalSnapGap: number = widthCarried ? verticalHelperLinesSnapGap : 0;
+    let horizontalSnapGap: number = heightCarried ? horizontalHelperLinesSnapGap : 0;
     const nodeBounds: { x1: number; x2: number; y1: number; y2: number } = {
       x1: movingChange.position.x + resizingNode.internals.positionAbsolute.x - resizingNode.position.x,
       x2:
@@ -268,6 +313,7 @@ const getHelperLinesForResizeAndMove = (
       .filter((node) => node.type != 'handleNode')
       .filter((node) => node.id != resizingNode.id)
       .filter((node) => !isDescendantOf(resizingNode, node, nodeLookup))
+      .filter((node) => !isFlushWithResizingListChild(resizingNode, node, nodeLookup))
       .reduce<HelperLines>((helperLines, otherNode) => {
         const otherNodeInternal = nodeLookup.get(otherNode.id);
         if (otherNodeInternal) {
@@ -315,6 +361,26 @@ const getHelperLinesForResizeAndMove = (
 export const useHelperLines = (): UseHelperLinesValue => {
   const { isHelperLineEnabled } = useContext<HelperLinesContextValue>(HelperLinesContext);
   const [state, setState] = useState<UseHelperLinesState>({ vertical: null, horizontal: null });
+  const gestures = useRef<Map<string, { atStart: SizeAtGestureStart; carried: CarriedAxes }>>(new Map());
+  /*
+   * Which axes the resize of a node has carried so far. The size the node had when the gesture began
+   * is remembered on the first change the gesture reports and forgotten on the last one, and what has
+   * moved since is accumulated against it: an axis stays carried once it has moved, so an edge
+   * carried away and back again goes on being the edge that is being dragged.
+   */
+  const axesCarried = (change: NodeDimensionChange, resizingNode: InternalNode<Node<NodeData>>): CarriedAxes => {
+    const known = gestures.current.get(change.id) ?? {
+      atStart: { width: resizingNode.width, height: resizingNode.height },
+      carried: nothingCarriedYet,
+    };
+    const carried = axesCarriedSoFar(known.carried, change.dimensions ?? {}, known.atStart);
+    if (change.resizing === false) {
+      gestures.current.delete(change.id);
+    } else {
+      gestures.current.set(change.id, { atStart: known.atStart, carried });
+    }
+    return carried;
+  };
   //Here we need the nodes in the ReactFlow store to get positionAbsolute
   const storeApi = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
   const { getNodes } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
@@ -367,7 +433,13 @@ export const useHelperLines = (): UseHelperLinesValue => {
         if (isResizing(change)) {
           const resizingNode = nodeLookup.get(change.id);
           if (resizingNode) {
-            const helperLines: HelperLines = getHelperLinesForResize(change, resizingNode, getNodes(), nodeLookup);
+            const helperLines: HelperLines = getHelperLinesForResize(
+              change,
+              resizingNode,
+              axesCarried(change, resizingNode),
+              getNodes(),
+              nodeLookup
+            );
             setState({ vertical: helperLines.vertical, horizontal: helperLines.horizontal });
             if (helperLines.snapX && change.dimensions && resizingNode.internals.positionAbsolute) {
               change.dimensions.width = Math.abs(resizingNode.internals.positionAbsolute.x - helperLines.snapX);
@@ -387,6 +459,7 @@ export const useHelperLines = (): UseHelperLinesValue => {
               resizingChange,
               movingChange,
               resizingNode,
+              axesCarried(resizingChange, resizingNode),
               getNodes(),
               nodeLookup
             );
