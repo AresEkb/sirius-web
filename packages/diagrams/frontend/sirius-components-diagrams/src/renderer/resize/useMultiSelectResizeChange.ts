@@ -10,24 +10,45 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-import { Node, NodeChange, NodeDimensionChange, NodePositionChange } from '@xyflow/react';
+import {
+  Edge,
+  InternalNode,
+  Node,
+  NodeChange,
+  NodeDimensionChange,
+  NodePositionChange,
+  useStoreApi,
+} from '@xyflow/react';
+import { NodeLookup } from '@xyflow/system';
 import { useCallback } from 'react';
 import { useStore } from '../../representation/useStore';
-import { NodeData } from '../DiagramRenderer.types';
+import { EdgeData, NodeData } from '../DiagramRenderer.types';
+import { isDescendantOf } from '../layout/layoutNode';
 import { isResize, isMove } from '../node/nodeChangePredicates';
 import { UseMultiSelectResizeChangeValue } from './useMultiSelectResizeChange.types';
+
+const isRelatedToResizedNode = (
+  node: Node<NodeData>,
+  resizedNode: Node<NodeData>,
+  nodeLookup: NodeLookup<InternalNode<Node<NodeData>>>
+): boolean => {
+  return isDescendantOf(resizedNode, node, nodeLookup) || isDescendantOf(node, resizedNode, nodeLookup);
+};
 
 const applyMultiSelectResize = (
   change: NodeDimensionChange,
   offsetWidth: number,
   offsetHeight: number,
-  nodes: Node<NodeData>[]
+  nodes: Node<NodeData>[],
+  resizedNode: Node<NodeData>,
+  nodeLookup: NodeLookup<InternalNode<Node<NodeData>>>
 ): NodeChange<Node<NodeData>>[] => {
   return nodes
     .filter((node) => node.id !== change.id && node.selected)
     .filter(
       (node) => node.data.nodeDescription?.userResizable !== 'NONE' && !node.data.isListChild && !node.data.isBorderNode
     )
+    .filter((node) => !isRelatedToResizedNode(node, resizedNode, nodeLookup))
     .map((node) => {
       let newWidth: number = (node.width ?? 0) + offsetWidth;
       let newHeight: number = (node.height ?? 0) + offsetHeight;
@@ -58,13 +79,16 @@ const applyMultiSelectMoveFromResize = (
   change: NodePositionChange,
   offsetX: number,
   offsetY: number,
-  nodes: Node<NodeData>[]
+  nodes: Node<NodeData>[],
+  resizedNode: Node<NodeData>,
+  nodeLookup: NodeLookup<InternalNode<Node<NodeData>>>
 ): NodeChange<Node<NodeData>>[] => {
   return nodes
     .filter((node) => node.id !== change.id && node.selected)
     .filter(
       (node) => node.data.nodeDescription?.userResizable !== 'NONE' && !node.data.isListChild && !node.data.isBorderNode
     )
+    .filter((node) => !isRelatedToResizedNode(node, resizedNode, nodeLookup))
     .map((node) => {
       const newX: number = (node.position.x ?? 0) + offsetX;
       const newY: number = (node.position.y ?? 0) + offsetY;
@@ -79,12 +103,22 @@ const applyMultiSelectMoveFromResize = (
 
 export const useMultiSelectResizeChange = (): UseMultiSelectResizeChangeValue => {
   const { getNode, getNodes } = useStore();
+  const storeApi = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
   const transformMultiSelectResizeNodeChanges = useCallback(
     (changes: NodeChange<Node<NodeData>>[]): NodeChange<Node<NodeData>>[] => {
+      const nodeLookup = storeApi.getState().nodeLookup;
       const newChanges: NodeChange<Node<NodeData>>[] = [];
       changes.forEach((currentChange) => {
         if (isResize(currentChange)) {
           const resizedNode = getNode(currentChange.id);
+          // A list child reports its own resize when the divider on its leading
+          // edge is dragged, and that gesture sizes the lane before the divider
+          // rather than anything the user has selected. Carrying it over to the
+          // selection would resize whatever stands selected elsewhere on the
+          // diagram, so a divider drag is left to the layout handler alone.
+          if (resizedNode?.data.isListChild) {
+            return;
+          }
           const positionChangeForSameNode: NodePositionChange | undefined = changes.find(
             (change): change is NodePositionChange => isMove(change) && change.id === currentChange.id
           );
@@ -97,16 +131,25 @@ export const useMultiSelectResizeChange = (): UseMultiSelectResizeChangeValue =>
               offsetX = positionChangeForSameNode.position.x - resizedNode.position.x;
               offsetY = positionChangeForSameNode.position.y - resizedNode.position.y;
               newChanges.push(
-                ...applyMultiSelectMoveFromResize(positionChangeForSameNode, offsetX, offsetY, getNodes())
+                ...applyMultiSelectMoveFromResize(
+                  positionChangeForSameNode,
+                  offsetX,
+                  offsetY,
+                  getNodes(),
+                  resizedNode,
+                  nodeLookup
+                )
               );
             }
-            newChanges.push(...applyMultiSelectResize(currentChange, offsetWidth, offsetHeight, getNodes()));
+            newChanges.push(
+              ...applyMultiSelectResize(currentChange, offsetWidth, offsetHeight, getNodes(), resizedNode, nodeLookup)
+            );
           }
         }
       });
       return [...changes, ...newChanges];
     },
-    [getNode, getNodes]
+    [getNode, getNodes, storeApi]
   );
 
   return { transformMultiSelectResizeNodeChanges };
