@@ -90,6 +90,7 @@ import { SnapToGridContextValue } from './snap-to-grid/SnapToGridContext.types';
 import { DiagramToolbar } from './toolbar/DiagramToolbar';
 
 const GRID_STEP: number = 10;
+const LARGE_GRID_STEP: number = 10 * GRID_STEP;
 
 export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRendererProps) => {
   const { readOnly } = useContext<DiagramContextValue>(DiagramContext);
@@ -393,18 +394,21 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
       <>
         {isSnapToGridEnabled ? (
           <>
+            {/* The background pattern draws its lines through the middle of a tile, so an offset of half a gap is
+                required to have them fall on the multiples of the gap, i.e. aligned with the origin of the diagram. */}
             <Background
               id="small-grid"
               style={{ background }}
               variant={BackgroundVariant.Lines}
               gap={GRID_STEP}
+              offset={GRID_STEP / 2}
               color={smallGridColor}
             />
             <Background
               id="large-grid"
               variant={BackgroundVariant.Lines}
-              gap={10 * GRID_STEP}
-              offset={1}
+              gap={LARGE_GRID_STEP}
+              offset={LARGE_GRID_STEP / 2}
               color={largeGridColor}
             />
           </>
