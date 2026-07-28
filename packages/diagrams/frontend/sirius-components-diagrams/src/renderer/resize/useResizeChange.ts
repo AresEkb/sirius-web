@@ -11,7 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { Edge, Node, NodeChange, NodeDimensionChange, NodePositionChange, useStoreApi } from '@xyflow/react';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useStore } from '../../representation/useStore';
 import { BorderNodePosition, EdgeData, NodeData } from '../DiagramRenderer.types';
 import { getBorderNodeExtent } from '../layout/layoutBorderNodes';
@@ -196,16 +196,95 @@ const applyMoveToListChild = (
   return [];
 };
 
+/**
+ * Snaps the size a resize is about to give a node to the grid.
+ *
+ * The resizer snaps the pointer, not the size: the new size is the size the node
+ * started with plus a whole number of grid steps. A node whose size is not a
+ * multiple of the step to begin with - the layout gives it one computed from its
+ * border and its measured label - therefore keeps that remainder through every
+ * resize, and the modeller sees sizes such as 102 where the grid promises 100.
+ * Rounding the size itself puts the node back on the grid on the first resize.
+ * The size is never rounded below one step, which would collapse the node.
+ */
+const snapDimensionsToGrid = (
+  change: NodeDimensionChange,
+  snapGrid: [number, number],
+  node: Node<NodeData> | undefined
+): NodeDimensionChange => {
+  if (!change.dimensions) {
+    return change;
+  }
+  const [stepX, stepY] = snapGrid;
+  const snap = (size: number, step: number): number =>
+    step > 0 ? Math.max(step, Math.round(size / step) * step) : size;
+  return {
+    ...change,
+    dimensions: {
+      width: change.dimensions.width === node?.width ? change.dimensions.width : snap(change.dimensions.width, stepX),
+      height:
+        change.dimensions.height === node?.height ? change.dimensions.height : snap(change.dimensions.height, stepY),
+    },
+  };
+};
+
 export const useResizeChange = (): UseResizeChangeValue => {
   const { getNodes } = useStore();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
+  const activeResizes = useRef(new Set<string>());
 
   const transformResizeListNodeChanges = useCallback(
     (changes: NodeChange<Node<NodeData>>[]): NodeChange<Node<NodeData>>[] => {
-      const zoom = store.getState().transform[2];
+      const { transform, snapToGrid, snapGrid } = store.getState();
+      const zoom = transform[2];
       const newResizeListContainChanges: NodeChange<Node<NodeData>>[] = [];
       const newBorderNodeMoveChanges: NodeChange<Node<NodeData>>[] = [];
-      const updatedChanges: NodeChange<Node<NodeData>>[] = changes.map((currentChange) => {
+      const nodeById = new Map(getNodes().map((node) => [node.id, node]));
+      const offsets = new Map<string, { x: number; y: number }>();
+      const resizeChanges = changes.map((change): NodeChange<Node<NodeData>> => {
+        if (!isResize(change)) {
+          return change;
+        }
+        const node = nodeById.get(change.id);
+        if (change.resizing === true) {
+          activeResizes.current.add(change.id);
+          const snapped = snapToGrid ? snapDimensionsToGrid(change, snapGrid, node) : change;
+          if (change.dimensions && snapped.dimensions) {
+            offsets.set(change.id, {
+              x: change.dimensions.width - snapped.dimensions.width,
+              y: change.dimensions.height - snapped.dimensions.height,
+            });
+          }
+          return snapped;
+        }
+        if (change.resizing === false && activeResizes.current.delete(change.id) && node && snapToGrid) {
+          return {
+            ...change,
+            dimensions: {
+              width: node.width ?? node.measured?.width ?? change.dimensions?.width ?? 0,
+              height: node.height ?? node.measured?.height ?? change.dimensions?.height ?? 0,
+            },
+          };
+        }
+        return change;
+      });
+      const updatedChanges: NodeChange<Node<NodeData>>[] = resizeChanges.map((change) => {
+        // The size the resize gives the node is snapped before anything is derived from it, so that
+        // the children and the border nodes laid out below follow the snapped size, not the raw one.
+        let currentChange = change;
+        if (isMove(change) && change.position) {
+          const offset = offsets.get(change.id);
+          const node = nodeById.get(change.id);
+          if (offset && node) {
+            currentChange = {
+              ...change,
+              position: {
+                x: change.position.x + (change.position.x !== node.position.x ? offset.x : 0),
+                y: change.position.y + (change.position.y !== node.position.y ? offset.y : 0),
+              },
+            };
+          }
+        }
         if (isResizing(currentChange)) {
           const resizedNode = getNodes().find((node) => currentChange.id === node.id);
           if (resizedNode) {
