@@ -347,7 +347,7 @@ const layoutDiagram = (
     // Update position of root nodes
     nodesToLayout.forEach((node, index) => {
       const previousNode = (previousDiagram?.nodes ?? []).find((previousNode) => previousNode.id === node.id);
-      const previousPosition = computePreviousPosition(previousNode, node);
+      const previousPosition = computePreviousPosition(previousNode, node, previousDiagram?.nodes ?? []);
 
       const createdNode = newlyAddedNodes.find((n) => n.id === node.id);
 

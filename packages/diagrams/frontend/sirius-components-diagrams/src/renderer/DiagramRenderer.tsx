@@ -195,17 +195,28 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
       };
 
       // If we're refreshing the diagram because of an undo/redo operation we need to update the previous diagram with nodeLayoutData before performing the layout
+      const convertedNodeById = new Map(
+        convertedDiagram.nodes.map((convertedNode) => [convertedNode.id, convertedNode])
+      );
       previousDiagram.nodes = previousDiagram.nodes.map((previousNode) => {
         const nodeLayoutData = diagramRefreshedEventPayload.diagram.layoutData.nodeLayoutData.find(
           (layoutData) => layoutData.id === previousNode.id
         );
-        if (nodeLayoutData) {
-          previousNode.position.x = nodeLayoutData.position.x;
-          previousNode.position.y = nodeLayoutData.position.y;
-          previousNode.width = nodeLayoutData.size.width;
-          previousNode.height = nodeLayoutData.size.height;
+        if (!nodeLayoutData) {
+          return previousNode;
         }
-        return previousNode;
+        // A node position is relative to its parent, so the incoming layout data only means what it says
+        // together with the parent the incoming diagram gives the node. Taking the position without the
+        // parent states a position in the new parent's frame and leaves it to be read in the old one, which
+        // moves a node that has just been reparented by its former parent's origin.
+        const convertedNode = convertedNodeById.get(previousNode.id);
+        return {
+          ...previousNode,
+          parentId: convertedNode ? convertedNode.parentId : previousNode.parentId,
+          position: { x: nodeLayoutData.position.x, y: nodeLayoutData.position.y },
+          width: nodeLayoutData.size.width,
+          height: nodeLayoutData.size.height,
+        };
       });
 
       layout(
