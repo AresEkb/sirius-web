@@ -196,16 +196,47 @@ const applyMoveToListChild = (
   return [];
 };
 
+/**
+ * Snaps the size a resize is about to give a node to the grid.
+ *
+ * The resizer snaps the pointer, not the size: the new size is the size the node
+ * started with plus a whole number of grid steps. A node whose size is not a
+ * multiple of the step to begin with - the layout gives it one computed from its
+ * border and its measured label - therefore keeps that remainder through every
+ * resize, and the modeller sees sizes such as 102 where the grid promises 100.
+ * Rounding the size itself puts the node back on the grid on the first resize.
+ * The size is never rounded below one step, which would collapse the node.
+ */
+const snapDimensionsToGrid = (change: NodeDimensionChange, snapGrid: [number, number]): NodeDimensionChange => {
+  if (!change.dimensions) {
+    return change;
+  }
+  const [stepX, stepY] = snapGrid;
+  const snap = (size: number, step: number): number =>
+    step > 0 ? Math.max(step, Math.round(size / step) * step) : size;
+  return {
+    ...change,
+    dimensions: {
+      width: snap(change.dimensions.width, stepX),
+      height: snap(change.dimensions.height, stepY),
+    },
+  };
+};
+
 export const useResizeChange = (): UseResizeChangeValue => {
   const { getNodes } = useStore();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
 
   const transformResizeListNodeChanges = useCallback(
     (changes: NodeChange<Node<NodeData>>[]): NodeChange<Node<NodeData>>[] => {
-      const zoom = store.getState().transform[2];
+      const { transform, snapToGrid, snapGrid } = store.getState();
+      const zoom = transform[2];
       const newResizeListContainChanges: NodeChange<Node<NodeData>>[] = [];
       const newBorderNodeMoveChanges: NodeChange<Node<NodeData>>[] = [];
-      const updatedChanges: NodeChange<Node<NodeData>>[] = changes.map((currentChange) => {
+      const updatedChanges: NodeChange<Node<NodeData>>[] = changes.map((change) => {
+        // The size the resize gives the node is snapped before anything is derived from it, so that
+        // the children and the border nodes laid out below follow the snapped size, not the raw one.
+        const currentChange = snapToGrid && isResizing(change) ? snapDimensionsToGrid(change, snapGrid) : change;
         if (isResizing(currentChange)) {
           const resizedNode = getNodes().find((node) => currentChange.id === node.id);
           if (resizedNode) {
