@@ -11,6 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
+import { positionUnderParentOf } from './layout/bounds';
 import { useData, useSelection } from '@eclipse-sirius/sirius-components-core';
 import { usePalette } from '@eclipse-sirius/sirius-components-palette';
 import {
@@ -145,7 +146,8 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
       const currentNode = getNode(convertedNode.id);
       if (
         currentNode &&
-        (convertedNode.position.x !== currentNode.position.x ||
+        (convertedNode.parentId !== currentNode.parentId ||
+          convertedNode.position.x !== currentNode.position.x ||
           convertedNode.position.y !== currentNode.position.y ||
           convertedNode.width !== currentNode.width ||
           convertedNode.height !== currentNode.height ||
@@ -195,17 +197,31 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
       };
 
       // If we're refreshing the diagram because of an undo/redo operation we need to update the previous diagram with nodeLayoutData before performing the layout
+      const convertedNodeById = new Map(
+        convertedDiagram.nodes.map((convertedNode) => [convertedNode.id, convertedNode])
+      );
       previousDiagram.nodes = previousDiagram.nodes.map((previousNode) => {
         const nodeLayoutData = diagramRefreshedEventPayload.diagram.layoutData.nodeLayoutData.find(
           (layoutData) => layoutData.id === previousNode.id
         );
-        if (nodeLayoutData) {
-          previousNode.position.x = nodeLayoutData.position.x;
-          previousNode.position.y = nodeLayoutData.position.y;
-          previousNode.width = nodeLayoutData.size.width;
-          previousNode.height = nodeLayoutData.size.height;
+        if (!nodeLayoutData) {
+          return previousNode;
         }
-        return previousNode;
+        // A node position is relative to its parent, so the incoming layout data only means what it says
+        // together with the parent the incoming diagram gives the node. Taking the position without the
+        // parent states a position in the new parent's frame and leaves it to be read in the old one, which
+        // moves a node that has just been reparented by its former parent's origin.
+        const convertedNode = convertedNodeById.get(previousNode.id);
+        return {
+          ...previousNode,
+          parentId: convertedNode ? convertedNode.parentId : previousNode.parentId,
+          position:
+            convertedNode && convertedNode.parentId !== previousNode.parentId
+              ? positionUnderParentOf(previousNode, convertedNode, nodes)
+              : { ...nodeLayoutData.position },
+          width: nodeLayoutData.size.width,
+          height: nodeLayoutData.size.height,
+        };
       });
 
       layout(
@@ -362,7 +378,9 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
     onEdgesChange: handleEdgesChange,
     onPaneClick: () => {
       // Select the diagram itself when the user left-clicks on the background
-      setSelection({ entries: [{ id: diagramRefreshedEventPayload.diagram.id }] });
+      setSelection({
+        entries: [{ id: diagramRefreshedEventPayload.diagram.id }],
+      });
     },
     onPaneContextMenu: onPaneContextMenu,
     onEdgeContextMenu: onEdgeContextMenu,

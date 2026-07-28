@@ -88,7 +88,7 @@ export class FreeFormNodeLayoutHandler implements INodeLayoutHandler<FreeFormNod
     // Update children position to be under the label and at the right padding.
     directNodesChildren.forEach((child, index) => {
       const previousNode = (previousDiagram?.nodes ?? []).find((previouseNode) => previouseNode.id === child.id);
-      const previousPosition = computePreviousPosition(previousNode, child);
+      const previousPosition = computePreviousPosition(previousNode, child, previousDiagram?.nodes ?? []);
       const createdNode = newlyAddedNodes.find((n) => n.id === child.id);
       const headerHeightFootprint = getHeaderHeightFootprint(node.data.insideLabel, 'TOP', borderWidth);
 
