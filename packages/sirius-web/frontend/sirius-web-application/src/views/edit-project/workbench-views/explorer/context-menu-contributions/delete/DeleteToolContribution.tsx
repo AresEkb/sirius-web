@@ -28,7 +28,7 @@ export const DeleteToolContribution = ({ onInvoked }: PaletteToolContributionCom
 
   const deleteTreeItem = () => handleDelete(editingContextId, treeId, item);
 
-  if (!item.deletable) {
+  if (!item?.deletable) {
     return null;
   }
 

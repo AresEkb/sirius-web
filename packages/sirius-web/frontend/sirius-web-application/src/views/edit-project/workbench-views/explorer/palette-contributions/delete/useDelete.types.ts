@@ -21,7 +21,7 @@ export interface DeleteMenuItemProps {
 }
 
 export interface UseDeleteValue {
-  handleDelete: (editingContextId: string, treeId: string, item: GQLTreeItem) => void;
+  handleDelete: (editingContextId: string, treeId: string, item: GQLTreeItem | null) => void;
 }
 
 export interface GQLDeleteTreeItemData {

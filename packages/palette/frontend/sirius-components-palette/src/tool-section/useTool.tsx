@@ -108,7 +108,13 @@ export const useTool = (): useToolValue => {
       );
     }
 
-    const contributedTool = paletteToolData.data.find((toolData) => toolData.id === toolId);
+    // A contribution is rendered only where it declares it belongs: tool ids are
+    // not unique across representations, so a tool of the same id contributed to
+    // another kind of representation would otherwise be rendered here, outside
+    // the context it reads its state from.
+    const contributedTool = paletteToolData.data.find(
+      (toolData) => toolData.id === toolId && toolData.canHandle(representationKind)
+    );
     if (contributedTool) {
       const ContributedComponent = contributedTool.component;
       return (

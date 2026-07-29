@@ -43,8 +43,8 @@ export const useDelete = (): UseDeleteValue => {
   );
   const { showDeletionConfirmation } = useDeletionConfirmationDialog();
 
-  const handleDelete = (editingContextId: string, treeId: string, item: GQLTreeItem) => {
-    if (item.deletable) {
+  const handleDelete = (editingContextId: string, treeId: string, item: GQLTreeItem | null) => {
+    if (item?.deletable) {
       const input: GQLDeleteTreeItemInput = {
         id: crypto.randomUUID(),
         editingContextId,
