@@ -67,7 +67,11 @@ export const useBorderChange = (): UseBorderChangeValue => {
   const transformBorderNodeChanges = useCallback(
     (changes: NodeChange<Node<NodeData>>[]): NodeChange<Node<NodeData>>[] => {
       return changes.map((change) => {
-        if (change.type === 'position' && change.position && change.dragging) {
+        // Every position a drag produces is placed on the border, the last one
+        // included: react-flow reports the drop as a move with `dragging` false,
+        // and leaving that one raw is what lets a border node land off its
+        // border and be pulled back only by the next layout.
+        if (change.type === 'position' && change.position && change.dragging !== undefined) {
           const nodeLookup = storeApi.getState().nodeLookup;
           const movedNodePositionAbsolute = getPositionAbsoluteFromNodeChange(change, nodeLookup);
           const movedNode = nodeLookup.get(change.id || '');
