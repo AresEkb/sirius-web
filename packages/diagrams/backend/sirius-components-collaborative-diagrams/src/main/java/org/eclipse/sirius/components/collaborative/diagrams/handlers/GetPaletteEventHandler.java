@@ -103,7 +103,14 @@ public class GetPaletteEventHandler implements IDiagramEventHandler {
                             .flatMap(Optional::stream)
                             .toList();
                     var palette = paletteProvider.handle(editingContext, diagramContext, diagramDescription, diagramElements);
-                    payload = new GetPaletteSuccessPayload(diagramInput.id(), palette);
+                    if (palette != null) {
+                        payload = new GetPaletteSuccessPayload(diagramInput.id(), palette);
+                    } else {
+                        // A palette is asked for elements which have none: an element the
+                        // diagram no longer holds, since the request was sent against an
+                        // earlier version of it, or one which carries no tools at all.
+                        payload = new ErrorPayload(diagramInput.id(), this.messageService.notFound());
+                    }
                 }
             }
         }
