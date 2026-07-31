@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025 Obeo.
+ * Copyright (c) 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -11,12 +11,8 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
-import { Edge, Node, OnSelectionChangeFunc } from '@xyflow/react';
-import { EdgeData, NodeData } from '../DiagramRenderer.types';
-
-export interface UseDiagramSelectionValue {
-  onSelectionChange: OnSelectionChangeFunc<Node<NodeData>, Edge<EdgeData>>;
+export interface UseRubberBandSelectionValue {
   onSelectionStart: () => void;
   onSelectionEnd: () => void;
-  selectedElementsIds: string[];
+  isBandActive: () => boolean;
 }

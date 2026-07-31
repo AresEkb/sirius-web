@@ -258,7 +258,9 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
   const { layoutOnBoundsChange } = useLayoutOnBoundsChange();
   const { filterReadOnlyChanges } = useFilterReadOnlyChanges();
   const { horizontalHelperLine, verticalHelperLine, applyHelperLines, resetHelperLines } = useHelperLines();
-  const { onSelectionChange, selectedElementsIds } = useDiagramSelection();
+  const { onSelectionChange, onSelectionStart, onSelectionEnd, selectedElementsIds } = useDiagramSelection(
+    diagramRefreshedEventPayload.diagram.targetObjectId
+  );
 
   const handleNodesChange: OnNodesChange<Node<NodeData>> = useCallback(
     (changes: NodeChange<Node<NodeData>>[]) => {
@@ -379,6 +381,8 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
     onEdgeMouseEnter: onEdgeMouseEnter,
     onEdgeMouseLeave: onEdgeMouseLeave,
     onSelectionChange: onSelectionChange,
+    onSelectionStart: onSelectionStart,
+    onSelectionEnd: onSelectionEnd,
     selectionMode: SelectionMode.Partial,
     maxZoom: 40,
     minZoom: 0.1,
