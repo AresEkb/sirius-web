@@ -85,6 +85,7 @@ import { useDiagramSelection } from './selection/useDiagramSelection';
 import { useLastElementSelectedChange } from './selection/useLastElementSelectedChange';
 import { useOnRightClickElement } from './selection/useOnRightClickElement';
 import { usePostToolSelection } from './selection/usePostToolSelection';
+import { useSelectAll } from './selection/useSelectAll';
 import { SnapToGridContext } from './snap-to-grid/SnapToGridContext';
 import { SnapToGridContextValue } from './snap-to-grid/SnapToGridContext.types';
 import { DiagramToolbar } from './toolbar/DiagramToolbar';
@@ -323,7 +324,10 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
     [onEdgesChange]
   );
 
+  const { onSelectAll } = useSelectAll();
+
   const onKeyDown = useCallback((event: React.KeyboardEvent<Element>) => {
+    onSelectAll(event);
     onDirectEdit(event);
     onKeyBinding(event);
   }, []);
