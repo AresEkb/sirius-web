@@ -26,6 +26,7 @@ import org.eclipse.sirius.components.collaborative.diagrams.api.IDiagramQuerySer
 import org.eclipse.sirius.components.collaborative.diagrams.api.IPaletteProvider;
 import org.eclipse.sirius.components.collaborative.diagrams.dto.GetPaletteInput;
 import org.eclipse.sirius.components.collaborative.diagrams.dto.GetPaletteSuccessPayload;
+import org.eclipse.sirius.components.collaborative.diagrams.dto.Palette;
 import org.eclipse.sirius.components.collaborative.messages.ICollaborativeMessageService;
 import org.eclipse.sirius.components.core.api.ErrorPayload;
 import org.eclipse.sirius.components.core.api.IEditingContext;
@@ -85,25 +86,35 @@ public class GetPaletteEventHandler implements IDiagramEventHandler {
         ChangeDescription changeDescription = new ChangeDescription(ChangeKind.NOTHING, editingContext.getId(), diagramInput);
 
         if (diagramInput instanceof GetPaletteInput getPaletteInput) {
-            var diagramElementIds = getPaletteInput.diagramElementIds();
+            var diagramElementIds = Optional.ofNullable(getPaletteInput.diagramElementIds()).orElseGet(List::of);
             Diagram diagram = diagramContext.diagram();
             var optionalDiagramDescription = this.representationDescriptionSearchService.findById(editingContext, diagram.getDescriptionId())
                     .filter(DiagramDescription.class::isInstance)
                     .map(DiagramDescription.class::cast);
             if (optionalDiagramDescription.isPresent()) {
                 DiagramDescription diagramDescription = optionalDiagramDescription.get();
-                var optionalPaletteProvider = this.paletteProviders.stream()
-                        .filter(paletteProvider -> paletteProvider.canHandle(editingContext, diagramContext, diagramDescription, diagramElementIds))
-                        .findFirst();
-                if (optionalPaletteProvider.isPresent()) {
-                    IPaletteProvider paletteProvider = optionalPaletteProvider.get();
-
-                    var diagramElements = diagramElementIds.stream()
-                            .map(diagramElementId -> this.findDiagramElement(diagram, diagramElementId))
-                            .flatMap(Optional::stream)
-                            .toList();
-                    var palette = paletteProvider.handle(editingContext, diagramContext, diagramDescription, diagramElements);
+                var diagramElements = diagramElementIds.stream()
+                        .map(diagramElementId -> this.findDiagramElement(diagram, diagramElementId))
+                        .flatMap(Optional::stream)
+                        .toList();
+                // A selection may disappear between sending the query and handling it (undo, deletion).
+                // Do not offer tools for a surviving subset of a selection from an older snapshot.
+                if (diagramElements.isEmpty() || diagramElements.size() != diagramElementIds.size()) {
+                    var palette = Palette.newPalette("palette:" + diagram.getId())
+                            .quickAccessTools(List.of()).paletteEntries(List.of()).build();
                     payload = new GetPaletteSuccessPayload(diagramInput.id(), palette);
+                } else {
+                    var optionalPaletteProvider = this.paletteProviders.stream()
+                            .filter(paletteProvider -> paletteProvider.canHandle(editingContext, diagramContext, diagramDescription, diagramElementIds))
+                            .findFirst();
+                    if (optionalPaletteProvider.isPresent()) {
+                        IPaletteProvider paletteProvider = optionalPaletteProvider.get();
+
+                        var palette = paletteProvider.handle(editingContext, diagramContext, diagramDescription, diagramElements);
+                        payload = Optional.ofNullable(palette)
+                                .<IPayload>map(value -> new GetPaletteSuccessPayload(diagramInput.id(), value))
+                                .orElseGet(() -> new ErrorPayload(diagramInput.id(), this.messageService.notFound()));
+                    }
                 }
             }
         }

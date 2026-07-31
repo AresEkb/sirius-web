@@ -17,8 +17,8 @@ import {
   PaletteExtensionSectionProps,
   usePalette,
 } from '@eclipse-sirius/sirius-components-palette';
-import { Edge, Node, useReactFlow, useViewport } from '@xyflow/react';
-import { memo, useCallback, useContext, useMemo } from 'react';
+import { Edge, Node, useReactFlow, useStore, useViewport } from '@xyflow/react';
+import { memo, useCallback, useContext, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DiagramContext } from '../../contexts/DiagramContext';
 import { DiagramContextValue } from '../../contexts/DiagramContext.types';
@@ -44,11 +44,24 @@ export const DiagramPalette = memo(({ diagramId, diagramTargetObjectId }: Diagra
   const { setCurrentlyEditedLabelId, currentlyEditedLabelId } = useDiagramDirectEdit();
   const { x: viewportX, y: viewportY, zoom: viewportZoom } = useViewport();
   const { getNode, getEdge } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
-  const { t } = useTranslation('sirius-components-diagrams', { keyPrefix: 'diagramPalette' });
+  const { t } = useTranslation('sirius-components-diagrams', {
+    keyPrefix: 'diagramPalette',
+  });
 
   const elementId = representationElementIds[0] ? representationElementIds[0] : diagramId;
   const elementsIds = representationElementIds[0] ? representationElementIds : [diagramId];
-  let { palette }: UsePaletteContentValue = usePaletteContents(elementsIds, false);
+  const selectionExists = useStore((state) =>
+    elementsIds.every((id) => id === diagramId || state.nodeLookup.has(id) || state.edgeLookup.has(id))
+  );
+  const { palette }: UsePaletteContentValue = usePaletteContents(
+    elementsIds,
+    readOnly || !isOpened || !selectionExists
+  );
+  useEffect(() => {
+    if (isOpened && !selectionExists) {
+      hidePalette();
+    }
+  }, [isOpened, selectionExists, hidePalette]);
 
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent<Element>) => {
@@ -148,7 +161,7 @@ export const DiagramPalette = memo(({ diagramId, diagramTargetObjectId }: Diagra
 
   const shouldRender = isOpened && !!paletteX && !!paletteY && !currentlyEditedLabelId;
 
-  return palette && shouldRender ? (
+  return palette && selectionExists && shouldRender ? (
     <PalettePortal>
       <div onKeyDown={onKeyDown}>
         <DraggablePalette
