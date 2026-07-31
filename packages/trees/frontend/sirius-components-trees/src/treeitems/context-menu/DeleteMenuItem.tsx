@@ -11,12 +11,12 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { gql, useMutation } from '@apollo/client';
-import { useDeletionConfirmationDialog, useMultiToast } from '@eclipse-sirius/sirius-components-core';
+import { useDeletionConfirmationDialog, useMultiToast, useSelection } from '@eclipse-sirius/sirius-components-core';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DeleteMenuItemProps,
@@ -46,6 +46,14 @@ export const DeleteMenuItem = ({ editingContextId, treeId, item, readOnly, onCli
     deleteTreeItemMutation
   );
   const { showDeletionConfirmation } = useDeletionConfirmationDialog();
+  const { selection, setSelection } = useSelection();
+  /*
+   * The menu closes as soon as the deletion is confirmed, so this component is gone by the time the
+   * mutation answers: what the selection holds is read from a ref, and the selection is freed of
+   * the deleted item on the mutation's own promise rather than in an effect that will never run.
+   */
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
 
   const { t } = useTranslation('sirius-components-trees', { keyPrefix: 'deleteMenuItem' });
 
@@ -57,7 +65,19 @@ export const DeleteMenuItem = ({ editingContextId, treeId, item, readOnly, onCli
       treeItemId: item.id,
     };
     showDeletionConfirmation(() => {
-      deleteTreeItem({ variables: { input } });
+      deleteTreeItem({ variables: { input } }).then((result) => {
+        const payload = result.data?.deleteTreeItem;
+        if (payload && !isErrorPayload(payload)) {
+          /*
+           * A deleted object cannot be pointed at any more: it leaves the selection, so that no
+           * view goes on offering the properties or the tools of an object which is gone.
+           */
+          const entries = selectionRef.current.entries;
+          if (entries.some((entry) => entry.id === item.id)) {
+            setSelection({ entries: entries.filter((entry) => entry.id !== item.id) });
+          }
+        }
+      });
       onClick();
     });
   };

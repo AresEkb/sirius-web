@@ -11,9 +11,9 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { gql, useMutation } from '@apollo/client';
-import { useDeletionConfirmationDialog, useMultiToast } from '@eclipse-sirius/sirius-components-core';
+import { useDeletionConfirmationDialog, useMultiToast, useSelection } from '@eclipse-sirius/sirius-components-core';
 import { GQLTreeItem } from '@eclipse-sirius/sirius-components-trees';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   GQLDeleteTreeItemData,
   GQLDeleteTreeItemInput,
@@ -42,6 +42,14 @@ export const useDelete = (): UseDeleteValue => {
     deleteTreeItemMutation
   );
   const { showDeletionConfirmation } = useDeletionConfirmationDialog();
+  const { selection, setSelection } = useSelection();
+  /*
+   * The menu closes as soon as the deletion is confirmed, so this hook's owner may be gone by the
+   * time the mutation answers: what the selection holds is read from a ref, and the selection is
+   * freed of the deleted item on the mutation's own promise rather than in an effect.
+   */
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
 
   const handleDelete = (editingContextId: string, treeId: string, item: GQLTreeItem) => {
     if (item.deletable) {
@@ -52,7 +60,19 @@ export const useDelete = (): UseDeleteValue => {
         treeItemId: item.id,
       };
       showDeletionConfirmation(() => {
-        deleteTreeItem({ variables: { input } });
+        deleteTreeItem({ variables: { input } }).then((result) => {
+          const payload = result.data?.deleteTreeItem;
+          if (payload && !isErrorPayload(payload)) {
+            /*
+             * A deleted object cannot be pointed at any more: it leaves the selection, so that no
+             * view goes on offering the properties or the tools of an object which is gone.
+             */
+            const entries = selectionRef.current.entries;
+            if (entries.some((entry) => entry.id === item.id)) {
+              setSelection({ entries: entries.filter((entry) => entry.id !== item.id) });
+            }
+          }
+        });
       });
     }
   };
