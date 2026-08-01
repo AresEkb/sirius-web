@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023 Obeo.
+ * Copyright (c) 2023, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -15,8 +15,11 @@ import { ToastContext } from '../contexts/ToastContext';
 import { ToastContextValue } from '../contexts/ToastContext.types';
 import { Variant } from './MultiToast.types';
 
+// Levels reach the toast from two sides: the backend sends the upper case names of its
+// message enum, while the local helpers below build a message by hand. Folding the case
+// here keeps a hand-written level from silently falling through to the default variant.
 const getVariantFromMessageLevel = (level: string): Variant => {
-  switch (level) {
+  switch (level.toUpperCase()) {
     case 'ERROR':
       return 'error';
     case 'INFO':
