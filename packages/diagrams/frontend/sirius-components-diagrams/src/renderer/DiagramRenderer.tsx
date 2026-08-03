@@ -346,6 +346,16 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
     useOnRightClickElement(selectedElementsIds);
 
   let reactFlowProps: ReactFlowProps<Node<NodeData>, Edge<EdgeData>> = {
+    /*
+     * A figure dragged with the pointer near the edge of the canvas would otherwise carry the
+     * canvas with it, scrolling the drawing every frame the pointer stays there. It is meant to
+     * help a figure be dragged somewhere off the view, but on a diagram of lanes it fires wherever
+     * the modeller happens to grab a lane that reaches past the edge - which is most of them, since
+     * a lane spans the drawing - and what they see is the drawing sliding out from under a gesture
+     * they meant to move a figure by a few pixels. The canvas is theirs to place; a drag moves what
+     * was grabbed and nothing else.
+     */
+    autoPanOnNodeDrag: false,
     nodes: nodes,
     nodeTypes: nodeTypes,
     onNodesChange: handleNodesChange,
