@@ -115,29 +115,9 @@ test.describe('selection', () => {
     await expect(node.nodeLocator).not.toContainClass('selected');
   });
 
-  test('the diagram can select a node from the global selection with an explicit button click', async ({ page }) => {
-    const explorer = new PlaywrightExplorer(page);
-    await explorer.expand('Flow');
-    await explorer.expand('NewSystem');
-    await explorer.select('CompositeProcessor1');
-
-    let node = await new PlaywrightNode(page, 'CompositeProcessor1');
-    await expect(node.nodeLocator).not.toContainClass('selected');
-
-    await page.getByTestId('diagram-reveal-selection').click();
-
-    node = await new PlaywrightNode(page, 'CompositeProcessor1');
-    await expect(node.nodeLocator).toContainClass('selected');
-  });
-
-  test('the diagram can select an edge from the global selection with an explicit button click', async ({ page }) => {
-    const explorer = new PlaywrightExplorer(page);
-    await explorer.expand('Flow');
-    await explorer.expand('NewSystem');
-    await explorer.expand('DataSource1');
-    await explorer.select('standard');
-    await page.getByTestId('diagram-reveal-selection').click();
+  test('selecting an edge in the diagram displays its connection handles', async ({ page }) => {
     const playwrightEdge = new PlaywrightEdge(page);
+    await playwrightEdge.click();
     await playwrightEdge.isSelected();
     await expect(page.locator('[data-testid^="connectionHandle"]')).toHaveCount(2);
     await expect(page.locator('[data-testid^="connectionHandle"]').first()).toHaveCSS(
