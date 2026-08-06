@@ -122,17 +122,6 @@ export const ExportImageButton = () => {
             disabled={loading}>
             {loading ? <CircularProgress size={20} /> : <ListItemText primary="PNG" />}
           </MenuItem>
-          <MenuItem
-            data-testid="experimental-export-diagram-to-svg"
-            onClick={() => {
-              protoExportToSvg((dataUrl: string) => {
-                downloadImage(dataUrl, '.svg');
-                onCloseExportImageMenu();
-              });
-            }}
-            disabled={loading}>
-            {loading ? <CircularProgress size={20} /> : <ListItemText primary={`SVG (${t('experimentalFeature')})`} />}
-          </MenuItem>
         </Menu>
       ) : null}
     </>

@@ -13,6 +13,7 @@
 
 import { expect, test } from '@playwright/test';
 import { PlaywrightExplorer } from '../../helpers/PlaywrightExplorer';
+import { PlaywrightNode } from '../../helpers/PlaywrightNode';
 import { PlaywrightProject } from '../../helpers/PlaywrightProject';
 
 test.describe('delete node without delete tool', () => {
@@ -52,11 +53,8 @@ test.describe('delete node without delete tool', () => {
 
     await expect(page.getByTestId('rf__wrapper')).toBeVisible();
 
-    // Select the semantic in the explorer
-    await playwrightExplorer.expand('package');
-    await playwrightExplorer.select('Class');
-    // And the corresponding node on the diagram
-    await page.getByTestId('diagram-reveal-selection').click();
+    // Select the node on the diagram
+    await new PlaywrightNode(page, 'Class').click();
 
     // Try do delete from the keyboard
     await page.keyboard.press('Delete');

@@ -51,11 +51,8 @@ import { isNotUtilityNode } from '../node/NodeTypes';
 import { usePinDiagramElements } from '../pin/usePinDiagramElements';
 import { SnapToGridContext } from '../snap-to-grid/SnapToGridContext';
 import { SnapToGridContextValue } from '../snap-to-grid/SnapToGridContext.types';
-import { ArrangeAllButton } from './ArrangeAllButton';
 import { DiagramToolbarActionProps, DiagramToolbarProps, DiagramToolbarState } from './DiagramToolbar.types';
 import { diagramToolbarActionExtensionPoint } from './DiagramToolbarExtensionPoints';
-import { ExportImageButton } from './ExportImageButton';
-import { RevealSelectionInDiagramButton } from './RevealSelectionInDiagramButton';
 
 export const DiagramToolbar = memo(({ diagramToolbar }: DiagramToolbarProps) => {
   const [state, setState] = useState<DiagramToolbarState>({
@@ -200,7 +197,6 @@ export const DiagramToolbar = memo(({ diagramToolbar }: DiagramToolbarProps) => 
                 <ShareIcon />
               </IconButton>
             </Tooltip>
-            <ExportImageButton />
             {isSnapToGridEnabled ? (
               <Tooltip title={t('exitSnapToGrid')}>
                 <IconButton size="small" aria-label={t('exitSnapToGrid')} onClick={() => setSnapToGridEnabled(false)}>
@@ -241,7 +237,6 @@ export const DiagramToolbar = memo(({ diagramToolbar }: DiagramToolbarProps) => 
                 </span>
               </Tooltip>
             )}
-            <ArrangeAllButton disabled={readOnly} />
             <Tooltip title={t('revealHidden')}>
               <span>
                 <IconButton
@@ -278,7 +273,6 @@ export const DiagramToolbar = memo(({ diagramToolbar }: DiagramToolbarProps) => 
                 </IconButton>
               </span>
             </Tooltip>
-            <RevealSelectionInDiagramButton editingContextId={editingContextId} />
             {diagramToolbarActionComponents.map(({ Component: DiagramToolbarActionComponent }, index) => (
               <DiagramToolbarActionComponent editingContextId={editingContextId} diagramId={diagramId} key={index} />
             ))}

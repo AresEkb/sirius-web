@@ -557,15 +557,10 @@ test.describe('edge', () => {
   });
 
   test('when source and target nodes are aligned, then custom is not reset', async ({ page }) => {
-    const playwrightExplorer = new PlaywrightExplorer(page);
-    await playwrightExplorer.expand('EntitySource');
-    await playwrightExplorer.select('edge');
-
     await expect(page.getByTestId('rf__wrapper')).toBeAttached();
 
-    await page.getByTestId('diagram-reveal-selection').click();
-
     const playwrightEdge = new PlaywrightEdge(page);
+    await playwrightEdge.click();
     await playwrightEdge.isSelected();
 
     const pathBefore = await playwrightEdge.getEdgePath();
