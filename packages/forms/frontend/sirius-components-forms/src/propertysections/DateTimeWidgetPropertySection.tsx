@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2024, 2025 Obeo.
+ * Copyright (c) 2024, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -26,6 +26,7 @@ import {
 } from './DateTimeWidgetPropertySection.types';
 import { LoadingIndicator } from './LoadingIndicator';
 import { PropertySectionLabel } from './PropertySectionLabel';
+import { getWidgetInputId } from './widgetIdentifiers';
 
 const useStyle = makeStyles<DateTimeStyleProps>()(
   (theme, { backgroundColor, foregroundColor, italic, bold, gridLayout }) => {
@@ -171,13 +172,18 @@ export const DateTimeWidgetPropertySection: PropertySectionComponent<GQLDateTime
       }}
       className={classes.propertySection}>
       <div className={classes.propertySectionLabel}>
-        <PropertySectionLabel editingContextId={editingContextId} formId={formId} widget={widget} />
+        <PropertySectionLabel
+          editingContextId={editingContextId}
+          formId={formId}
+          widget={widget}
+          htmlFor={getWidgetInputId(widget)}
+        />
         <LoadingIndicator loading={mutationEditDateTimeResult.loading} />
       </div>
       <div className={classes.propertySectionWidget}>
         <TextField
           variant="standard"
-          id="datetime"
+          id={getWidgetInputId(widget)}
           disabled={readOnly || widget.readOnly}
           value={convertToLocalDateTimeString(widget.type, state.editedValue)}
           type={type}

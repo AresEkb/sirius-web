@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2025 Obeo.
+ * Copyright (c) 2019, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import { getTextDecorationLineValue } from './getTextDecorationLineValue';
 import { GQLSuccessPayload } from './ListPropertySection.types';
 import { LoadingIndicator } from './LoadingIndicator';
 import { PropertySectionLabel } from './PropertySectionLabel';
+import { getWidgetInputId } from './widgetIdentifiers';
 import { ProposalsList } from './ProposalsList';
 import {
   GQLCompletionProposal,
@@ -336,11 +337,17 @@ export const TextfieldPropertySection: PropertySectionComponent<GQLTextfield | G
       }}
       className={classes.propertySection}>
       <div className={classes.propertySectionLabel}>
-        <PropertySectionLabel editingContextId={editingContextId} formId={formId} widget={widget} />
+        <PropertySectionLabel
+          editingContextId={editingContextId}
+          formId={formId}
+          widget={widget}
+          htmlFor={getWidgetInputId(widget)}
+        />
         <LoadingIndicator loading={updateTextfieldLoading} />
       </div>
       <div className={classes.propertySectionWidget}>
         <TextField
+          id={getWidgetInputId(widget)}
           name={widget.label}
           placeholder={widget.label}
           variant="standard"

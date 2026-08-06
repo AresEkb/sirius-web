@@ -37,7 +37,7 @@ import { ToolbarPlugin } from './ToolbarPlugin';
 /**
  * A content-editable div managed by lexical, but which also invokes our onFocus callback.
  */
-const ContentEditable = ({ readOnly }: ContentEditableProps): JSX.Element => {
+const ContentEditable = ({ ariaLabelledBy, readOnly }: ContentEditableProps): JSX.Element => {
   const [editor] = useLexicalComposerContext();
   const ref = useCallback(
     (rootElement: null | HTMLElement) => {
@@ -45,7 +45,7 @@ const ContentEditable = ({ readOnly }: ContentEditableProps): JSX.Element => {
     },
     [editor]
   );
-  return <div ref={ref} contentEditable={!readOnly} spellCheck={false}></div>;
+  return <div ref={ref} aria-labelledby={ariaLabelledBy} contentEditable={!readOnly} spellCheck={false}></div>;
 };
 
 /**
@@ -178,7 +178,7 @@ const useRichTextEditorStyles = makeStyles()((theme) => ({
   },
 }));
 
-export const RichTextEditor = ({ value, placeholder, readOnly, onBlur }: RichTextEditorProps) => {
+export const RichTextEditor = ({ ariaLabelledBy, value, placeholder, readOnly, onBlur }: RichTextEditorProps) => {
   const { classes } = useRichTextEditorStyles();
   const theme = {
     placeholder: classes.editorPlaceholder,
@@ -219,7 +219,7 @@ export const RichTextEditor = ({ value, placeholder, readOnly, onBlur }: RichTex
           <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
           <ListPlugin />
           <RichTextPlugin
-            contentEditable={<ContentEditable readOnly={readOnly} />}
+            contentEditable={<ContentEditable ariaLabelledBy={ariaLabelledBy} readOnly={readOnly} />}
             placeholder={<div className={classes.editorPlaceholder}>{placeholder}</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />

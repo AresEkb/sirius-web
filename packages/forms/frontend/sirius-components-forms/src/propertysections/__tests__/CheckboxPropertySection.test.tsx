@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2025 Obeo.
+ * Copyright (c) 2022, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -84,6 +84,28 @@ test('should send mutation when clicked', async () => {
   );
 
   await userEvent.click(screen.getByRole('checkbox'));
+  await waitFor(() => {
+    expect(editCheckboxSuccessMock.result).toHaveBeenCalledTimes(1);
+  });
+});
+
+test('should send mutation when its label is clicked', async () => {
+  render(
+    <MockedProvider mocks={[editCheckboxSuccessMock]}>
+      <ToastContext.Provider value={toastContextMock}>
+        <CheckboxPropertySection
+          editingContextId="editingContextId"
+          formId="formId"
+          widget={checkbox}
+          readOnly={false}
+        />
+      </ToastContext.Provider>
+    </MockedProvider>
+  );
+
+  expect(screen.getByLabelText(checkbox.label)).toBe(screen.getByRole('checkbox'));
+
+  await userEvent.click(screen.getByText(checkbox.label));
   await waitFor(() => {
     expect(editCheckboxSuccessMock.result).toHaveBeenCalledTimes(1);
   });

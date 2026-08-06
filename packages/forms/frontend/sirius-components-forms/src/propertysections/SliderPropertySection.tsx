@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2025 Obeo.
+ * Copyright (c) 2023, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -20,6 +20,7 @@ import { PropertySectionComponent, PropertySectionComponentProps } from '../form
 import { GQLSlider } from '../form/FormEventFragments.types';
 import { LoadingIndicator } from './LoadingIndicator';
 import { PropertySectionLabel } from './PropertySectionLabel';
+import { getWidgetLabelId } from './widgetIdentifiers';
 import {
   GQLEditSliderInput,
   GQLEditSliderMutationData,
@@ -119,6 +120,7 @@ export const SliderPropertySection: PropertySectionComponent<GQLSlider> = ({
         <LoadingIndicator loading={loading} />
       </div>
       <Slider
+        aria-labelledby={getWidgetLabelId(widget)}
         data-testid={widget.label}
         disabled={readOnly || widget.readOnly}
         min={widget.minValue}

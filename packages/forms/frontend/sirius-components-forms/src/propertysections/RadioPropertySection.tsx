@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2025 Obeo.
+ * Copyright (c) 2019, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -26,6 +26,7 @@ import { GQLRadio } from '../form/FormEventFragments.types';
 import { getTextDecorationLineValue } from './getTextDecorationLineValue';
 import { LoadingIndicator } from './LoadingIndicator';
 import { PropertySectionLabel } from './PropertySectionLabel';
+import { getWidgetLabelId } from './widgetIdentifiers';
 import {
   GQLEditRadioInput,
   GQLEditRadioMutationData,
@@ -142,6 +143,7 @@ export const RadioPropertySection: PropertySectionComponent<GQLRadio> = ({
       <RadioGroup
         classes={{ root: classes.radioGroupRoot }}
         aria-label={widget.label}
+        aria-labelledby={getWidgetLabelId(widget)}
         name={widget.label}
         value={selectedOption ? selectedOption.id : null}
         onChange={onChange}>

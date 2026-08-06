@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2024 Obeo.
+ * Copyright (c) 2022, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -14,6 +14,7 @@
 import { ReactNode } from 'react';
 
 export interface RichTextEditorProps {
+  ariaLabelledBy?: string;
   value: string;
   placeholder: string;
   onBlur: (newValue: string) => void;
@@ -21,6 +22,7 @@ export interface RichTextEditorProps {
 }
 
 export interface ContentEditableProps {
+  ariaLabelledBy?: string;
   readOnly: boolean;
 }
 

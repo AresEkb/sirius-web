@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2025 Obeo.
+ * Copyright (c) 2021, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,7 @@ import { makeStyles } from 'tss-react/mui';
 import { HelpTooltip } from './HelpTooltip';
 import { PropertySectionLabelDecoratorProps, PropertySectionLabelProps } from './PropertySectionLabel.types';
 import { propertySectionLabelDecoratorExtensionPoint } from './PropertySectionLabelExtensionPoints';
+import { getWidgetLabelId } from './widgetIdentifiers';
 
 const usePropertySectionLabelStyles = makeStyles()((theme) => ({
   propertySectionLabel: {
@@ -27,6 +28,11 @@ const usePropertySectionLabelStyles = makeStyles()((theme) => ({
   typography: {
     lineHeight: '1.5',
   },
+  clickableTypography: {
+    lineHeight: '1.5',
+    cursor: 'pointer',
+    width: 'fit-content',
+  },
   decorators: {
     display: 'flex',
     flexDirection: 'row',
@@ -35,7 +41,7 @@ const usePropertySectionLabelStyles = makeStyles()((theme) => ({
   },
 }));
 
-export const PropertySectionLabel = ({ editingContextId, formId, widget }: PropertySectionLabelProps) => {
+export const PropertySectionLabel = ({ editingContextId, formId, widget, htmlFor }: PropertySectionLabelProps) => {
   const { classes } = usePropertySectionLabelStyles();
 
   const propertySectionPanelDecorators: ComponentExtension<PropertySectionLabelDecoratorProps>[] = useComponents(
@@ -47,9 +53,20 @@ export const PropertySectionLabel = ({ editingContextId, formId, widget }: Prope
   return (
     <div className={classes.propertySectionLabel}>
       {!!widget.label ? (
-        <Typography className={classes.typography} variant="subtitle2">
-          {widget.label}
-        </Typography>
+        htmlFor ? (
+          <Typography
+            id={getWidgetLabelId(widget)}
+            className={classes.clickableTypography}
+            variant="subtitle2"
+            component="label"
+            htmlFor={htmlFor}>
+            {widget.label}
+          </Typography>
+        ) : (
+          <Typography id={getWidgetLabelId(widget)} className={classes.typography} variant="subtitle2">
+            {widget.label}
+          </Typography>
+        )
       ) : null}
       {hasDecorator ? (
         <div className={classes.decorators}>

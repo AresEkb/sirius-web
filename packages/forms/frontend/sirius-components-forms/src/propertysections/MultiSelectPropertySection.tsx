@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2025 Obeo.
+ * Copyright (c) 2021, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -34,6 +34,7 @@ import {
   MultiSelectStyleProps,
 } from './MultiSelectPropertySection.types';
 import { PropertySectionLabel } from './PropertySectionLabel';
+import { getWidgetLabelId } from './widgetIdentifiers';
 
 const useStyle = makeStyles<MultiSelectStyleProps>()(
   (theme, { backgroundColor, foregroundColor, fontSize, italic, bold, underline, strikeThrough, gridLayout }) => {
@@ -169,6 +170,7 @@ export const MultiSelectPropertySection: PropertySectionComponent<GQLMultiSelect
       <div className={classes.propertySectionWidget}>
         <Select
           variant="standard"
+          labelId={getWidgetLabelId(widget)}
           value={widget.values}
           onChange={onChange}
           displayEmpty

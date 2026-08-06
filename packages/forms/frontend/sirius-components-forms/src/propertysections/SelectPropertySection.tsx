@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2025 Obeo.
+ * Copyright (c) 2019, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import { GQLSelect } from '../form/FormEventFragments.types';
 import { getTextDecorationLineValue } from './getTextDecorationLineValue';
 import { LoadingIndicator } from './LoadingIndicator';
 import { PropertySectionLabel } from './PropertySectionLabel';
+import { getWidgetLabelId } from './widgetIdentifiers';
 import {
   GQLEditSelectMutationData,
   GQLEditSelectPayload,
@@ -163,6 +164,7 @@ export const SelectPropertySection: PropertySectionComponent<GQLSelect> = ({
       <div className={classes.propertySectionWidget}>
         <Select
           variant="standard"
+          labelId={getWidgetLabelId(widget)}
           value={widget.value || ''}
           onChange={onChange}
           displayEmpty

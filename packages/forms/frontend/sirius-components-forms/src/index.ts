@@ -39,6 +39,7 @@ export type { SelectStyleProps } from './propertysections/SelectPropertySection.
 export type { TextfieldStyleProps } from './propertysections/TextfieldPropertySection.types';
 export * from './propertysections/TreePropertySection';
 export * from './propertysections/useClickHandler';
+export * from './propertysections/widgetIdentifiers';
 export * from './representations/FormRepresentation';
 export * from './views/FormBasedView';
 export type * from './views/FormBasedView.types';

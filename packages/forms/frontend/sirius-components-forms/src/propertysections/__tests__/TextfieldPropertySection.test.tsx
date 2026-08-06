@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2025 Obeo.
+ * Copyright (c) 2022, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -50,6 +50,27 @@ test('should render the textfield', () => {
 
   const inputElement: HTMLInputElement = screen.getByRole('textbox');
   expect(inputElement.value).toBe('Composite Processor');
+});
+
+test('should focus the textfield when its label is clicked', async () => {
+  render(
+    <MockedProvider>
+      <ToastContext.Provider value={toastContextMock}>
+        <TextfieldPropertySection
+          editingContextId="editingContextId"
+          formId="formId"
+          widget={textfield}
+          readOnly={false}
+        />
+      </ToastContext.Provider>
+    </MockedProvider>
+  );
+
+  const inputElement: HTMLInputElement = screen.getByRole('textbox');
+  expect(screen.getByLabelText(textfield.label)).toBe(inputElement);
+
+  await userEvent.click(screen.getByText(textfield.label));
+  expect(document.activeElement).toBe(inputElement);
 });
 
 test('should render a readOnly textfield', () => {

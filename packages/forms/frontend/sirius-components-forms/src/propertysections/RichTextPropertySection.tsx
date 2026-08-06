@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2025 Obeo.
+ * Copyright (c) 2022, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import { GQLRichText } from '../form/FormEventFragments.types';
 import { RichTextEditor } from '../richtexteditor/RichTextEditor';
 import { LoadingIndicator } from './LoadingIndicator';
 import { PropertySectionLabel } from './PropertySectionLabel';
+import { getWidgetLabelId } from './widgetIdentifiers';
 import {
   GQLEditRichTextInput,
   GQLEditRichTextMutationData,
@@ -120,6 +121,7 @@ export const RichTextPropertySection: PropertySectionComponent<GQLRichText> = ({
       </div>
       <div data-testid={widget.label}>
         <RichTextEditor
+          ariaLabelledBy={getWidgetLabelId(widget)}
           value={widget.stringValue}
           placeholder={widget.label}
           onBlur={onBlur}
