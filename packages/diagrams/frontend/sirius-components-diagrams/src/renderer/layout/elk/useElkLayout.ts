@@ -142,9 +142,14 @@ const convertToElkGraph = (nodes: Node<NodeData>[], options: LayoutOptions): Elk
     .map((node) => buildElkNodeChildrenAndPorts(node, nodes, options));
 };
 
+// The engine is shared by every diagram, since a layout is fully described by the
+// graph handed to it and leaves nothing behind. A fresh instance per render would
+// be far from free: each one registers the whole set of layout algorithms again on
+// its first layout, and does so on the main thread.
+const elk = new ELK();
+
 export const useElkLayout = (): UseElkLayoutValue => {
   const { addErrorMessage } = useMultiToast();
-  const elk = new ELK();
 
   const getELKLayout = async (
     nodes: Node<NodeData>[],
