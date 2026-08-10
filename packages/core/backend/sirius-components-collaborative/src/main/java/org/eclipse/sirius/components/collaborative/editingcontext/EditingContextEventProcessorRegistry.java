@@ -113,14 +113,8 @@ public class EditingContextEventProcessorRegistry implements IEditingContextEven
 
                     var editingContextEventProcessor = this.editingContextEventProcessorFactory.createEditingContextEventProcessor(editingContext);
                     Disposable subscription = editingContextEventProcessor.canBeDisposed().delayElements(this.disposeDelay).subscribe(canBeDisposed -> {
-                        // We will wait for the delay before trying to dispose the editing context event processor
-                        // We will check if the editing context event processor is still empty
-                        if (canBeDisposed.booleanValue() && representationEventProcessorRegistry.values(editingContextId).isEmpty()) {
-                            this.disposeEditingContextEventProcessor(editingContextId);
-                        } else {
-                            this.logger.atTrace()
-                                    .setMessage("Stopping the disposal of the editing context")
-                                    .log();
+                        if (canBeDisposed.booleanValue()) {
+                            this.disposeIfUnused(editingContextId, editingContextEventProcessor);
                         }
                     });
 
@@ -134,6 +128,24 @@ public class EditingContextEventProcessorRegistry implements IEditingContextEven
         }
 
         return optionalEditingContextEventProcessor;
+    }
+
+    private void disposeIfUnused(String editingContextId, IEditingContextEventProcessor processor) {
+        // Acquisition may still be constructing the first representation. Check
+        // emptiness and retire atomically with inputs and acquisition, instead
+        // of shutting down their executor mid-task.
+        synchronized (processor) {
+            var current = this.editingContextEventProcessors.get(editingContextId);
+            var isCurrent = current != null && current.getEditingContextEventProcessor() == processor;
+            if (isCurrent && this.representationEventProcessorRegistry.values(editingContextId).isEmpty()
+                    && this.editingContextEventProcessors.remove(editingContextId, current)) {
+                current.dispose();
+            } else {
+                this.logger.atTrace()
+                        .setMessage("Stopping the disposal of the editing context")
+                        .log();
+            }
+        }
     }
 
     @Override
