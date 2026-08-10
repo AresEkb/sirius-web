@@ -1,0 +1,14 @@
+**/node_modules
+**/target
+**/dist
+**/.turbo
+**/.idea
+**/.vscode
+**/*.log
+.git
+.github
+integration-tests-cypress
+integration-tests-playwright
+vscode-extension
+diagram-image-server
+doc

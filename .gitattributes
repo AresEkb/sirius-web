@@ -1,2 +1,9 @@
 # Prevent global windows configuration to change lf into crlf
 * text=auto eol=lf
+
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+*.sh    text eol=lf
+mvnw    text eol=lf
+gradlew text eol=lf

@@ -2,17 +2,52 @@ name: sirius-web
 
 services:
   database:
+    container_name: sirius-web-postgres
     image: postgres:15
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: username
       POSTGRES_PASSWORD: password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: "exit 0"
-      start_period: 1s
+      test: ["CMD-SHELL", "pg_isready -U username -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  elasticsearch:
+    container_name: sirius-web-elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.1
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -E '\"status\":\"(yellow|green)\"' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
   backend:
-    image: "eclipsesirius/sirius-web:${VERSION:-latest}"
-    pull_policy: always
+    container_name: sirius-web-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GITHUB_USERNAME: "${GITHUB_USERNAME:-}"
+        GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+        GITHUB_PUBLISH_TOKEN: "${GITHUB_PUBLISH_TOKEN:-${GITHUB_TOKEN:-}}"
+        METAMODEL_NEXUS_USERNAME: "${METAMODEL_NEXUS_USERNAME:-}"
+        METAMODEL_NEXUS_PASSWORD: "${METAMODEL_NEXUS_PASSWORD:-}"
+        METAMODEL_NEXUS_TOKEN: "${METAMODEL_NEXUS_TOKEN:-}"
+    image: sirius-web:local
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://database/postgres
       SPRING_DATASOURCE_USERNAME: username
@@ -20,14 +55,21 @@ services:
       SIRIUS_COMPONENTS_CORS_ALLOWEDORIGINPATTERNS: "*"
       SIRIUS_WEB_TREE_NEW-PALETTE_ENABLED: false
       SERVER_PORT: 8080
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
     ports:
-      - 8080:8080
+      - "8020:8080"
     healthcheck:
-      test: "curl --fail --silent localhost:8080/actuator/health | grep UP || exit 1"
+      test: ["CMD-SHELL", "curl --fail --silent localhost:8080/actuator/health | grep -q UP || exit 1"]
       interval: 20s
       timeout: 3s
       retries: 5
-      start_period: 10s
+      start_period: 30s
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  elasticsearch-data:
