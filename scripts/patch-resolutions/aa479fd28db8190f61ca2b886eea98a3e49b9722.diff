@@ -1,0 +1,107 @@
+--- preimage
++++ resolved
+@@ -12,11 +12,8 @@
+  *******************************************************************************/
+ import { InternalNode, Node, Position, XYPosition } from '@xyflow/react';
+ import { useEffect, useRef, useState } from 'react';
+-<<<<<<<
+-=======
+ import { MutableRefObject } from 'react';
+ import { clipSegmentRoute, projectToNodeBounds } from './SegmentRoute';
+->>>>>>>
+ import { DraggableData } from 'react-draggable';
+ import { useStore } from '../../../representation/useStore';
+ import { NodeData } from '../../DiagramRenderer.types';
+@@ -48,7 +45,6 @@
+ 
+   const [middleBendingPoints, setMiddleBendingPoints] = useState<MiddlePoint[]>([]);
+ 
+-<<<<<<<
+   const [dragInProgress, setDragInProgress] = useState(false);
+   const initialRoute = useRef<XYPosition[]>([]);
+   const preview = useRef<XYPosition[] | null>(null);
+@@ -89,67 +85,6 @@
+     setEdges((edges) =>
+       edges.map((edge) => (edge.id === edgeId ? { ...edge, reconnectable: reconnectable.current } : edge))
+     );
+-=======
+-  const [state, setState] = useState<TemporaryLinesState>({
+-    isSourceSegment: false,
+-    isTargetSegment: false,
+-    dragInProgress: false,
+-  });
+-  // Whether the pointer actually moved during the current gesture. A bare click
+-  // (e.g. selecting or double-clicking the edge to edit its label) fires
+-  // onStart/onStop with no onDrag, and must not persist a (re)layout - otherwise
+-  // an auto-routed edge would be turned into a customised one. A ref is used so
+-  // the value is read synchronously within the gesture (no stale closure).
+-  const draggedRef = useRef(false);
+-
+-  const onDragStart = () => {
+-    draggedRef.current = false;
+-    setNodes((previousNodes) =>
+-      previousNodes.map((previousNode) => {
+-        if (previousNode.id === sourceNode.id || previousNode.id === targetNode.id) {
+-          return {
+-            ...previousNode,
+-            data: {
+-              ...previousNode.data,
+-              connectionHandles: previousNode.data.connectionHandles.map((handle) => {
+-                if (handle.edgeId === edgeId) {
+-                  return {
+-                    ...handle,
+-                    isHidden: true,
+-                  };
+-                }
+-                return handle;
+-              }),
+-            },
+-          };
+-        }
+-        return previousNode;
+-      })
+-    );
+-  };
+-
+-  const onTemporaryLineDragStop = (_eventData: DraggableData, _index: number) => {
+-    if (draggedRef.current) {
+-      handleDragStop(
+-        edgeId,
+-        source,
+-        setSource,
+-        sourceNode,
+-        sourceHandleId,
+-        sourcePosition,
+-        target,
+-        setTarget,
+-        targetNode,
+-        targetHandleId,
+-        targetPosition,
+-        state.isSourceSegment,
+-        state.isTargetSegment,
+-        localBendingPoints
+-      );
+-    }
+-    draggedRef.current = false;
+-    setState((prevState) => ({ ...prevState, isSourceSegment: false, isTargetSegment: false, dragInProgress: false }));
+->>>>>>>
+   };
+ 
+   const onTemporaryLineDrag = (eventData: DraggableData, index: number, direction: 'x' | 'y') => {
+@@ -249,16 +184,10 @@
+         }
+       }
+     }
+-<<<<<<<
+-    draggedRef.current = true;
+-    setLocalBendingPoints(newPoints);
+-    setState((prevState) => ({ ...prevState, dragInProgress: true }));
+-=======
+     setMiddleBendingPoints((points) =>
+       points.map((point, i) => (i === index && active ? active : { ...point, segmentLength: 0 }))
+     );
+     setDragInProgress(true);
+->>>>>>>
+   };
+ 
+   const computeMiddlePoints = () => {

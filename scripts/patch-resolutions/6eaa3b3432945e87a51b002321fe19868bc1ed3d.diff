@@ -1,0 +1,11 @@
+--- preimage
++++ postimage
+@@ -14 +14,2 @@
+-<<<<<<<
++import { positionUnderParentOf } from './layout/bounds';
++import { DiagramRefreshContext } from '../contexts/DiagramRefreshContext';
+@@ -20,4 +20,0 @@
+-=======
+-import { positionUnderParentOf } from './layout/bounds';
+-import { DiagramRefreshContext } from '../contexts/DiagramRefreshContext';
+->>>>>>>

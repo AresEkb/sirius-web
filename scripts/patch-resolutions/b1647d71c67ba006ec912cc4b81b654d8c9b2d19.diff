@@ -1,0 +1,36 @@
+--- preimage
++++ postimage
+@@ -149 +149 @@
+-        .map((widget, index) => (
++        .map((widget) => (
+@@ -155 +155 @@
+-            key={`${widget.id}#${index}`}
++            key={widget.id}
+@@ -188,25 +187,0 @@
+-<<<<<<<
+-      <div className={classes.groupLabelAndToolbar}>
+-        {group.displayMode === 'TOGGLEABLE_AREAS' ? (
+-          widgetSelector
+-        ) : (
+-          <Typography variant="subtitle1" className={classes.title} gutterBottom>
+-            {group.label}
+-          </Typography>
+-        )}
+-        {toolbar}
+-      </div>
+-      <div className={group.displayMode === 'LIST' ? classes.verticalSections : classes.adaptableSections}>
+-        {group.widgets
+-          .filter((widget) => visibleWidgetIds.includes(widget.id))
+-          .map((widget) => (
+-            <PropertySection
+-              editingContextId={editingContextId}
+-              formId={formId}
+-              widget={widget}
+-              readOnly={readOnly}
+-              key={widget.id}
+-            />
+-          ))}
+-      </div>
+-=======
+@@ -220 +194,0 @@
+->>>>>>>

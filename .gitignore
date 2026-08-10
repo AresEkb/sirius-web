@@ -17,6 +17,8 @@ ehthumbs_vista.db
 ### Eclipse ###
 # m2e
 .factorypath
+/.metadata/
+/.sonarlint/
 
 ### Java ###
 # Compiled class file

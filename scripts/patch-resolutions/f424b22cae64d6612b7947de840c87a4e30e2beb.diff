@@ -1,0 +1,68 @@
+--- preimage
++++ postimage
+@@ -42 +41,0 @@
+-<<<<<<<
+@@ -55,28 +54,7 @@
+-    let { palette }: UsePaletteContentValue = usePaletteContents(elementsIds, false);
+-=======
+-export const DiagramPalette = memo(({ diagramId, diagramTargetObjectId }: DiagramPaletteProps) => {
+-  const { readOnly } = useContext<DiagramContextValue>(DiagramContext);
+-  const { isOpened, x: paletteX, y: paletteY, representationElementIds, hidePalette } = usePalette();
+-  const { executeTool } = useContext<DiagramToolExecutorContextValue>(DiagramToolExecutorContext);
+-  const { setCurrentlyEditedLabelId, currentlyEditedLabelId } = useDiagramDirectEdit();
+-  const { x: viewportX, y: viewportY, zoom: viewportZoom } = useViewport();
+-  const { getNode, getEdge } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
+-  const { t } = useTranslation('sirius-components-diagrams', {
+-    keyPrefix: 'diagramPalette',
+-  });
+-
+-  const elementId = representationElementIds[0] ? representationElementIds[0] : diagramId;
+-  const elementsIds = representationElementIds[0] ? representationElementIds : [diagramId];
+-  const selectionExists = useStore((state) =>
+-    elementsIds.every((id) => id === diagramId || state.nodeLookup.has(id) || state.edgeLookup.has(id))
+-  );
+-  const { palette }: UsePaletteContentValue = usePaletteContents(
+-    elementsIds,
+-    readOnly || !isOpened || !selectionExists
+-  );
+-  useEffect(() => {
+-    if (isOpened && !selectionExists) {
+-      hidePalette();
+-    }
+-  }, [isOpened, selectionExists, hidePalette]);
+->>>>>>>
++    const selectionExists = useStore((state) => elementsIds.every((id) => id === diagramId || state.nodeLookup.has(id) || state.edgeLookup.has(id)));
++    let { palette }: UsePaletteContentValue = usePaletteContents(elementsIds, readOnly || !isOpened || !selectionExists);
++    useEffect(() => {
++      if (isOpened && !selectionExists) {
++        hidePalette();
++      }
++    }, [isOpened, selectionExists, hidePalette]);
+@@ -199 +177 @@
+-    return palette && shouldRender ? (
++    return palette && selectionExists && shouldRender ? (
+@@ -216,22 +193,0 @@
+-<<<<<<<
+-
+-  const shouldRender = isOpened && !!paletteX && !!paletteY && !currentlyEditedLabelId;
+-
+-  return palette && selectionExists && shouldRender ? (
+-    <PalettePortal>
+-      <div onKeyDown={onKeyDown}>
+-        <DraggablePalette
+-          representationKind={DIAGRAM_REPRESENTATION_KIND}
+-          representationElementIds={representationElementIds.length > 0 ? representationElementIds : [diagramId]}
+-          palette={palette}
+-          onToolClick={onToolClick}
+-          onClose={hidePalette}
+-          paletteToolListExtensions={extensionSections}
+-          x={paletteX}
+-          y={paletteY}
+-        />
+-      </div>
+-    </PalettePortal>
+-  ) : null;
+-});
+-=======
+@@ -239 +194,0 @@
+->>>>>>>

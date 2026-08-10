@@ -1,0 +1,21 @@
+--- preimage
++++ postimage
+@@ -556 +556,2 @@
+-<<<<<<<
++  const { onSelectAll } = useSelectAll();
++
+@@ -571,0 +573 @@
++      onSelectAll(event);
+@@ -575 +577 @@
+-    [readOnly, onDirectEdit, onKeyBinding]
++    [readOnly, onSelectAll, onDirectEdit, onKeyBinding]
+@@ -577,9 +578,0 @@
+-=======
+-  const { onSelectAll } = useSelectAll();
+-
+-  const onKeyDown = useCallback((event: React.KeyboardEvent<Element>) => {
+-    onSelectAll(event);
+-    onDirectEdit(event);
+-    onKeyBinding(event);
+-  }, []);
+->>>>>>>
