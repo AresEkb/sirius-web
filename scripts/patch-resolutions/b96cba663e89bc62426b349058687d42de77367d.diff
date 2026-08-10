@@ -1,0 +1,19 @@
+--- preimage
++++ postimage
+@@ -13 +12,0 @@
+-<<<<<<<
+@@ -24 +23 @@
+-import { useCallback, useContext } from 'react';
++import { useCallback, useContext, useRef } from 'react';
+@@ -27,4 +25,0 @@
+-=======
+-import { Edge, Node, NodeChange, NodeDimensionChange, NodePositionChange, useStoreApi } from '@xyflow/react';
+-import { useCallback, useRef } from 'react';
+->>>>>>>
+@@ -275,3 +269,0 @@
+-<<<<<<<
+-  const activeResizes = useRef(new Set<string>());
+-=======
+@@ -279 +271 @@
+->>>>>>>
++  const activeResizes = useRef(new Set<string>());

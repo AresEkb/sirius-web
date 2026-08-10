@@ -1,0 +1,24 @@
+--- preimage
++++ postimage
+@@ -98,16 +98,3 @@
+-<<<<<<<
+-    if (state.currentStep === 'INITIAL_STEP') {
+-      const processedReferencePosition = referencePosition
+-        ? { ...referencePosition, positions: referencePosition.positions.map((position) => ({ ...position })) }
+-        : null;
+-      if (processedReferencePosition && !isHandleReferencePosition(processedReferencePosition.causedBy)) {
+-        let parentNode = reactFlowInstance.getNode(processedReferencePosition.parentId ?? '');
+-        while (parentNode) {
+-          processedReferencePosition.positions.forEach((position) => {
+-            position.x -= parentNode?.position.x ?? 0;
+-            position.y -= parentNode?.position.y ?? 0;
+-          });
+-          parentNode = reactFlowInstance.getNode(parentNode.parentId ?? '');
+-        }
+-=======
+-    let processedReferencePosition: GQLReferencePosition | null = referencePosition;
++    const processedReferencePosition = referencePosition
++      ? { ...referencePosition, positions: referencePosition.positions.map((position) => ({ ...position })) }
++      : null;
+@@ -122 +108,0 @@
+->>>>>>>

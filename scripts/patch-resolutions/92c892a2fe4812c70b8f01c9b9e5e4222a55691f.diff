@@ -1,0 +1,54 @@
+--- preimage
++++ postimage
+@@ -22,5 +22 @@
+-<<<<<<<
+-import { Edge, Node, useReactFlow } from '@xyflow/react';
+-import { memo, useCallback, useContext, useMemo } from 'react';
+-=======
+-import { Edge, Node, useReactFlow, useStore, useViewport } from '@xyflow/react';
++import { Edge, Node, useReactFlow, useStore } from '@xyflow/react';
+@@ -28 +23,0 @@
+->>>>>>>
+@@ -47 +41,0 @@
+-<<<<<<<
+@@ -54,2 +48 @@
+-    const { x: viewportX, y: viewportY, zoom: viewportZoom } = useViewport();
+-    const { getNode, getEdge } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
++    const { getNode, getEdge, getViewport } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
+@@ -57,9 +49,0 @@
+-=======
+-export const DiagramPalette = memo(({ diagramId, diagramTargetObjectId }: DiagramPaletteProps) => {
+-  const { readOnly } = useContext<DiagramContextValue>(DiagramContext);
+-  const { isOpened, x: paletteX, y: paletteY, representationElementIds, hidePalette } = usePalette();
+-  const { executeTool } = useContext<DiagramToolExecutorContextValue>(DiagramToolExecutorContext);
+-  const { setCurrentlyEditedLabelId, currentlyEditedLabelId } = useDiagramDirectEdit();
+-  const { getNode, getEdge, getViewport } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
+-  const { t } = useTranslation('sirius-components-diagrams', { keyPrefix: 'diagramPalette' });
+->>>>>>>
+@@ -69,2 +53,7 @@
+-    const selectionExists = useStore((state) => elementsIds.every((id) => id === diagramId || state.nodeLookup.has(id) || state.edgeLookup.has(id)));
+-    let { palette }: UsePaletteContentValue = usePaletteContents(elementsIds, readOnly || !isOpened || !selectionExists);
++    const selectionExists = useStore((state) =>
++      elementsIds.every((id) => id === diagramId || state.nodeLookup.has(id) || state.edgeLookup.has(id))
++    );
++    let { palette }: UsePaletteContentValue = usePaletteContents(
++      elementsIds,
++      readOnly || !isOpened || !selectionExists
++    );
+@@ -137,0 +127 @@
++      const { x: viewportX, y: viewportY, zoom: viewportZoom } = getViewport();
+@@ -183 +172,0 @@
+-<<<<<<<
+@@ -186,12 +174,0 @@
+-=======
+-  const onToolClick = (tool: GQLTool) => {
+-    const { x: viewportX, y: viewportY, zoom: viewportZoom } = getViewport();
+-    let x: number = 0;
+-    let y: number = 0;
+-    if (viewportZoom !== 0 && paletteX && paletteY) {
+-      x = (paletteX - viewportX) / viewportZoom;
+-      y = (paletteY - viewportY) / viewportZoom;
+-    }
+-    executeTool(x, y, elementsIds, targetObjectId, handleDirectEditClick, tool);
+-  };
+->>>>>>>

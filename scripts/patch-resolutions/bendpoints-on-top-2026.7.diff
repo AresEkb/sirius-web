@@ -1,0 +1,36 @@
+diff --git a/packages/diagrams/frontend/sirius-components-diagrams/src/renderer/edge/rectilinear-edge/MultiLabelRectilinearEditableEdge.tsx b/packages/diagrams/frontend/sirius-components-diagrams/src/renderer/edge/rectilinear-edge/MultiLabelRectilinearEditableEdge.tsx
+index b4fba55b19..cb0bed8b0e 100644
+--- a/packages/diagrams/frontend/sirius-components-diagrams/src/renderer/edge/rectilinear-edge/MultiLabelRectilinearEditableEdge.tsx
++++ b/packages/diagrams/frontend/sirius-components-diagrams/src/renderer/edge/rectilinear-edge/MultiLabelRectilinearEditableEdge.tsx
+@@ -205,0 +206,15 @@ export const MultiLabelRectilinearEditableEdge = memo(
++        {selected &&
++          middleBendingPoints &&
++          middleBendingPoints.map((point, index) => (
++            <TemporaryMovingLine
++              key={index}
++              x={point.x}
++              y={point.y}
++              direction={point.direction}
++              segmentLength={point.segmentLength}
++              index={index}
++              onDragStart={onDragStart}
++              onDrag={onTemporaryLineDrag}
++              onDragStop={onTemporaryLineDragStop}
++            />
++          ))}
+@@ -225,15 +239,0 @@ export const MultiLabelRectilinearEditableEdge = memo(
+-        {selected &&
+-          middleBendingPoints &&
+-          middleBendingPoints.map((point, index) => (
+-            <TemporaryMovingLine
+-              key={index}
+-              x={point.x}
+-              y={point.y}
+-              direction={point.direction}
+-              segmentLength={point.segmentLength}
+-              index={index}
+-              onDragStart={onDragStart}
+-              onDrag={onTemporaryLineDrag}
+-              onDragStop={onTemporaryLineDragStop}
+-            />
+-          ))}

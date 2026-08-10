@@ -1,0 +1,11 @@
+--- preimage
++++ postimage
+@@ -128,4 +127,0 @@
+-<<<<<<<
+-    const handleKeyDown = (event) => {
+-      if (event.code === 'ArrowUp') {
+-=======
+@@ -159,2 +155 @@
+-      if (event.key === 'ArrowUp') {
+->>>>>>>
++      if (event.code === 'ArrowUp') {
