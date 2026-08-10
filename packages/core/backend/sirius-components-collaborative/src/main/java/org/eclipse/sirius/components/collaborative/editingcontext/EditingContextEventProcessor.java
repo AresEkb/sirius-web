@@ -12,12 +12,15 @@
  *******************************************************************************/
 package org.eclipse.sirius.components.collaborative.editingcontext;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -30,6 +33,7 @@ import org.eclipse.sirius.components.collaborative.editingcontext.api.IEditingCo
 import org.eclipse.sirius.components.collaborative.editingcontext.api.IInputDispatcher;
 import org.eclipse.sirius.components.collaborative.editingcontext.api.IRepresentationEventProcessorProvider;
 import org.eclipse.sirius.components.collaborative.representations.api.IRepresentationEventProcessorRegistry;
+import org.eclipse.sirius.components.core.api.ErrorPayload;
 import org.eclipse.sirius.components.core.api.IEditingContext;
 import org.eclipse.sirius.components.core.api.IInput;
 import org.eclipse.sirius.components.core.api.IPayload;
@@ -59,6 +63,13 @@ public class EditingContextEventProcessor implements IEditingContextEventProcess
     public static final String REPRESENTATION_ID = "representationId";
 
     public static final String INPUT = "INPUT";
+
+    /**
+     * How long an input may be handled before the thread which handed it over gives up on it. Long enough that heavy
+     * but honest work - a large model saved, a whole project imported - is never cut short, short enough that a thread
+     * is not lost for good to work which will never finish.
+     */
+    private static final Duration DEFAULT_INPUT_TIMEOUT = Duration.ofMinutes(5);
 
     private final Logger logger = LoggerFactory.getLogger(EditingContextEventProcessor.class);
 
@@ -96,6 +107,15 @@ public class EditingContextEventProcessor implements IEditingContextEventProcess
 
     }
 
+    /**
+     * How long an input is given to be handled before the thread which handed it over gives up on it.
+     *
+     * @return the time an input is given to be handled
+     */
+    protected Duration getInputTimeout() {
+        return DEFAULT_INPUT_TIMEOUT;
+    }
+
     private Disposable setupChangeDescriptionSinkConsumer() {
         Consumer<ChangeDescription> consumer = changeDescription -> changeDescriptionListener.onChange(this.sink, this.canBeDisposedSink, this.editingContext, changeDescription);
         Consumer<Throwable> errorConsumer = throwable -> this.logger.atWarn()
@@ -131,14 +151,47 @@ public class EditingContextEventProcessor implements IEditingContextEventProcess
         One<IPayload> payloadSink = Sinks.one();
         Future<?> future = this.executorService.submit(() -> this.inputDispatcher.dispatch(this.executorService, payloadSink, this.canBeDisposedSink, this.changeDescriptionSink, this.editingContext, input));
         try {
-            // Block until the event has been processed
-            future.get();
-        } catch (InterruptedException | ExecutionException exception) {
-            this.logger.atWarn()
-                    .setMessage("Input processing interrupted. Input: {}")
-                    .addArgument(input)
-                    .setCause(exception)
-                    .log();
+            // Block until the event has been processed, but not for longer than an input may reasonably take. Work
+            // which never finishes, or which is never run at all, would otherwise park this thread for the life of the
+            // server: the caller is answered as though the input had been handled, nothing is logged, and the threads
+            // lost this way accumulate until everything they carried has quietly stopped.
+            Duration inputTimeout = this.getInputTimeout();
+            future.get(inputTimeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException exception) {
+            if (exception instanceof TimeoutException) {
+                this.logger.atError()
+                        .setMessage("Input processing has not finished within {} for editing context {}. Input: {}")
+                        .addArgument(this.getInputTimeout())
+                        .addArgument(this.editingContext.getId())
+                        .addArgument(input)
+                        .setCause(exception)
+                        .log();
+            } else {
+                this.logger.atWarn()
+                        .setMessage("Input processing interrupted. Input: {}")
+                        .addArgument(input)
+                        .setCause(exception)
+                        .log();
+            }
+
+            // A handler which has thrown has emitted no payload, so the sink stays empty and the caller is
+            // answered with an empty Mono - the very same answer an editing context gives when it has nothing
+            // to say. Whoever handed the input over therefore cannot tell a failure from a no-op, and the only
+            // trace of what happened is this log line. The failure is answered as an error payload instead, so
+            // that it crosses back over the executor to the caller which is waiting on it.
+            Throwable cause = exception;
+            if (exception instanceof ExecutionException) {
+                cause = exception.getCause();
+            }
+            String reason = String.valueOf(cause);
+            if (cause != null && cause.getMessage() != null) {
+                reason = cause.getMessage();
+            }
+            payloadSink.tryEmitValue(new ErrorPayload(input.id(), "Input processing failed: " + reason));
+
+            if (exception instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
         handleTimer.stop(this.meterRegistry.timer(Monitoring.TIMER_PROCESSING_INPUT, "input", input.getClass().getSimpleName(),
                 "inputId", input.id().toString()));
