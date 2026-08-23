@@ -13,7 +13,7 @@
 
 import { ServerContext, ServerContextValue } from '@eclipse-sirius/sirius-components-core';
 import { Edge, Node, useReactFlow } from '@xyflow/react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { NodeTypeContext } from '../../contexts/NodeContext';
 import { NodeTypeContextValue } from '../../contexts/NodeContext.types';
 import { useDiagramDescription } from '../../contexts/useDiagramDescription';
@@ -24,7 +24,7 @@ import { useLayoutConfigurations } from './arrange-all/useLayoutConfigurations';
 import { useElkLayout } from './elk/useElkLayout';
 import { cleanLayoutArea, layout, prepareLayoutArea, prepareLayoutLabels, prepareListNodeLayout } from './layout';
 import { RawDiagram } from './layout.types';
-import { UseLayoutState, UseLayoutValue } from './useLayout.types';
+import { LayoutRequest, UseLayoutState, UseLayoutValue } from './useLayout.types';
 
 const initialState: UseLayoutState = {
   currentStep: 'INITIAL_STEP',
@@ -51,6 +51,14 @@ export const useLayout = (): UseLayoutValue => {
 
   const reactFlowInstance = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
 
+  // A layout asked for while one is running waits here instead of being turned away. Laying a
+  // diagram out takes several renders and a run of the layout engine, so a gesture that ends in
+  // two changes - the shapes it moved coming to rest, then the one it sized coming to rest - asks
+  // twice, and the second ask arrives while the first is still under way whenever the browser is
+  // busy. Turning it away left the diagram short of what the gesture did, and that is what was
+  // then stored. Only the last ask is kept: a later one says everything an earlier one did.
+  const waitingRequest = useRef<LayoutRequest | null>(null);
+
   const layoutAreaPrepared = () => {
     const currentStep = 'LAYOUT';
     setState((prevState) => ({ ...prevState, currentStep }));
@@ -63,28 +71,30 @@ export const useLayout = (): UseLayoutValue => {
     layoutDirection: GQLArrangeLayoutDirection,
     callback: (laidoutDiagram: RawDiagram) => void
   ) => {
-    if (state.currentStep === 'INITIAL_STEP') {
-      let processedReferencePosition: GQLReferencePosition | null = referencePosition;
-      if (processedReferencePosition && !isHandleReferencePosition(processedReferencePosition.causedBy)) {
-        let parentNode = reactFlowInstance.getNode(processedReferencePosition.parentId ?? '');
-        while (parentNode) {
-          processedReferencePosition.positions.forEach((position) => {
-            position.x -= parentNode?.position.x ?? 0;
-            position.y -= parentNode?.position.y ?? 0;
-          });
-          parentNode = reactFlowInstance.getNode(parentNode.parentId ?? '');
-        }
+    let processedReferencePosition: GQLReferencePosition | null = referencePosition;
+    if (processedReferencePosition && !isHandleReferencePosition(processedReferencePosition.causedBy)) {
+      let parentNode = reactFlowInstance.getNode(processedReferencePosition.parentId ?? '');
+      while (parentNode) {
+        processedReferencePosition.positions.forEach((position) => {
+          position.x -= parentNode?.position.x ?? 0;
+          position.y -= parentNode?.position.y ?? 0;
+        });
+        parentNode = reactFlowInstance.getNode(parentNode.parentId ?? '');
       }
+    }
 
-      setState((prevState) => ({
-        ...prevState,
-        currentStep: 'BEFORE_LAYOUT',
-        previousDiagram: previousLaidoutDiagram,
-        diagramToLayout,
-        referencePosition: processedReferencePosition,
-        layoutDirection,
-        onLaidoutDiagram: callback,
-      }));
+    const request: LayoutRequest = {
+      previousDiagram: previousLaidoutDiagram,
+      diagramToLayout,
+      referencePosition: processedReferencePosition,
+      layoutDirection,
+      onLaidoutDiagram: callback,
+    };
+
+    if (state.currentStep === 'INITIAL_STEP') {
+      setState((prevState) => ({ ...prevState, currentStep: 'BEFORE_LAYOUT', ...request }));
+    } else {
+      waitingRequest.current = request;
     }
   };
 
@@ -158,7 +168,9 @@ export const useLayout = (): UseLayoutValue => {
     } else if (state.currentStep === 'AFTER_LAYOUT' && state.hiddenContainer && state.laidoutDiagram) {
       cleanLayoutArea(state.hiddenContainer, state.root);
       state.onLaidoutDiagram(state.laidoutDiagram);
-      setState(() => initialState);
+      const waiting = waitingRequest.current;
+      waitingRequest.current = null;
+      setState(() => (waiting ? { ...initialState, currentStep: 'BEFORE_LAYOUT', ...waiting } : initialState));
     }
   }, [state.currentStep, state.hiddenContainer, state.referencePosition, state.layoutDirection]);
 

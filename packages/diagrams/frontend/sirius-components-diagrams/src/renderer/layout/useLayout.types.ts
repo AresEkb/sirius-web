@@ -39,3 +39,12 @@ export interface UseLayoutState {
   layoutDirection: GQLArrangeLayoutDirection;
   onLaidoutDiagram: (laidoutDiagram: RawDiagram) => void;
 }
+
+/** What a caller asked a layout for, kept while another layout is running so it can be run in turn. */
+export interface LayoutRequest {
+  previousDiagram: RawDiagram | null;
+  diagramToLayout: RawDiagram;
+  referencePosition: GQLReferencePosition | null;
+  layoutDirection: GQLArrangeLayoutDirection;
+  onLaidoutDiagram: (laidoutDiagram: RawDiagram) => void;
+}
