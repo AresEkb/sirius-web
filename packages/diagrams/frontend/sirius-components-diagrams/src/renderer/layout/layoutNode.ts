@@ -637,6 +637,41 @@ const getOffsetFromPreviousNewSibling = (
   return { xOffset, yOffset };
 };
 
+/**
+ * A sibling of `node` whose figure would be overlapped were `node` drawn at `position`, or undefined where the place is
+ * free. Siblings are compared as boxes rather than as points: two nodes added from the same palette are created a few
+ * pixels apart rather than at the very same spot, so equal positions do not catch the case of one being drawn over the
+ * other.
+ */
+const siblingOverlapping = (
+  nodes: Node<NodeData, DiagramNodeType>[],
+  node: Node<NodeData, DiagramNodeType>,
+  position: XYPosition
+): Node<NodeData, DiagramNodeType> | undefined =>
+  nodes.find((sibling) => {
+    if (sibling.id === node.id || sibling.parentId !== node.parentId || sibling.data.isBorderNode) {
+      return false;
+    }
+    // Two figures can only be told to stand on the same spot once it is known how much room each of
+    // them takes. Before a figure has been drawn its size is not known, and taking it for nothing
+    // would report the whole diagram as standing on it: a sub-process opened again would have every
+    // figure it holds carried aside, away from where the modeller left them.
+    if (
+      node.width === undefined ||
+      node.height === undefined ||
+      sibling.width === undefined ||
+      sibling.height === undefined
+    ) {
+      return false;
+    }
+    return (
+      position.x < sibling.position.x + sibling.width &&
+      sibling.position.x < position.x + node.width &&
+      position.y < sibling.position.y + sibling.height &&
+      sibling.position.y < position.y + node.height
+    );
+  });
+
 const getPositionFromReferencedNode = (
   node: Node<NodeData, DiagramNodeType>,
   referencedNode: Node<NodeData, DiagramNodeType>,
@@ -705,6 +740,16 @@ export const computeNewlyNodePosition = (
           referencePosition.parentId &&
           referencePosition.parentId !== ''
         ) {
+          // Here the position the tool was invoked at says nothing about where the new node goes - it is a
+          // point on the node the tool was invoked on - so one is worked out beside that node instead. A node
+          // the server sent layout data for has one already: the tool that created it worked out where it
+          // belongs and stored that. Two branches drawn from one gateway would otherwise be laid on the same
+          // spot, and since the layout is written back, what the tool decided would be lost rather than
+          // merely unseen. A border node is left alone: where it goes is read off the border of the node it
+          // is attached to, below, and a position of its own is no answer to that.
+          if (!node.data.isNew && !node.data.isBorderNode) {
+            return { ...node };
+          }
           let referencedNode = nodes.find((n) => n.id === referencePosition?.parentId);
           if (referencedNode) {
             for (let iter = 0; iter <= maxOverflowIteration; iter++) {
@@ -717,6 +762,25 @@ export const computeNewlyNodePosition = (
               }
               referencedNode = samePositionSibling;
             }
+          }
+        } else if (!node.data.isBorderNode && node.parentId) {
+          // A child the server sent layout data for already stands where it belongs and is only appearing again:
+          // expanding a container shows the children it holds, and they reach the diagram the way created nodes do,
+          // absent a moment ago and present now. The point the expand tool was invoked at is a point on the
+          // collapsed container's name band and no answer to where any of them goes; taken as one it would gather
+          // every child onto that band, and since the layout is written back the arrangement the modeller made
+          // would be lost rather than merely mislaid.
+          if (!node.data.isNew) {
+            return { ...node };
+          }
+          // Here the tool was invoked on the very node the new one goes inside, so the point it was invoked at is a
+          // point within that node and a usable place for it - unless a figure already stands there. Two children
+          // added from a container's own palette are both created at the point that palette was opened at, and would
+          // otherwise be drawn one on top of the other until something else laid the container out again.
+          let occupant = siblingOverlapping(nodes, node, newPosition);
+          for (let iter = 0; occupant && iter <= maxOverflowIteration; iter++) {
+            newPosition = getPositionFromReferencedNode(node, occupant, layoutDirection);
+            occupant = siblingOverlapping(nodes, node, newPosition);
           }
         }
         if (node.data.isBorderNode) {

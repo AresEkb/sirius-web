@@ -27,6 +27,7 @@
     "build": "vite build && tsc",
     "format": "prettier --write \"src/**/*.{js,ts,tsx,css}\"",
     "format-lint": "prettier --list-different \"src/**/*.{js,ts,tsx,css}\"",
+    "test": "vitest --run --config vite.config.js",
     "publish:local": "yalc push"
   },
   "peerDependencies": {
