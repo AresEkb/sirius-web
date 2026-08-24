@@ -311,7 +311,27 @@ export const layout = (
     nodeLayoutHandlerContributions,
     autoLayout
   );
+  measureAtLaidOutSize(diagram.nodes);
   return diagram;
+};
+
+/**
+ * Puts the size each node is measured at back in step with the size the layout has just given it.
+ *
+ * A node arrives measured at the size the server has stored for it, and the layout then works out
+ * the size it is drawn at, which is not the same one whenever the diagram has changed since - a
+ * container grown by something added inside it, for instance. The two only come back together once
+ * the new size has been stored and has come back, and until then anything reading the measured size
+ * reads a size that is on screen nowhere: a resize begun in that window starts from the stored size
+ * rather than from the edge the modeller is pulling, so the gesture is short by the whole of the
+ * difference and the node is left smaller than it was asked to be.
+ */
+const measureAtLaidOutSize = (nodes: Node<NodeData>[]): void => {
+  nodes.forEach((node) => {
+    if (node.width !== undefined && node.height !== undefined) {
+      node.measured = { width: node.width, height: node.height };
+    }
+  });
 };
 
 const layoutDiagram = (
