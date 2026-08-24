@@ -120,7 +120,7 @@ public class EditingContextEventProcessor implements IEditingContextEventProcess
                     .addArgument(this.editingContext.getId())
                     .log();
 
-            handleTimer.stop(this.meterRegistry.timer(Monitoring.EVENT_HANDLER, INPUT, input.getClass().getSimpleName(), "inputId", input.id().toString()));
+            handleTimer.stop(this.meterRegistry.timer(Monitoring.EVENT_HANDLER, INPUT, input.getClass().getSimpleName()));
             return Mono.empty();
         }
 
@@ -140,8 +140,7 @@ public class EditingContextEventProcessor implements IEditingContextEventProcess
                     .setCause(exception)
                     .log();
         }
-        handleTimer.stop(this.meterRegistry.timer(Monitoring.TIMER_PROCESSING_INPUT, "input", input.getClass().getSimpleName(),
-                "inputId", input.id().toString()));
+        handleTimer.stop(this.meterRegistry.timer(Monitoring.TIMER_PROCESSING_INPUT, "input", input.getClass().getSimpleName()));
 
         return payloadSink.asMono()
                 .log(this.getClass().getName(), Level.FINEST, SignalType.ON_NEXT, SignalType.ON_ERROR)

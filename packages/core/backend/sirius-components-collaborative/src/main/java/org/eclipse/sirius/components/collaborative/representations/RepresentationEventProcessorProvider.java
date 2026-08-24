@@ -100,9 +100,7 @@ public class RepresentationEventProcessorProvider implements IRepresentationEven
             }
         } else {
             var timer = this.meterRegistry.timer(Monitoring.TIMER_CREATE_REPRESENATION_EVENT_PROCESSOR,
-                    "editingContext", editingContext.getId(),
-                    "input", input.getClass().getSimpleName(),
-                    REPRESENTATION_ID, representationId);
+                    "input", input.getClass().getSimpleName());
             getRepresentationEventProcessorSample.stop(timer);
         }
 

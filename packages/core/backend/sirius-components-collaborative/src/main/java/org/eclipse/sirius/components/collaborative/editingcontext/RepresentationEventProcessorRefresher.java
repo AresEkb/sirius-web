@@ -76,7 +76,7 @@ public class RepresentationEventProcessorRefresher implements IChangeDescription
                     .log();
         }
 
-        var timer = this.meterRegistry.timer(Monitoring.TIMER_REFRESH_REPRESENTATION, "changeDescription", changeDescription.getSourceId());
+        var timer = this.meterRegistry.timer(Monitoring.TIMER_REFRESH_REPRESENTATION, "changeDescription", changeDescription.getKind());
         refreshRepresentationSample.stop(timer);
     }
 
