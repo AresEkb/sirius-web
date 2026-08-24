@@ -38,6 +38,7 @@ import { DiagramContext } from '../contexts/DiagramContext';
 import { DiagramContextValue } from '../contexts/DiagramContext.types';
 import { NodeTypeContext } from '../contexts/NodeContext';
 import { NodeTypeContextValue } from '../contexts/NodeContext.types';
+import { isPlainChangeBatch } from './node/nodeChangePredicates';
 import { useDiagramDescription } from '../contexts/useDiagramDescription';
 import { convertDiagram } from '../converter/convertDiagram';
 import { useStore } from '../representation/useStore';
@@ -263,18 +264,8 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
   const handleNodesChange: OnNodesChange<Node<NodeData>> = useCallback(
     (changes: NodeChange<Node<NodeData>>[]) => {
       const noReadOnlyChanges = filterReadOnlyChanges(changes);
-      const isResetChange = changes.find((change) => change.type === 'replace');
-      const isSelectChange = changes.find(
-        (change) => change.type === 'select' && !change.id.startsWith('edgeAnchorNodeCreationHandles')
-      );
 
-      if (
-        isResetChange ||
-        isSelectChange ||
-        (noReadOnlyChanges.length === 1 &&
-          noReadOnlyChanges[0]?.type === 'dimensions' &&
-          typeof noReadOnlyChanges[0].resizing !== 'boolean')
-      ) {
+      if (isPlainChangeBatch(noReadOnlyChanges)) {
         setNodes((previousNodes) => {
           const newNodes = applyLastElementSelected(changes, previousNodes, selectedElementsIds);
           return applyNodeChanges<Node<NodeData>>(noReadOnlyChanges, newNodes);
