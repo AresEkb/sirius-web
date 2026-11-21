@@ -29,7 +29,23 @@ export interface ILayoutEngine {
   );
 }
 
+export interface FloatingEdgeEndpointContext {
+  node: Node<NodeData>;
+  bounds: XYPosition & Dimensions;
+  reference: XYPosition;
+  projection: 'radial' | 'orthogonal';
+  endpoint: 'source' | 'target';
+}
+
+export interface FloatingEdgeEndpointResolution {
+  point: XYPosition;
+  position: Position;
+}
+
 export interface INodeLayoutHandler<T extends NodeData> {
+  resolveFloatingEdgeEndpoint?(context: FloatingEdgeEndpointContext): FloatingEdgeEndpointResolution | undefined;
+  canAlignEdgeHandle?(node: Node<NodeData>, handleId: string): boolean;
+
   canHandle(node: Node<NodeData, DiagramNodeType>);
 
   handle(

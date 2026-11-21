@@ -43,7 +43,7 @@ type GraphBoundingBox = {
   yMin: number;
 };
 
-type SVGDrawFunction = (source: XYPosition, target: XYPosition, path: number[][]) => string;
+type SVGDrawFunction = (source: PointInfo, target: PointInfo, path: XYPosition[]) => string;
 
 type PathFindingFunction = (
   grid: Grid,
@@ -61,16 +61,31 @@ const roundUp = (x: number, multiple = 10) => Math.ceil(x / multiple) * multiple
 const round = (x: number, multiple = 10) => Math.round(x / multiple) * multiple;
 
 const svgDrawStraightLinePath: SVGDrawFunction = (source, target, path) => {
-  let svgPathString = `M ${source.x}, ${source.y} `;
-
-  path.forEach((point) => {
-    const [x, y] = point;
-    svgPathString += `L ${x}, ${y} `;
-  });
-
-  svgPathString += `L ${target.x}, ${target.y} `;
-
-  return svgPathString;
+  let last: XYPosition = source;
+  let result = `M ${source.x}, ${source.y} `;
+  const append = (x: number, y: number) => {
+    if (x !== last.x || y !== last.y) {
+      result += `L ${x}, ${y} `;
+      last = { x, y };
+    }
+  };
+  const first = path[0];
+  if (first) {
+    const { x, y } = first;
+    if (source.position === Position.Left || source.position === Position.Right) {
+      append(x, source.y);
+    } else {
+      append(source.x, y);
+    }
+    path.forEach(({ x, y }) => append(x, y));
+    if (target.position === Position.Left || target.position === Position.Right) {
+      append(last.x, target.y);
+    } else {
+      append(target.x, last.y);
+    }
+  }
+  append(target.x, target.y);
+  return result;
 };
 
 const pathfindingJumpPointNoDiagonal: PathFindingFunction = (grid, start, end) => {
@@ -302,7 +317,7 @@ export const getSmartEdge = ({ nodes, sourceX, sourceY, targetX, targetY, source
   const graphPath = smoothedPath.map((gridPoint) => {
     const [x, y] = gridPoint;
     const graphPoint = gridToGraphPoint({ x: x ?? 0, y: y ?? 0 }, graphBox.xMin, graphBox.yMin, gridRatio);
-    return [graphPoint.x, graphPoint.y];
+    return graphPoint;
   });
 
   const svgPathString = svgDrawStraightLinePath(source, target, graphPath);

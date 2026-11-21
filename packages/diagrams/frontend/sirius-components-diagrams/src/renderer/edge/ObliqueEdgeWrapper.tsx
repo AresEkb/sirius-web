@@ -10,6 +10,7 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
+import { resolveFloatingEdgeEndpoints } from './FloatingEdgeEndpoints';
 import { Edge, EdgeProps, InternalNode, Node, useInternalNode, Position } from '@xyflow/react';
 import { useContext, memo } from 'react';
 import { NodeTypeContext } from '../../contexts/NodeContext';
@@ -26,8 +27,8 @@ export const ObliqueEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeData
     target,
     markerEnd,
     markerStart,
-    sourcePosition,
-    targetPosition,
+    sourcePosition: initialSourcePosition,
+    targetPosition: initialTargetPosition,
     sourceHandleId,
     targetHandleId,
     data,
@@ -50,17 +51,37 @@ export const ObliqueEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeData
 
   let { x: sourceX, y: sourceY } = getHandleCoordinatesByPosition(
     sourceNode,
-    sourcePosition,
+    initialSourcePosition,
     sourceHandleId ?? '',
     sourceLayoutHandler?.calculateCustomNodeEdgeHandlePosition
   );
   let { x: targetX, y: targetY } = getHandleCoordinatesByPosition(
     targetNode,
-    targetPosition,
+    initialTargetPosition,
     targetHandleId ?? '',
     targetLayoutHandler?.calculateCustomNodeEdgeHandlePosition
   );
 
+  let sourcePosition = initialSourcePosition;
+  let targetPosition = initialTargetPosition;
+  const sourceInput = {
+    node: sourceNode,
+    handler: sourceLayoutHandler,
+    handleId: sourceHandleId ?? '',
+    handlePoint: { x: sourceX, y: sourceY },
+    position: sourcePosition,
+  };
+  const targetInput = {
+    node: targetNode,
+    handler: targetLayoutHandler,
+    handleId: targetHandleId ?? '',
+    handlePoint: { x: targetX, y: targetY },
+    position: targetPosition,
+  };
+  const staleRelativeRoute = data?.relativePositionBendingPoints && sourceNode.data.moving && targetNode.data.moving;
+  const floating = staleRelativeRoute
+    ? {}
+    : resolveFloatingEdgeEndpoints(sourceInput, targetInput, 'radial', data?.bendingPoints ?? []);
   // trick to have the source of the edge positioned at the very border of a node
   // if the edge has a marker, then only the marker need to touch the node
   const handleSourceRadius = markerStart == undefined || markerStart.includes('None') ? 2 : 3;
@@ -96,6 +117,15 @@ export const ObliqueEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeData
       break;
   }
 
+  if (floating.source) {
+    ({ x: sourceX, y: sourceY } = floating.source.point);
+    sourcePosition = floating.source.position;
+  }
+  if (floating.target) {
+    ({ x: targetX, y: targetY } = floating.target.point);
+    targetPosition = floating.target.position;
+  }
+
   if (data?.relativePositionBendingPoints && sourceNode.data.moving && targetNode.data.moving) {
     data.bendingPoints = data.relativePositionBendingPoints.map((relativePositionBendingPoint) => ({
       x: relativePositionBendingPoint.x + sourceX,
@@ -106,6 +136,8 @@ export const ObliqueEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeData
   return (
     <MultiLabelObliqueEditableEdge
       {...props}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
       sourceX={sourceX}
       sourceY={sourceY}
       targetX={targetX}

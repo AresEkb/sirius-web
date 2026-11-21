@@ -11,6 +11,11 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import {
+  canAlignEdgeHandle,
+  resolveFloatingEdgeEndpoints,
+  resolveFloatingOrthogonalRoute,
+} from './FloatingEdgeEndpoints';
+import {
   Edge,
   EdgeProps,
   getSmoothStepPath,
@@ -43,14 +48,78 @@ const isVerticalPosition = (position: Position) => position === Position.Top || 
 
 const isHorizontalPosition = (position: Position) => position === Position.Left || position === Position.Right;
 
+const createSmoothStepBendingPoints = (
+  sourceX: number,
+  sourceY: number,
+  sourcePosition: Position,
+  targetX: number,
+  targetY: number,
+  targetPosition: Position,
+  roundCoordinates = true
+): XYPosition[] => {
+  const bendingPoints: XYPosition[] = [];
+  const [smoothEdgePath] = getSmoothStepPath({
+    sourceX: roundCoordinates ? roundToDecimal(sourceX) : sourceX,
+    sourceY: roundCoordinates ? roundToDecimal(sourceY) : sourceY,
+    sourcePosition,
+    targetX: roundCoordinates ? roundToDecimal(targetX) : targetX,
+    targetY: roundCoordinates ? roundToDecimal(targetY) : targetY,
+    targetPosition,
+  });
+
+  const quadraticCurvePoints: {
+    x: number;
+    y: number;
+  }[] = smoothEdgePath.includes('NaN') ? [] : parse(smoothEdgePath).filter((segment) => segment.code === 'Q');
+
+  if (quadraticCurvePoints.length > 0) {
+    const firstPoint = quadraticCurvePoints[0];
+    if (firstPoint) {
+      switch (sourcePosition) {
+        case Position.Right:
+        case Position.Left:
+          bendingPoints.push({ x: firstPoint.x, y: sourceY });
+          for (let i = 1; i < quadraticCurvePoints.length; i++) {
+            const currentPoint = quadraticCurvePoints[i];
+            const previousPoint = quadraticCurvePoints[i - 1];
+            if (currentPoint && previousPoint) {
+              if (isMultipleOfTwo(i)) {
+                bendingPoints.push({ x: currentPoint.x, y: previousPoint.y });
+              } else {
+                bendingPoints.push({ x: previousPoint.x, y: currentPoint.y });
+              }
+            }
+          }
+          break;
+        case Position.Top:
+        case Position.Bottom:
+          bendingPoints.push({ x: sourceX, y: firstPoint.y });
+          for (let i = 1; i < quadraticCurvePoints.length; i++) {
+            const currentPoint = quadraticCurvePoints[i];
+            const previousPoint = quadraticCurvePoints[i - 1];
+            if (currentPoint && previousPoint) {
+              if (isMultipleOfTwo(i)) {
+                bendingPoints.push({ x: previousPoint.x, y: currentPoint.y });
+              } else {
+                bendingPoints.push({ x: currentPoint.x, y: previousPoint.y });
+              }
+            }
+          }
+          break;
+      }
+    }
+  }
+  return bendingPoints;
+};
+
 export const SmoothStepEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeData>>) => {
   const {
     source,
     target,
     markerEnd,
     markerStart,
-    sourcePosition,
-    targetPosition,
+    sourcePosition: initialSourcePosition,
+    targetPosition: initialTargetPosition,
     sourceHandleId,
     targetHandleId,
     data,
@@ -73,17 +142,58 @@ export const SmoothStepEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeD
 
   let { x: sourceX, y: sourceY } = getHandleCoordinatesByPosition(
     sourceNode,
-    sourcePosition,
+    initialSourcePosition,
     sourceHandleId ?? '',
     sourceLayoutHandler?.calculateCustomNodeEdgeHandlePosition
   );
   let { x: targetX, y: targetY } = getHandleCoordinatesByPosition(
     targetNode,
-    targetPosition,
+    initialTargetPosition,
     targetHandleId ?? '',
     targetLayoutHandler?.calculateCustomNodeEdgeHandlePosition
   );
 
+  let sourcePosition = initialSourcePosition;
+  let targetPosition = initialTargetPosition;
+  const sourceInput = {
+    node: sourceNode,
+    handler: sourceLayoutHandler,
+    handleId: sourceHandleId ?? '',
+    handlePoint: { x: sourceX, y: sourceY },
+    position: sourcePosition,
+  };
+  const targetInput = {
+    node: targetNode,
+    handler: targetLayoutHandler,
+    handleId: targetHandleId ?? '',
+    handlePoint: { x: targetX, y: targetY },
+    position: targetPosition,
+  };
+  const staleRelativeRoute = data?.relativePositionBendingPoints && sourceNode.data.moving && targetNode.data.moving;
+  const generated =
+    !data?.bendingPoints?.length && !staleRelativeRoute
+      ? resolveFloatingOrthogonalRoute(sourceInput, targetInput, (from, to) =>
+          createSmoothStepBendingPoints(
+            from.point.x,
+            from.point.y,
+            from.position,
+            to.point.x,
+            to.point.y,
+            to.position,
+            false
+          )
+        )
+      : undefined;
+  const floating = staleRelativeRoute
+    ? {}
+    : generated?.terminals ??
+      resolveFloatingEdgeEndpoints(
+        sourceInput,
+        targetInput,
+        'orthogonal',
+        data?.bendingPoints ?? [],
+        !data?.bendingPoints?.length
+      );
   // trick to have the source of the edge positioned at the very border of a node
   // if the edge has a marker, then only the marker need to touch the node
   const handleSourceRadius = markerStart == undefined || markerStart.includes('None') ? 2 : 3;
@@ -119,8 +229,24 @@ export const SmoothStepEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeD
       break;
   }
 
+  if (floating.source) {
+    ({ x: sourceX, y: sourceY } = floating.source.point);
+    sourcePosition = floating.source.position;
+  }
+  if (floating.target) {
+    ({ x: targetX, y: targetY } = floating.target.point);
+    targetPosition = floating.target.position;
+  }
+
   const threshold = 10;
+  const shouldAlign =
+    !floating.source &&
+    !floating.target &&
+    !data?.bendingPoints?.length &&
+    canAlignEdgeHandle(sourceNode, sourceHandleId, sourceLayoutHandler) &&
+    canAlignEdgeHandle(targetNode, targetHandleId, targetLayoutHandler);
   if (
+    shouldAlign &&
     Math.abs(sourceX - targetX) < threshold &&
     isVerticalPosition(sourcePosition) &&
     isVerticalPosition(targetPosition)
@@ -145,6 +271,7 @@ export const SmoothStepEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeD
     }
   }
   if (
+    shouldAlign &&
     Math.abs(sourceY - targetY) < threshold &&
     isHorizontalPosition(sourcePosition) &&
     isHorizontalPosition(targetPosition)
@@ -179,62 +306,16 @@ export const SmoothStepEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeD
     }
     bendingPoints = data.bendingPoints;
   } else {
-    const [smoothEdgePath] = getSmoothStepPath({
-      sourceX: roundToDecimal(sourceX),
-      sourceY: roundToDecimal(sourceY),
-      sourcePosition,
-      targetX: roundToDecimal(targetX),
-      targetY: roundToDecimal(targetY),
-      targetPosition,
-    });
-
-    const quadraticCurvePoints: {
-      x: number;
-      y: number;
-    }[] = smoothEdgePath.includes('NaN') ? [] : parse(smoothEdgePath).filter((segment) => segment.code === 'Q');
-
-    if (quadraticCurvePoints.length > 0) {
-      const firstPoint = quadraticCurvePoints[0];
-      if (firstPoint) {
-        switch (sourcePosition) {
-          case Position.Right:
-          case Position.Left:
-            bendingPoints.push({ x: firstPoint.x, y: sourceY });
-            for (let i = 1; i < quadraticCurvePoints.length; i++) {
-              const currentPoint = quadraticCurvePoints[i];
-              const previousPoint = quadraticCurvePoints[i - 1];
-              if (currentPoint && previousPoint) {
-                if (isMultipleOfTwo(i)) {
-                  bendingPoints.push({ x: currentPoint.x, y: previousPoint.y });
-                } else {
-                  bendingPoints.push({ x: previousPoint.x, y: currentPoint.y });
-                }
-              }
-            }
-            break;
-          case Position.Top:
-          case Position.Bottom:
-            bendingPoints.push({ x: sourceX, y: firstPoint.y });
-            for (let i = 1; i < quadraticCurvePoints.length; i++) {
-              const currentPoint = quadraticCurvePoints[i];
-              const previousPoint = quadraticCurvePoints[i - 1];
-              if (currentPoint && previousPoint) {
-                if (isMultipleOfTwo(i)) {
-                  bendingPoints.push({ x: previousPoint.x, y: currentPoint.y });
-                } else {
-                  bendingPoints.push({ x: currentPoint.x, y: previousPoint.y });
-                }
-              }
-            }
-            break;
-        }
-      }
-    }
+    bendingPoints =
+      generated?.bendingPoints ??
+      createSmoothStepBendingPoints(sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition);
   }
 
   return (
     <MultiLabelRectilinearEditableEdge
       {...props}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
       sourceX={sourceX}
       sourceY={sourceY}
       targetX={targetX}

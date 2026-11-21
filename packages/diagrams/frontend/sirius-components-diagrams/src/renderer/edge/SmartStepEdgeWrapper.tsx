@@ -10,6 +10,7 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
+import { canAlignEdgeHandle } from './FloatingEdgeEndpoints';
 import {
   Edge,
   EdgeProps,
@@ -128,19 +129,27 @@ export const SmartStepEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeDa
   switch (sourcePosition) {
     case Position.Right:
       sourceX = sourceX + handleSourceRadius;
-      sourceY = roundToNearestTen(sourceY);
+      if (canAlignEdgeHandle(sourceNode, sourceHandleId, sourceLayoutHandler)) {
+        sourceY = roundToNearestTen(sourceY);
+      }
       break;
     case Position.Left:
       sourceX = sourceX - handleSourceRadius;
-      sourceY = roundToNearestTen(sourceY);
+      if (canAlignEdgeHandle(sourceNode, sourceHandleId, sourceLayoutHandler)) {
+        sourceY = roundToNearestTen(sourceY);
+      }
       break;
     case Position.Top:
       sourceY = sourceY - handleSourceRadius;
-      sourceX = roundToNearestTen(sourceX);
+      if (canAlignEdgeHandle(sourceNode, sourceHandleId, sourceLayoutHandler)) {
+        sourceX = roundToNearestTen(sourceX);
+      }
       break;
     case Position.Bottom:
       sourceY = sourceY + handleSourceRadius;
-      sourceX = roundToNearestTen(sourceX);
+      if (canAlignEdgeHandle(sourceNode, sourceHandleId, sourceLayoutHandler)) {
+        sourceX = roundToNearestTen(sourceX);
+      }
       break;
   }
   // trick to have the target of the edge positioned at the very border of a node
@@ -149,19 +158,27 @@ export const SmartStepEdgeWrapper = memo((props: EdgeProps<Edge<MultiLabelEdgeDa
   switch (targetPosition) {
     case Position.Right:
       targetX = targetX + handleTargetRadius;
-      targetY = roundToNearestTen(targetY);
+      if (canAlignEdgeHandle(targetNode, targetHandleId, targetLayoutHandler)) {
+        targetY = roundToNearestTen(targetY);
+      }
       break;
     case Position.Left:
       targetX = targetX - handleTargetRadius;
-      targetY = roundToNearestTen(targetY);
+      if (canAlignEdgeHandle(targetNode, targetHandleId, targetLayoutHandler)) {
+        targetY = roundToNearestTen(targetY);
+      }
       break;
     case Position.Top:
       targetY = targetY - handleTargetRadius;
-      targetX = roundToNearestTen(targetX);
+      if (canAlignEdgeHandle(targetNode, targetHandleId, targetLayoutHandler)) {
+        targetX = roundToNearestTen(targetX);
+      }
       break;
     case Position.Bottom:
       targetY = targetY + handleTargetRadius;
-      targetX = roundToNearestTen(targetX);
+      if (canAlignEdgeHandle(targetNode, targetHandleId, targetLayoutHandler)) {
+        targetX = roundToNearestTen(targetX);
+      }
       break;
   }
 

@@ -74,7 +74,12 @@ export { useElkLayout } from './renderer/layout/elk/useElkLayout';
 export type { UseElkLayoutValue } from './renderer/layout/elk/useElkLayout.types';
 export type { ForcedDimensions, RawDiagram } from './renderer/layout/layout.types';
 export * from './renderer/layout/layoutBorderNodes';
-export type { ILayoutEngine, INodeLayoutHandler } from './renderer/layout/LayoutEngine.types';
+export type {
+  FloatingEdgeEndpointContext,
+  FloatingEdgeEndpointResolution,
+  ILayoutEngine,
+  INodeLayoutHandler,
+} from './renderer/layout/LayoutEngine.types';
 export * from './renderer/layout/layoutNode';
 export { defaultHeight, defaultWidth } from './renderer/layout/layoutParams';
 export { useLayout } from './renderer/layout/useLayout';
