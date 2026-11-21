@@ -20,7 +20,7 @@ import ListItemText from '@mui/material/ListItemText';
 import { Theme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { isTool, isToolSection } from '../Palette';
 import { GQLPaletteEntry, GQLTool } from '../Palette.types';
@@ -104,14 +104,54 @@ const useStyle = makeStyles()((theme) => ({
 export const PaletteSearchResult = ({ palette, onToolClick, searchToolValue }: PaletteSearchResultProps) => {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
+  const [scrollTop, setScrollTop] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rowHeight = 32;
+  const viewportHeight = 280;
+  const overscan = 4;
   const { classes } = useStyle();
 
   const toolList: GQLTool[] = useMemo(() => flatToolsFromPaletteEntries(palette.paletteEntries), [palette]);
 
-  const filteredToolList: GQLTool[] = toolList.filter((tool) => fuzzyMatch(tool.label, searchToolValue).matches);
+  const filteredToolList = useMemo(
+    () => toolList.filter((tool) => fuzzyMatch(tool.label, searchToolValue).matches),
+    [toolList, searchToolValue]
+  );
+
+  const firstVisible = Math.max(0, Math.min(Math.floor(scrollTop / rowHeight) - overscan, filteredToolList.length - 1));
+  const endVisible = Math.min(
+    filteredToolList.length,
+    Math.max(firstVisible, Math.ceil((scrollTop + viewportHeight) / rowHeight) + overscan)
+  );
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    setSelectedIndex(0);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+    setScrollTop(0);
+  }, [filteredToolList]);
+
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) {
+      return;
+    }
+    const top = selectedIndex * rowHeight;
+    const height = element.clientHeight || viewportHeight;
+    if (top < element.scrollTop) {
+      element.scrollTop = top;
+    } else if (top + rowHeight > element.scrollTop + height) {
+      element.scrollTop = top + rowHeight - height;
+    }
+    setScrollTop(element.scrollTop);
+  }, [selectedIndex]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (filteredToolList.length === 0) {
+        return;
+      }
       if (event.key === 'ArrowUp') {
         event.preventDefault();
         setSelectedIndex((prev) => (prev === 0 ? filteredToolList.length - 1 : prev - 1));
@@ -132,7 +172,7 @@ export const PaletteSearchResult = ({ palette, onToolClick, searchToolValue }: P
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedIndex, filteredToolList]);
+  }, [selectedIndex, filteredToolList, onToolClick]);
 
   const convertToListItem = (tool: GQLTool, index: number): JSX.Element | null => {
     const matchResult = fuzzyMatch(tool.label, searchToolValue);
@@ -140,6 +180,7 @@ export const PaletteSearchResult = ({ palette, onToolClick, searchToolValue }: P
       <Tooltip title={tool.label} key={tool.id} placement="right">
         <ListItemButton
           className={classes.listItemButton}
+          sx={{ height: rowHeight, minHeight: rowHeight, boxSizing: 'border-box' }}
           onClick={() => onToolClick(tool)}
           selected={index === selectedIndex}>
           <ListItemIcon className={classes.listItemIcon}>
@@ -154,10 +195,18 @@ export const PaletteSearchResult = ({ palette, onToolClick, searchToolValue }: P
   };
 
   return (
-    <Box className={classes.toolListContainer}>
+    <Box
+      className={classes.toolListContainer}
+      ref={scrollRef}
+      sx={{ minHeight: 0, maxHeight: viewportHeight }}
+      onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}>
       {filteredToolList.length > 0 ? (
         <List className={classes.toolList} component="nav">
-          {filteredToolList.map(convertToListItem)}
+          <div aria-hidden="true" style={{ height: firstVisible * rowHeight }} />
+          {filteredToolList
+            .slice(firstVisible, endVisible)
+            .map((tool, index) => convertToListItem(tool, firstVisible + index))}
+          <div aria-hidden="true" style={{ height: (filteredToolList.length - endVisible) * rowHeight }} />
         </List>
       ) : (
         <Typography variant="body2" align="center">
