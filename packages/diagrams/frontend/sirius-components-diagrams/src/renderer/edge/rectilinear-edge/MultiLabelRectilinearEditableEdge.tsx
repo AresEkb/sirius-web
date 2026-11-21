@@ -11,6 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
+import { useSharedMarkerUrl } from '../MarkerDefinitions';
 import { useTheme } from '@mui/material/styles';
 import { BaseEdge, Edge, XYPosition } from '@xyflow/react';
 import { memo, useEffect, useMemo, useState } from 'react';
@@ -49,6 +50,8 @@ export const MultiLabelRectilinearEditableEdge = memo(
     targetHandleId,
   }: MultiLabelEditableEdgeProps<Edge<MultiLabelEdgeData>>) => {
     const faded = !!data?.faded;
+    const sharedMarkerEnd = useSharedMarkerUrl(markerEnd, selected);
+    const sharedMarkerStart = useSharedMarkerUrl(markerStart, selected);
     const { setEdges } = useStore();
     const theme = useTheme();
 
@@ -194,8 +197,8 @@ export const MultiLabelRectilinearEditableEdge = memo(
           path={edgePath}
           style={strokeStyle}
           className={`target_handle_${targetPosition} source_handle_${sourcePosition}`}
-          markerEnd={selected ? `${markerEnd?.slice(0, markerEnd.length - 2)}--selected')` : markerEnd}
-          markerStart={selected ? `${markerStart?.slice(0, markerStart.length - 2)}--selected')` : markerStart}
+          markerEnd={sharedMarkerEnd}
+          markerStart={sharedMarkerStart}
         />
         {selected ? (
           <EdgeCreationHandle

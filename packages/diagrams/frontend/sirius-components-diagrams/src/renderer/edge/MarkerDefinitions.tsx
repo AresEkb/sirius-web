@@ -13,17 +13,17 @@
 
 import { getCSSColor } from '@eclipse-sirius/sirius-components-core';
 import { Theme, useTheme } from '@mui/material/styles';
-import { Edge, EdgeMarkerType, ReactFlowState, useStore } from '@xyflow/react';
+import { Edge, EdgeMarkerType, ReactFlowState, useStore, useStoreApi } from '@xyflow/react';
 import { useCallback } from 'react';
 import { MarkerProps } from './MarkerDefinitions.types';
 
 const markerSelector = (state: ReactFlowState): MarkerProps[] => {
-  const ids: string[] = [];
+  const ids = new Set<string>();
   const initialMarkerProps: MarkerProps[] = [];
   const reducer = (allMarkerProps: MarkerProps[], edge: Edge): MarkerProps[] => {
     [edge.markerStart, edge.markerEnd].forEach((marker: EdgeMarkerType | undefined) => {
       if (marker && typeof marker === 'string' && edge.style?.stroke) {
-        if (!ids.includes(marker)) {
+        if (!ids.has(marker)) {
           allMarkerProps.push(
             {
               id: marker,
@@ -34,8 +34,8 @@ const markerSelector = (state: ReactFlowState): MarkerProps[] => {
               edgeColor: edge.style.stroke,
             }
           );
-          ids.push(marker);
-          ids.push(`${marker}--selected`);
+          ids.add(marker);
+          ids.add(`${marker}--selected`);
         }
       }
     });
@@ -46,6 +46,67 @@ const markerSelector = (state: ReactFlowState): MarkerProps[] => {
   return state.edges
     .reduce<MarkerProps[]>(reducer, initialMarkerProps)
     .sort((firstMarkerProps, secondMarkerProps) => firstMarkerProps.id.localeCompare(secondMarkerProps.id));
+};
+
+type SharedMarkers = { aliases: Map<string, string>; markers: MarkerProps[] };
+const scopedMarkersByEdges = new WeakMap<Edge[], Map<string, SharedMarkers>>();
+const diagramScopes = new WeakMap<object, string>();
+let nextDiagramScope = 0;
+
+const getMarkerScope = (store: object): string => {
+  const existing = diagramScopes.get(store);
+  if (existing) {
+    return existing;
+  }
+  const scope = `diagram-marker-${++nextDiagramScope}`;
+  diagramScopes.set(store, scope);
+  return scope;
+};
+
+const sharedMarkerData = (state: ReactFlowState, scope: string): SharedMarkers => {
+  let scopes = scopedMarkersByEdges.get(state.edges);
+  if (!scopes) {
+    scopes = new Map();
+    scopedMarkersByEdges.set(state.edges, scopes);
+  }
+  const existing = scopes.get(scope);
+  if (existing) {
+    return existing;
+  }
+  const aliases = new Map<string, string>();
+  const definitions = new Map<string, MarkerProps>();
+  for (const marker of markerSelector(state)) {
+    const type = marker.id.split('--')[0];
+    const color = Array.from(marker.edgeColor)
+      .map((character) => character.codePointAt(0)?.toString(16).padStart(6, '0'))
+      .join('');
+    const id = `${type}--${scope}-${color}${marker.id.endsWith('--selected') ? '--selected' : ''}`;
+    aliases.set(marker.id, id);
+    if (!definitions.has(id)) {
+      definitions.set(id, { ...marker, id });
+    }
+  }
+  const result = { aliases, markers: [...definitions.values()] };
+  scopes.set(scope, result);
+  return result;
+};
+
+export const useSharedMarkerUrl = (value: string | undefined, selected: boolean | undefined): string | undefined => {
+  const { getState } = useStoreApi();
+  const scope = getMarkerScope(getState);
+  return useStore(
+    useCallback(
+      (state) => {
+        const originalId = value?.match(/^url\(['"]?#([^'"\)]+)['"]?\)$/)?.[1];
+        if (!originalId) {
+          return value;
+        }
+        const id = selected ? `${originalId}--selected` : originalId;
+        return `url('#${sharedMarkerData(state, scope).aliases.get(id) ?? id}')`;
+      },
+      [value, selected, scope]
+    )
+  );
 };
 
 const equalityFunction = (oldMarkerProps: MarkerProps[], newMarkerProps: MarkerProps[]) => {
@@ -150,7 +211,9 @@ const buildCircle = (id: string, edgeColor: string, fill: boolean) => {
 };
 
 export const MarkerDefinitions = () => {
-  const selector = useCallback(markerSelector, []);
+  const { getState } = useStoreApi();
+  const scope = getMarkerScope(getState);
+  const selector = useCallback((state: ReactFlowState) => sharedMarkerData(state, scope).markers, [scope]);
   const allMarkerProps = useStore<MarkerProps[]>(selector, equalityFunction);
   return (
     <svg id="edge-markers" style={{ position: 'absolute', zIndex: -1, top: '0px' }}>

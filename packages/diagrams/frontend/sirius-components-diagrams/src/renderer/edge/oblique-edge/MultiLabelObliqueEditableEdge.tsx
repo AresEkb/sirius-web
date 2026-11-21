@@ -10,6 +10,7 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
+import { useSharedMarkerUrl } from '../MarkerDefinitions';
 import { memo, useMemo, useEffect } from 'react';
 import { MultiLabelEdgeData } from '../MultiLabelEdge.types';
 import { Edge, BaseEdge, XYPosition } from '@xyflow/react';
@@ -41,6 +42,8 @@ export const MultiLabelObliqueEditableEdge = memo(
   }: MultiLabelObliqueEditableEdgeProps<Edge<MultiLabelEdgeData>>) => {
     const faded = !!data?.faded;
     const theme = useTheme();
+    const sharedMarkerEnd = useSharedMarkerUrl(markerEnd, selected);
+    const sharedMarkerStart = useSharedMarkerUrl(markerStart, selected);
     const { setEdges } = useStore();
 
     const { localBendingPoints, draggingPointIndex, onBendingPointDragStop, onBendingPointDrag } = useBendingPoints(
@@ -136,8 +139,8 @@ export const MultiLabelObliqueEditableEdge = memo(
           id={id}
           path={edgePath}
           style={edgeStyle}
-          markerEnd={selected ? `${markerEnd?.slice(0, markerEnd.length - 2)}--selected')` : markerEnd}
-          markerStart={selected ? `${markerStart?.slice(0, markerStart.length - 2)}--selected')` : markerStart}
+          markerEnd={sharedMarkerEnd}
+          markerStart={sharedMarkerStart}
         />
         {selected &&
           localBendingPoints &&

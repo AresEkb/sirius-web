@@ -11,6 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
+import { useSharedMarkerUrl } from './MarkerDefinitions';
 import { getCSSColor } from '@eclipse-sirius/sirius-components-core';
 import { Theme, useTheme } from '@mui/material/styles';
 import { BaseEdge, Edge } from '@xyflow/react';
@@ -59,6 +60,8 @@ export const MultiLabelEdge = memo(
   }: MultiLabelEdgeProps<Edge<MultiLabelEdgeData>>) => {
     const faded = !!data?.faded;
     const theme = useTheme();
+    const sharedMarkerEnd = useSharedMarkerUrl(markerEnd, selected);
+    const sharedMarkerStart = useSharedMarkerUrl(markerStart, selected);
     const { setEdges } = useStore();
     const baseEdgeStyle = useMemo(() => multiLabelEdgeStyle(theme, style, selected, faded), [style, selected, faded]);
     const crossingDashArray = useMemo(() => {
@@ -105,8 +108,8 @@ export const MultiLabelEdge = memo(
           id={id}
           path={svgPathString}
           style={edgeStyle}
-          markerEnd={selected ? `${markerEnd?.slice(0, markerEnd.length - 2)}--selected')` : markerEnd}
-          markerStart={selected ? `${markerStart?.slice(0, markerStart.length - 2)}--selected')` : markerStart}
+          markerEnd={sharedMarkerEnd}
+          markerStart={sharedMarkerStart}
         />
         {data ? (
           <DraggableEdgeLabels
