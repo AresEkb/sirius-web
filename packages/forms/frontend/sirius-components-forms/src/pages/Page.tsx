@@ -30,9 +30,16 @@ export const Page = ({ editingContextId, formId, page, readOnly }: PageProps) =>
   const { classes } = usePageStyles();
   return (
     <div className={classes.page}>
-      {page.groups.map((group) => {
+      {page.groups.map((group, index) => {
         return (
-          <Group editingContextId={editingContextId} formId={formId} group={group} key={group.id} readOnly={readOnly} />
+          <Group
+            editingContextId={editingContextId}
+            formId={formId}
+            group={group}
+            firstGroup={index === 0}
+            key={group.id}
+            readOnly={readOnly}
+          />
         );
       })}
     </div>

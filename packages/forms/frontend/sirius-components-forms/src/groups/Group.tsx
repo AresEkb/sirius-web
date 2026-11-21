@@ -10,12 +10,14 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import { getCSSColor, IconOverlay } from '@eclipse-sirius/sirius-components-core';
 import { useTheme } from '@mui/material/styles';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { PropertySection } from '../propertysections/PropertySection';
 import { ToolbarAction } from '../toolbaraction/ToolbarAction';
@@ -31,6 +33,16 @@ const useGroupStyles = makeStyles<GroupStyleProps>()((theme, { borderStyle }) =>
     borderColor: borderStyle?.color ? getCSSColor(borderStyle.color, theme) : 'transparent',
     borderStyle: borderStyle?.lineStyle || 'solid',
     borderRadius: borderStyle?.radius || 0,
+  },
+  disclosure: {
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    listStyle: 'none',
+    '&::-webkit-details-marker': { display: 'none' },
+    '& .group-disclosure-open': { display: 'none' },
+    'details[open] > & .group-disclosure-open': { display: 'inline-flex' },
+    'details[open] > & .group-disclosure-closed': { display: 'none' },
   },
   groupLabelAndToolbar: {
     display: 'flex',
@@ -72,7 +84,10 @@ const useGroupStyles = makeStyles<GroupStyleProps>()((theme, { borderStyle }) =>
   },
 }));
 
-export const Group = ({ editingContextId, formId, group, readOnly }: GroupProps) => {
+export const CollapsibleGroupsContext = createContext(false);
+
+export const Group = ({ editingContextId, formId, group, readOnly, firstGroup = false }: GroupProps) => {
+  const collapsibleGroups = useContext(CollapsibleGroupsContext);
   const props: GroupStyleProps = {
     borderStyle: group.borderStyle,
   };
@@ -122,31 +137,61 @@ export const Group = ({ editingContextId, formId, group, readOnly }: GroupProps)
       </div>
     );
   }
+  const title = (
+    <Typography variant="subtitle1" className={classes.title} gutterBottom>
+      {group.label}
+    </Typography>
+  );
+  const widgets = (
+    <div className={group.displayMode === 'LIST' ? classes.verticalSections : classes.adaptableSections}>
+      {group.widgets
+        .filter((widget) => visibleWidgetIds.includes(widget.id))
+        .map((widget, index) => (
+          <PropertySection
+            editingContextId={editingContextId}
+            formId={formId}
+            widget={widget}
+            readOnly={readOnly}
+            key={`${widget.id}#${index}`}
+          />
+        ))}
+    </div>
+  );
+
+  if (collapsibleGroups && !firstGroup) {
+    return (
+      <details open className={classes.group} data-testid={`group-${group.label}`}>
+        <summary
+          className={classes.disclosure}
+          onKeyDown={(event) => {
+            if (event.key === ' ' || event.key === 'Enter') {
+              event.stopPropagation();
+            }
+          }}>
+          <ArrowDropDownIcon className="group-disclosure-open" fontSize="small" />
+          <ArrowRightIcon className="group-disclosure-closed" fontSize="small" />
+          {title}
+        </summary>
+        {(widgetSelector || toolbar) && (
+          <div className={classes.groupLabelAndToolbar}>
+            {widgetSelector}
+            {toolbar}
+          </div>
+        )}
+        {widgets}
+      </details>
+    );
+  }
+
   return (
     <div className={classes.group} data-testid={`group-${group.label}`}>
-      <div className={classes.groupLabelAndToolbar}>
-        {group.displayMode === 'TOGGLEABLE_AREAS' ? (
-          widgetSelector
-        ) : (
-          <Typography variant="subtitle1" className={classes.title} gutterBottom>
-            {group.label}
-          </Typography>
-        )}
-        {toolbar}
-      </div>
-      <div className={group.displayMode === 'LIST' ? classes.verticalSections : classes.adaptableSections}>
-        {group.widgets
-          .filter((widget) => visibleWidgetIds.includes(widget.id))
-          .map((widget, index) => (
-            <PropertySection
-              editingContextId={editingContextId}
-              formId={formId}
-              widget={widget}
-              readOnly={readOnly}
-              key={`${widget.id}#${index}`}
-            />
-          ))}
-      </div>
+      {(!collapsibleGroups || widgetSelector || toolbar) && (
+        <div className={classes.groupLabelAndToolbar}>
+          {group.displayMode === 'TOGGLEABLE_AREAS' ? widgetSelector : !collapsibleGroups ? title : null}
+          {toolbar}
+        </div>
+      )}
+      {widgets}
     </div>
   );
 };

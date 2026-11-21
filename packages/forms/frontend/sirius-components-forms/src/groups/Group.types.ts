@@ -16,6 +16,7 @@ export interface GroupProps {
   editingContextId: string;
   formId: string;
   group: GQLGroup;
+  firstGroup?: boolean;
   readOnly: boolean;
 }
 

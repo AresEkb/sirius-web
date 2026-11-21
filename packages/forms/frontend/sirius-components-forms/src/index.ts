@@ -43,3 +43,5 @@ export * from './representations/FormRepresentation';
 export * from './views/FormBasedView';
 export type * from './views/FormBasedView.types';
 export * from './views/FormBasedViewExtensionPoints';
+
+export { CollapsibleGroupsContext } from './groups/Group';
