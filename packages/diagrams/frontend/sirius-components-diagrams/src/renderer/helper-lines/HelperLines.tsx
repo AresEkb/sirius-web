@@ -28,8 +28,11 @@ const storeSelector = (state: ReactFlowState) => ({
   height: state.height,
 });
 
-export const HelperLines = ({ horizontal, vertical }: HelperLinesProps) => {
-  const { width, height } = useStore(storeSelector);
+export const HelperLines = (props: HelperLinesProps) =>
+  typeof props.horizontal === 'number' || typeof props.vertical === 'number' ? <ActiveHelperLines {...props} /> : null;
+
+const ActiveHelperLines = ({ horizontal, vertical }: HelperLinesProps) => {
+  const { width, height } = useStore(storeSelector, (a, b) => a.width === b.width && a.height === b.height);
   const { x, y, zoom } = useViewport();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const theme: Theme = useTheme();
@@ -40,27 +43,33 @@ export const HelperLines = ({ horizontal, vertical }: HelperLinesProps) => {
 
     if (canvas && context2D) {
       const dpi = window.devicePixelRatio;
-      canvas.width = width * dpi;
-      canvas.height = height * dpi;
+      const pixelWidth = Math.round(width * dpi);
+      const pixelHeight = Math.round(height * dpi);
+      if (canvas.width !== pixelWidth) {
+        canvas.width = pixelWidth;
+      }
+      if (canvas.height !== pixelHeight) {
+        canvas.height = pixelHeight;
+      }
 
-      context2D.scale(dpi, dpi);
+      context2D.setTransform(dpi, 0, 0, dpi, 0, 0);
       context2D.clearRect(0, 0, width, height);
       context2D.strokeStyle = theme.palette.primary.main;
       context2D.setLineDash([4, 2]);
 
-      if (vertical) {
+      context2D.beginPath();
+      if (typeof vertical === 'number') {
         context2D.moveTo(vertical * zoom + x, 0);
         context2D.lineTo(vertical * zoom + x, height);
-        context2D.stroke();
       }
 
-      if (horizontal) {
+      if (typeof horizontal === 'number') {
         context2D.moveTo(0, horizontal * zoom + y);
         context2D.lineTo(width, horizontal * zoom + y);
-        context2D.stroke();
       }
+      context2D.stroke();
     }
-  }, [width, height, x, y, zoom, horizontal, vertical]);
+  }, [width, height, x, y, zoom, horizontal, vertical, theme.palette.primary.main]);
 
   return <canvas ref={canvasRef} className="react-flow__canvas" style={canvasStyle} />;
 };
