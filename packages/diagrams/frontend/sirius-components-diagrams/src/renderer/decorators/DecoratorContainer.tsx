@@ -64,5 +64,5 @@ export const DecoratorContainer = ({ decorators }: DecoratorContainerProps) => {
     }
   }
 
-  return <div className={classes.decoratorContainer}>{renderedDecorators}</div>;
+  return <div className={`${classes.decoratorContainer} diagram-decorators`}>{renderedDecorators}</div>;
 };

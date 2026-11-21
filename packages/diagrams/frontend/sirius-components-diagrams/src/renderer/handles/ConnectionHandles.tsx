@@ -123,7 +123,7 @@ export const ConnectionHandles = memo(({ connectionHandles }: ConnectionHandlesP
           .filter((connectionHandle) => connectionHandle.position === position)
           .sort((a, b) => a.index - b.index);
         return (
-          <div style={borderHandlesStyle(position)} key={position}>
+          <div className="diagram-connection-handles" style={borderHandlesStyle(position)} key={position}>
             {currentSideHandles.map((connectionHandle) => {
               return (
                 <Handle
