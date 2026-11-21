@@ -61,16 +61,18 @@ public class DiagramLayoutChangeRecorder implements IDiagramEventConsumer {
             List<DiagramEdgeLayoutEvent> undoEdgeLayoutEvents = new ArrayList<>();
             List<DiagramEdgeLayoutEvent> redoEdgeLayoutEvents = new ArrayList<>();
 
+            // A newly created view has no previous layout. Its first client layout must still
+            // be replayed on redo; undo removes the view and has no geometry to restore for it.
             var previousNodeLayout = previousDiagram.getLayoutData().nodeLayoutData();
             layoutDiagramInput.diagramLayoutData().nodeLayoutData()
                     .forEach(updatedNodeLayoutInput -> {
                         var previousNodeLayoutData = previousNodeLayout.get(updatedNodeLayoutInput.id());
-                        if (previousNodeLayoutData != null) {
-                            if (!this.isSameNodeLayoutData(previousNodeLayoutData, updatedNodeLayoutInput)) {
-                                var updatedNodeLayout = new NodeLayoutData(updatedNodeLayoutInput.id(), updatedNodeLayoutInput.position(), updatedNodeLayoutInput.size(), updatedNodeLayoutInput.resizedByUser(), updatedNodeLayoutInput.movedByUser(), updatedNodeLayoutInput.handleLayoutData(), updatedNodeLayoutInput.minComputedSize());
+                        if (previousNodeLayoutData == null || !this.isSameNodeLayoutData(previousNodeLayoutData, updatedNodeLayoutInput)) {
+                            var updatedNodeLayout = new NodeLayoutData(updatedNodeLayoutInput.id(), updatedNodeLayoutInput.position(), updatedNodeLayoutInput.size(), updatedNodeLayoutInput.resizedByUser(), updatedNodeLayoutInput.movedByUser(), updatedNodeLayoutInput.handleLayoutData(), updatedNodeLayoutInput.minComputedSize());
+                            if (previousNodeLayoutData != null) {
                                 undoNodeLayoutEvents.add(new DiagramNodeLayoutEvent(previousNodeLayoutData.id(), previousNodeLayoutData));
-                                redoNodeLayoutEvents.add(new DiagramNodeLayoutEvent(updatedNodeLayoutInput.id(), updatedNodeLayout));
                             }
+                            redoNodeLayoutEvents.add(new DiagramNodeLayoutEvent(updatedNodeLayoutInput.id(), updatedNodeLayout));
                         }
                     });
 
@@ -78,12 +80,12 @@ public class DiagramLayoutChangeRecorder implements IDiagramEventConsumer {
             layoutDiagramInput.diagramLayoutData().labelLayoutData()
                     .forEach(updatedLabelLayoutInput -> {
                         var previousLabelLayoutData = previousLabelLayout.get(updatedLabelLayoutInput.id());
-                        if (previousLabelLayoutData != null) {
-                            if (!this.isSamePosition(previousLabelLayoutData.position(), updatedLabelLayoutInput.position())) {
-                                var updatedLabelLayout = new LabelLayoutData(updatedLabelLayoutInput.id(), updatedLabelLayoutInput.position(), updatedLabelLayoutInput.size(), updatedLabelLayoutInput.resizedByUser(), updatedLabelLayoutInput.movedByUser());
+                        if (previousLabelLayoutData == null || !this.isSamePosition(previousLabelLayoutData.position(), updatedLabelLayoutInput.position())) {
+                            var updatedLabelLayout = new LabelLayoutData(updatedLabelLayoutInput.id(), updatedLabelLayoutInput.position(), updatedLabelLayoutInput.size(), updatedLabelLayoutInput.resizedByUser(), updatedLabelLayoutInput.movedByUser());
+                            if (previousLabelLayoutData != null) {
                                 undoLabelLayoutEvents.add(new DiagramLabelLayoutEvent(previousLabelLayoutData.id(), previousLabelLayoutData));
-                                redoLabelLayoutEvents.add(new DiagramLabelLayoutEvent(updatedLabelLayoutInput.id(), updatedLabelLayout));
                             }
+                            redoLabelLayoutEvents.add(new DiagramLabelLayoutEvent(updatedLabelLayoutInput.id(), updatedLabelLayout));
                         }
                     });
 
@@ -91,27 +93,27 @@ public class DiagramLayoutChangeRecorder implements IDiagramEventConsumer {
             layoutDiagramInput.diagramLayoutData().edgeLayoutData()
                     .forEach(updatedEdgeLayoutInput -> {
                         var previousEdgelLayoutData = previousEdgeLayout.get(updatedEdgeLayoutInput.id());
-                        if (previousEdgelLayoutData != null) {
-                            if (!this.isSameEdgeLayoutData(previousEdgelLayoutData, updatedEdgeLayoutInput)) {
-                                var updatedEdgeLayout = new EdgeLayoutData(updatedEdgeLayoutInput.id(), updatedEdgeLayoutInput.bendingPoints(), updatedEdgeLayoutInput.relativePositionBendingPoints(),
+                        if (previousEdgelLayoutData == null || !this.isSameEdgeLayoutData(previousEdgelLayoutData, updatedEdgeLayoutInput)) {
+                            var updatedEdgeLayout = new EdgeLayoutData(updatedEdgeLayoutInput.id(), updatedEdgeLayoutInput.bendingPoints(), updatedEdgeLayoutInput.relativePositionBendingPoints(),
                                         updatedEdgeLayoutInput.edgeAnchorLayoutData());
+                            if (previousEdgelLayoutData != null) {
                                 undoEdgeLayoutEvents.add(new DiagramEdgeLayoutEvent(previousEdgelLayoutData.id(), previousEdgelLayoutData));
-                                redoEdgeLayoutEvents.add(new DiagramEdgeLayoutEvent(updatedEdgeLayoutInput.id(), updatedEdgeLayout));
                             }
+                            redoEdgeLayoutEvents.add(new DiagramEdgeLayoutEvent(updatedEdgeLayoutInput.id(), updatedEdgeLayout));
                         }
                     });
 
-            if (!undoNodeLayoutEvents.isEmpty()) {
+            if (!redoNodeLayoutEvents.isEmpty()) {
                 var nodeLayoutChange = new DiagramNodeLayoutChange(layoutDiagramInput.id(), layoutDiagramInput.representationId(), undoNodeLayoutEvents, redoNodeLayoutEvents);
                 representationChanges.add(nodeLayoutChange);
             }
 
-            if (!undoLabelLayoutEvents.isEmpty()) {
+            if (!redoLabelLayoutEvents.isEmpty()) {
                 var nodeLabelLayoutChange = new DiagramLabelLayoutChange(layoutDiagramInput.id(), layoutDiagramInput.representationId(), undoLabelLayoutEvents, redoLabelLayoutEvents);
                 representationChanges.add(nodeLabelLayoutChange);
             }
 
-            if (!undoEdgeLayoutEvents.isEmpty()) {
+            if (!redoEdgeLayoutEvents.isEmpty()) {
                 var edgeLayoutChange = new DiagramEdgeLayoutChange(layoutDiagramInput.id(), layoutDiagramInput.representationId(), undoEdgeLayoutEvents, redoEdgeLayoutEvents);
                 representationChanges.add(edgeLayoutChange);
             }
