@@ -11,10 +11,10 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
-import { Edge, Node, Position, useReactFlow, XYPosition } from '@xyflow/react';
-import { EdgeData, NodeData } from '../DiagramRenderer.types';
+import { Node, Position, XYPosition } from '@xyflow/react';
 import { getMiddleOfEdgePath, getSegmentDirection } from '../edge/EdgeLayout';
 import { HandleNodeData, isHandleNode } from '../node/HandleNode.types';
+import { useStore } from '../../representation/useStore';
 import { UseHandlesValue } from './useHandles.types';
 
 const HANDLE_OFFSET = 20;
@@ -118,7 +118,9 @@ const createHandleNode = (
 };
 
 export const useHandles = (): UseHandlesValue => {
-  const { setNodes } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
+  // Utility handles belong to the same controlled nodes as the diagram. XYFlow's
+  // queued setNodes can replay a pre-click snapshot and restore a cleared selection.
+  const { setNodes } = useStore();
 
   const mountNodeHandles = (nodeId: string, nodeXYPosition: XYPosition, nodeWidth: number, nodeHeight: number) => {
     const handleNodes: Node<HandleNodeData>[] = Object.values(Position).map((position) =>
