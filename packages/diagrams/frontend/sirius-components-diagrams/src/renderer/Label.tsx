@@ -138,7 +138,8 @@ export const Label = memo(({ diagramElementId, label, faded, width, height }: La
   const { currentlyEditedLabelId, editingKey, resetDirectEdit } = useDiagramDirectEdit();
   const { readOnly } = useContext<DiagramContextValue>(DiagramContext);
   const labelElementRef = useRef<HTMLDivElement>(null);
-  const zoom = useStore(zoomSelector);
+  const editingThisLabel = label.id === currentlyEditedLabelId && !readOnly;
+  const zoom = useStore((state) => (editingThisLabel ? zoomSelector(state) : 1));
 
   const handleClose = () => {
     resetDirectEdit();
@@ -152,26 +153,25 @@ export const Label = memo(({ diagramElementId, label, faded, width, height }: La
     return { marginRight: theme.spacing(1) };
   }, []);
 
-  const content: JSX.Element =
-    label.id === currentlyEditedLabelId && !readOnly ? (
-      <DiagramDirectEditInput
-        editingKey={editingKey}
-        width={Math.max(minWidth, directEditInputWidth(labelElementRef.current, zoom))}
-        onClose={handleClose}
-        labelId={label.id}
-      />
-    ) : (
-      <div
-        ref={labelElementRef}
-        data-id={`${label.id}-content`}
-        data-testid={`Label content - ${label.text}`}
-        style={labelContentStyle(theme, label, width, height)}>
-        <IconOverlay iconURLs={label.iconURL} alt={label.text} customIconStyle={customIconStyle} />
-        <div style={labelOverflowStyle(label)} data-svg="text">
-          {label.text}
-        </div>
+  const content: JSX.Element = editingThisLabel ? (
+    <DiagramDirectEditInput
+      editingKey={editingKey}
+      width={Math.max(minWidth, directEditInputWidth(labelElementRef.current, zoom))}
+      onClose={handleClose}
+      labelId={label.id}
+    />
+  ) : (
+    <div
+      ref={labelElementRef}
+      data-id={`${label.id}-content`}
+      data-testid={`Label content - ${label.text}`}
+      style={labelContentStyle(theme, label, width, height)}>
+      <IconOverlay iconURLs={label.iconURL} alt={label.text} customIconStyle={customIconStyle} />
+      <div style={labelOverflowStyle(label)} data-svg="text">
+        {label.text}
       </div>
-    );
+    </div>
+  );
   return (
     <>
       {isDisplayTopHeaderSeparator(label) && (

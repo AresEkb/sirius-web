@@ -14,6 +14,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Draggable, { DraggableData } from 'react-draggable';
 import { Resizable } from 'react-resizable';
 import { Label } from '../Label';
+import { useInteractionZoom } from '../move/useInteractionZoom';
 import { DraggableResizableLabelProps, LabelSize } from './DraggableResizableLabel.types';
 import { Theme, useTheme } from '@mui/material/styles';
 import { EdgeLabel } from '../DiagramRenderer.types';
@@ -45,7 +46,6 @@ export const DraggableResizableLabel = ({
   positionOffset,
   onDragStop,
   onResizeStop,
-  zoom,
   readOnly,
   selected,
   faded,
@@ -53,6 +53,7 @@ export const DraggableResizableLabel = ({
   transform,
 }: DraggableResizableLabelProps) => {
   const theme: Theme = useTheme();
+  const { zoom, begin } = useInteractionZoom(readOnly);
   const nodeRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<LabelSize>({ width: label.width ?? 0, height: label.height ?? 0 });
 
@@ -82,7 +83,11 @@ export const DraggableResizableLabel = ({
       nodeRef={nodeRef}
       disabled={readOnly}
       cancel={'.react-resizable-handle'}>
-      <div ref={nodeRef} style={{ position: 'absolute', zIndex: 1001 }}>
+      <div
+        ref={nodeRef}
+        style={{ position: 'absolute', zIndex: 1001 }}
+        onMouseDownCapture={begin}
+        onTouchStartCapture={begin}>
         <div style={{ padding: 5, transform: `${transform}` }}>
           <div style={resizableLabelStyle(theme, size, label, selected)}>
             <Resizable

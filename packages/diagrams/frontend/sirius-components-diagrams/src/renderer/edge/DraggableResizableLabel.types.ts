@@ -21,7 +21,6 @@ export interface DraggableResizableLabelProps {
   positionOffset?: { x: number; y: number };
   onDragStop: (e: any, eventData: DraggableData) => void;
   onResizeStop: (e: React.SyntheticEvent, data: { size: { width: number; height: number } }) => void;
-  zoom: number;
   readOnly: boolean;
   selected: boolean;
   faded: boolean;

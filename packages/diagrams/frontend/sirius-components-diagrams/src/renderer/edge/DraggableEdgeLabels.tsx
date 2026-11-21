@@ -10,7 +10,7 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
-import { EdgeLabelRenderer, Position, ReactFlowState, useStore } from '@xyflow/react';
+import { EdgeLabelRenderer, Position } from '@xyflow/react';
 import { useContext, useMemo } from 'react';
 import { DiagramContext } from '../../contexts/DiagramContext';
 import { DiagramContextValue } from '../../contexts/DiagramContext.types';
@@ -33,9 +33,17 @@ const getTranslateFromHandlePositon = (position: Position) => {
   }
 };
 
-const zoomSelector = (state: ReactFlowState) => state.panZoom?.getViewport().zoom || 1;
+export const DraggableEdgeLabels = (props: DraggableEdgeLabelsProps) => {
+  const { data } = props;
+  const hasVisibleLabel =
+    data &&
+    [data.beginLabel, data.label, data.endLabel].some(
+      (label) => label && (!label.style.visibility || label.style.visibility === 'visible')
+    );
+  return hasVisibleLabel ? <DraggableEdgeLabelsWithContent {...props} /> : null;
+};
 
-export const DraggableEdgeLabels = ({
+const DraggableEdgeLabelsWithContent = ({
   id,
   data,
   selected,
@@ -49,7 +57,6 @@ export const DraggableEdgeLabels = ({
   edgeCenterSegmentDirection,
 }: DraggableEdgeLabelsProps) => {
   const { beginLabel, endLabel, label, faded } = data || {};
-  const zoom = useStore(zoomSelector);
   const { readOnly } = useContext<DiagramContextValue>(DiagramContext);
   const { onEdgeLabelMoveStop } = useLabelMove();
   const { onEdgeLabelResizeStop } = useLabelResize();
@@ -77,7 +84,6 @@ export const DraggableEdgeLabels = ({
           positionOffset={{ x: sourceX, y: sourceY }}
           onDragStop={(_e, eventData) => onEdgeLabelMoveStop(eventData, id, 'begin', { x: 0, y: 0 })}
           onResizeStop={(_e, { size }) => onEdgeLabelResizeStop(id, size, 'begin')}
-          zoom={zoom}
           readOnly={readOnly}
           selected={selected}
           faded={faded}
@@ -96,7 +102,6 @@ export const DraggableEdgeLabels = ({
           }}
           onDragStop={(_e, eventData) => onEdgeLabelMoveStop(eventData, id, 'center', labelCenterOffset)}
           onResizeStop={(_e, { size }) => onEdgeLabelResizeStop(id, size, 'center')}
-          zoom={zoom}
           readOnly={readOnly}
           selected={selected}
           faded={faded}
@@ -111,7 +116,6 @@ export const DraggableEdgeLabels = ({
           positionOffset={{ x: targetX, y: targetY }}
           onDragStop={(_e, eventData) => onEdgeLabelMoveStop(eventData, id, 'end', { x: 0, y: 0 })}
           onResizeStop={(_e, { size }) => onEdgeLabelResizeStop(id, size, 'end')}
-          zoom={zoom}
           readOnly={readOnly}
           selected={selected}
           faded={faded}

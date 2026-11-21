@@ -11,7 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { Theme, useTheme } from '@mui/material/styles';
-import { ReactFlowState, useStore } from '@xyflow/react';
+import { useInteractionZoom } from '../move/useInteractionZoom';
 import React, { useContext, useState, useEffect } from 'react';
 import Draggable, { DraggableData } from 'react-draggable';
 import { Resizable } from 'react-resizable';
@@ -23,8 +23,6 @@ import { useLabelMove } from '../move/useLabelMove';
 import { useLabelResize } from '../move/useLabelResize';
 import { DraggableResizableOutsideLabelProps, LabelSize } from './DraggableResizableOutsideLabel.types';
 import 'react-resizable/css/styles.css';
-
-const zoomSelector = (state: ReactFlowState) => state.panZoom?.getViewport().zoom || 1;
 
 const resizableLabelStyle = (
   theme: Theme,
@@ -57,7 +55,7 @@ export const DraggableResizableOutsideLabel = ({
   const { onNodeLabelMoveStop } = useLabelMove();
   const { readOnly } = useContext<DiagramContextValue>(DiagramContext);
   const { onLabelResizeStop } = useLabelResize();
-  const zoom = useStore(zoomSelector);
+  const { zoom, begin } = useInteractionZoom(readOnly);
   const [size, setSize] = useState<LabelSize>({ width: label.width, height: label.height });
 
   useEffect(() => {
@@ -81,7 +79,7 @@ export const DraggableResizableOutsideLabel = ({
   const resizable: boolean = selected && !readOnly && label.overflowStrategy !== 'NONE' && label.text.length > 0;
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
+    <div style={{ display: 'flex', justifyContent: 'center' }} onMouseDownCapture={begin} onTouchStartCapture={begin}>
       <Draggable
         position={label.position}
         onStop={onDragStop}
