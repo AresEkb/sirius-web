@@ -130,7 +130,11 @@ export const useDiagramKeyBinding = (diagramTargetObjectId: string): UseDiagramK
 
   const onKeyBinding = useCallback(
     (event: React.KeyboardEvent<Element>) => {
-      const { key, altKey, ctrlKey, metaKey, shiftKey } = event;
+      const { key, code, altKey, ctrlKey, metaKey, shiftKey } = event;
+      // History shortcuts must not fetch tools for a selection which undo may remove.
+      if ((ctrlKey || metaKey) && (code === 'KeyZ' || code === 'KeyY')) {
+        return;
+      }
       const isTextField = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement;
       // If a modifier key is hit alone or if the event comes from a text field, do nothing
       if (

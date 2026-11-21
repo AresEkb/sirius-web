@@ -323,10 +323,26 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
     [onEdgesChange]
   );
 
-  const onKeyDown = useCallback((event: React.KeyboardEvent<Element>) => {
-    onDirectEdit(event);
-    onKeyBinding(event);
-  }, []);
+  const onKeyDown = useCallback(
+    (event: React.KeyboardEvent<Element>) => {
+      const { target, currentTarget } = event;
+      if (
+        readOnly ||
+        event.repeat ||
+        event.defaultPrevented ||
+        !(target instanceof Element) ||
+        !currentTarget.contains(target) ||
+        target.closest(
+          'input, textarea, select, button, a, [role="menu"], [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="dialog"]'
+        )
+      ) {
+        return;
+      }
+      onDirectEdit(event);
+      onKeyBinding(event);
+    },
+    [readOnly, onDirectEdit, onKeyBinding]
+  );
 
   const { onNodeMouseEnter, onNodeMouseLeave } = useNodeHover();
   const { onEdgeMouseEnter, onEdgeMouseLeave } = useEdgeHover();
