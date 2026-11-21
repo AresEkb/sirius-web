@@ -14,7 +14,7 @@ import { memo, useMemo, useEffect } from 'react';
 import { MultiLabelEdgeData } from '../MultiLabelEdge.types';
 import { Edge, BaseEdge, XYPosition } from '@xyflow/react';
 import { useTheme } from '@mui/material/styles';
-import { useStore } from '../../../representation/useStore';
+import { useStoreActions } from '../../../representation/useStore';
 import { buildCrossingDashArray } from '../crossings/buildCrossingDashArray';
 import { BendPoint } from '../BendPoint';
 import { DraggableEdgeLabels } from '../DraggableEdgeLabels';
@@ -41,7 +41,7 @@ export const MultiLabelObliqueEditableEdge = memo(
   }: MultiLabelObliqueEditableEdgeProps<Edge<MultiLabelEdgeData>>) => {
     const faded = !!data?.faded;
     const theme = useTheme();
-    const { setEdges } = useStore();
+    const { setEdges } = useStoreActions();
 
     const { localBendingPoints, draggingPointIndex, onBendingPointDragStop, onBendingPointDrag } = useBendingPoints(
       id,

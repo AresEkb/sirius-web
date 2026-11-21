@@ -12,7 +12,7 @@
  *******************************************************************************/
 
 import { useContext } from 'react';
-import { StoreContext } from './StoreContext';
+import { StoreActionsContext, StoreContext } from './StoreContext';
 import { StoreContextValue } from './StoreContext.types';
 import { useStoreValue } from './useStore.types';
 
@@ -31,3 +31,6 @@ export const useStore = (): useStoreValue => {
     getNode,
   };
 };
+
+/** Stable actions for callbacks which do not render the current diagram state. */
+export const useStoreActions = (): useStoreValue => useContext(StoreActionsContext);

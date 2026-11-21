@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
 import { DraggableData } from 'react-draggable';
 import { UseBendingPointsValue, BendingPointsState } from './useBendingPoints.types';
 import { useEditableEdgePath } from '../useEditableEdgePath';
-import { useStore } from '../../../representation/useStore';
+import { useStoreActions } from '../../../representation/useStore';
 import { NodeData, EdgeData } from '../../DiagramRenderer.types';
 import { isMultipleOfTwo, getMiddlePoint } from '../rectilinear-edge/RectilinearEdgeCalculation';
 
@@ -64,7 +64,7 @@ export const useBendingPoints = (
   targetX: number,
   targetY: number
 ): UseBendingPointsValue => {
-  const { getNodes, setEdges } = useStore();
+  const { getNodes, setEdges } = useStoreActions();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
   const { synchronizeEdgeLayoutData } = useEditableEdgePath();
   const [state, setState] = useState<BendingPointsState>({

@@ -15,7 +15,7 @@ import { getCSSColor } from '@eclipse-sirius/sirius-components-core';
 import { Theme, useTheme } from '@mui/material/styles';
 import { BaseEdge, Edge } from '@xyflow/react';
 import { memo, useEffect, useMemo } from 'react';
-import { useStore } from '../../representation/useStore';
+import { useStoreActions } from '../../representation/useStore';
 import { DraggableEdgeLabels } from './DraggableEdgeLabels';
 import { MultiLabelEdgeData, MultiLabelEdgeProps } from './MultiLabelEdge.types';
 import { buildCrossingDashArray } from './crossings/buildCrossingDashArray';
@@ -59,7 +59,7 @@ export const MultiLabelEdge = memo(
   }: MultiLabelEdgeProps<Edge<MultiLabelEdgeData>>) => {
     const faded = !!data?.faded;
     const theme = useTheme();
-    const { setEdges } = useStore();
+    const { setEdges } = useStoreActions();
     const baseEdgeStyle = useMemo(() => multiLabelEdgeStyle(theme, style, selected, faded), [style, selected, faded]);
     const crossingDashArray = useMemo(() => {
       if (!data?.crossingGaps || data.crossingGaps.length === 0) {

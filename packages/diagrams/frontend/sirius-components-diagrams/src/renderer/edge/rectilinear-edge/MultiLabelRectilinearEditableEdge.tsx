@@ -14,7 +14,7 @@
 import { useTheme } from '@mui/material/styles';
 import { BaseEdge, Edge, XYPosition } from '@xyflow/react';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { useStore } from '../../../representation/useStore';
+import { useStoreActions } from '../../../representation/useStore';
 import { useConnectorEdgeStyle } from '../../connector/useConnectorEdgeStyle';
 import { BendPoint, TemporaryMovingLine } from '../BendPoint';
 import { buildCrossingDashArray } from '../crossings/buildCrossingDashArray';
@@ -49,7 +49,7 @@ export const MultiLabelRectilinearEditableEdge = memo(
     targetHandleId,
   }: MultiLabelEditableEdgeProps<Edge<MultiLabelEdgeData>>) => {
     const faded = !!data?.faded;
-    const { setEdges } = useStore();
+    const { setEdges } = useStoreActions();
     const theme = useTheme();
 
     const [source, setSource] = useState<XYPosition>({ x: sourceX, y: sourceY });

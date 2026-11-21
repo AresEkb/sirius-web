@@ -11,7 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 import { InternalNode, Node, Position, useUpdateNodeInternals, XYPosition, useStoreApi, Edge } from '@xyflow/react';
-import { useStore } from '../../../representation/useStore';
+import { useStoreActions } from '../../../representation/useStore';
 import { NodeData, EdgeData } from '../../DiagramRenderer.types';
 import { getNodesUpdatedWithHandles } from '../EdgeLayout';
 import { useEditableEdgePath } from '../useEditableEdgePath';
@@ -20,7 +20,7 @@ import { BendPointData } from './useBendingPoints.types';
 import { UseEdgeDragStopHandlerValue } from './useEdgeDragStopHandler.types';
 
 export const useEdgeDragStopHandler = (): UseEdgeDragStopHandlerValue => {
-  const { getNodes, setEdges, setNodes } = useStore();
+  const { getNodes, setEdges, setNodes } = useStoreActions();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
   const { synchronizeEdgeLayoutData } = useEditableEdgePath();
   const updateNodeInternals = useUpdateNodeInternals();

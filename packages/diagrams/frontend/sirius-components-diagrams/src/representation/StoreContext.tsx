@@ -12,7 +12,7 @@
  *******************************************************************************/
 
 import { Edge, EdgeChange, Node, NodeChange, applyEdgeChanges, applyNodeChanges } from '@xyflow/react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { EdgeData, NodeData } from '../renderer/DiagramRenderer.types';
 import { StoreContextValue } from './StoreContext.types';
 
@@ -28,6 +28,7 @@ const defaultValue: StoreContextValue = {
 };
 
 export const StoreContext = React.createContext<StoreContextValue>(defaultValue);
+export const StoreActionsContext = React.createContext<StoreContextValue>(defaultValue);
 
 export const StoreContextProvider = ({ children }) => {
   const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
@@ -35,27 +36,47 @@ export const StoreContextProvider = ({ children }) => {
 
   const onNodesChange = useCallback(
     (changes: NodeChange<Node<NodeData>>[]) => setNodes((prevState) => applyNodeChanges(changes, prevState)),
-    [setEdges]
+    []
   );
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange<Edge<EdgeData>>[]) => setEdges((prevState) => applyEdgeChanges(changes, prevState)),
-    [setEdges]
+    []
+  );
+
+  const committed = useRef({ nodes, edges });
+  useLayoutEffect(() => {
+    committed.current = { nodes, edges };
+  }, [nodes, edges]);
+  const actions = useMemo<StoreContextValue>(
+    () => ({
+      setNodes,
+      setEdges,
+      onEdgesChange,
+      onNodesChange,
+      getNodes: () => committed.current.nodes,
+      getEdges: () => committed.current.edges,
+      getNode: (id) => committed.current.nodes.find((node) => node.id === id),
+      getEdge: (id) => committed.current.edges.find((edge) => edge.id === id),
+    }),
+    [onEdgesChange, onNodesChange]
   );
 
   return (
-    <StoreContext.Provider
-      value={{
-        setEdges,
-        setNodes,
-        getEdges: () => edges,
-        getNodes: () => nodes,
-        getEdge: (id: string) => edges.find((edge) => edge.id === id),
-        getNode: (id: string) => nodes.find((node) => node.id === id),
-        onNodesChange,
-        onEdgesChange,
-      }}>
-      {children}
-    </StoreContext.Provider>
+    <StoreActionsContext.Provider value={actions}>
+      <StoreContext.Provider
+        value={{
+          setEdges,
+          setNodes,
+          getEdges: () => edges,
+          getNodes: () => nodes,
+          getEdge: (id: string) => edges.find((edge) => edge.id === id),
+          getNode: (id: string) => nodes.find((node) => node.id === id),
+          onNodesChange,
+          onEdgesChange,
+        }}>
+        {children}
+      </StoreContext.Provider>
+    </StoreActionsContext.Provider>
   );
 };
