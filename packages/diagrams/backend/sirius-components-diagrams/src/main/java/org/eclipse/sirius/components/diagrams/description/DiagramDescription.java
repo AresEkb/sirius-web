@@ -72,6 +72,8 @@ public final class DiagramDescription implements IRepresentationDescription {
 
     private Function<VariableManager, String> targetObjectIdProvider;
 
+    private Function<VariableManager, String> paletteConfigurationKeyProvider;
+
     private Predicate<VariableManager> canCreatePredicate;
 
     private Function<VariableManager, String> labelProvider;
@@ -270,6 +272,15 @@ public final class DiagramDescription implements IRepresentationDescription {
         return this.iconURLsProvider;
     }
 
+    /**
+     * Identifies configuration changes affecting the creation catalogue, independently of diagram instances.
+     *
+     * @return the configuration key provider
+     */
+    public Function<VariableManager, String> getPaletteConfigurationKeyProvider() {
+        return this.paletteConfigurationKeyProvider;
+    }
+
     public Function<VariableManager, DiagramStyle> getStyleProvider() {
         return this.styleProvider;
     }
@@ -302,6 +313,8 @@ public final class DiagramDescription implements IRepresentationDescription {
 
         private Function<VariableManager, String> targetObjectIdProvider;
 
+        private Function<VariableManager, String> paletteConfigurationKeyProvider = variableManager -> "";
+
         private Predicate<VariableManager> canCreatePredicate;
 
         private Function<VariableManager, String> labelProvider;
@@ -330,6 +343,7 @@ public final class DiagramDescription implements IRepresentationDescription {
             this.layoutOption = diagramDescription.getLayoutOption();
             this.arrangeLayoutDirection = diagramDescription.getArrangeLayoutDirection();
             this.targetObjectIdProvider = diagramDescription.getTargetObjectIdProvider();
+            this.paletteConfigurationKeyProvider = diagramDescription.getPaletteConfigurationKeyProvider();
             this.canCreatePredicate = diagramDescription.getCanCreatePredicate();
             this.labelProvider = diagramDescription.getLabelProvider();
             this.nodeDescriptions = diagramDescription.getNodeDescriptions();
@@ -396,6 +410,11 @@ public final class DiagramDescription implements IRepresentationDescription {
             return this;
         }
 
+        public Builder paletteConfigurationKeyProvider(Function<VariableManager, String> paletteConfigurationKeyProvider) {
+            this.paletteConfigurationKeyProvider = Objects.requireNonNull(paletteConfigurationKeyProvider);
+            return this;
+        }
+
         public Builder styleProvider(Function<VariableManager, DiagramStyle> styleProvider) {
             this.styleProvider = Objects.requireNonNull(styleProvider);
             return this;
@@ -413,6 +432,7 @@ public final class DiagramDescription implements IRepresentationDescription {
             diagramDescription.layoutOption = Objects.requireNonNull(this.layoutOption);
             diagramDescription.arrangeLayoutDirection = Objects.requireNonNull(this.arrangeLayoutDirection);
             diagramDescription.targetObjectIdProvider = Objects.requireNonNull(this.targetObjectIdProvider);
+            diagramDescription.paletteConfigurationKeyProvider = this.paletteConfigurationKeyProvider;
             diagramDescription.canCreatePredicate = Objects.requireNonNull(this.canCreatePredicate);
             diagramDescription.labelProvider = Objects.requireNonNull(this.labelProvider);
             diagramDescription.nodeDescriptions = Objects.requireNonNull(this.nodeDescriptions);

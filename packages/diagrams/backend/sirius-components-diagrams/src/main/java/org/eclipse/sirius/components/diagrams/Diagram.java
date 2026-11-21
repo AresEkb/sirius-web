@@ -39,6 +39,8 @@ public final class Diagram implements IRepresentation {
 
     private String descriptionId;
 
+    private String paletteConfigurationKey = "";
+
     private List<Node> nodes;
 
     private List<Edge> edges;
@@ -83,6 +85,10 @@ public final class Diagram implements IRepresentation {
         return this.layoutData;
     }
 
+    public String getPaletteConfigurationKey() {
+        return this.paletteConfigurationKey;
+    }
+
     public DiagramStyle getStyle() {
         return this.style;
     }
@@ -117,6 +123,8 @@ public final class Diagram implements IRepresentation {
 
         private String descriptionId;
 
+        private String paletteConfigurationKey = "";
+
         private List<Node> nodes;
 
         private List<Edge> edges;
@@ -133,6 +141,7 @@ public final class Diagram implements IRepresentation {
             this.id = diagram.getId();
             this.targetObjectId = diagram.getTargetObjectId();
             this.descriptionId = diagram.getDescriptionId();
+            this.paletteConfigurationKey = diagram.getPaletteConfigurationKey();
             this.nodes = diagram.getNodes();
             this.edges = diagram.getEdges();
             this.style = diagram.getStyle();
@@ -159,6 +168,11 @@ public final class Diagram implements IRepresentation {
             return this;
         }
 
+        public Builder paletteConfigurationKey(String paletteConfigurationKey) {
+            this.paletteConfigurationKey = Objects.requireNonNull(paletteConfigurationKey);
+            return this;
+        }
+
         public Builder style(DiagramStyle style) {
             this.style = Objects.requireNonNull(style);
             return this;
@@ -175,6 +189,7 @@ public final class Diagram implements IRepresentation {
             diagram.kind = Objects.requireNonNull(this.kind);
             diagram.targetObjectId = Objects.requireNonNull(this.targetObjectId);
             diagram.descriptionId = Objects.requireNonNull(this.descriptionId);
+            diagram.paletteConfigurationKey = this.paletteConfigurationKey;
             diagram.nodes = Objects.requireNonNull(this.nodes);
             diagram.edges = Objects.requireNonNull(this.edges);
             diagram.style = Objects.requireNonNull(this.style);

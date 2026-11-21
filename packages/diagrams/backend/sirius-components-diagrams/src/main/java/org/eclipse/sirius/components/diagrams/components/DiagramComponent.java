@@ -109,6 +109,7 @@ public class DiagramComponent implements IComponent {
         DiagramElementProps diagramElementProps = DiagramElementProps.newDiagramElementProps(diagramId)
                 .targetObjectId(targetObjectId)
                 .descriptionId(diagramDescription.getId())
+                .paletteConfigurationKey(diagramDescription.getPaletteConfigurationKeyProvider().apply(variableManager))
                 .children(children)
                 .style(style)
                 .build();

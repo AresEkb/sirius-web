@@ -19,6 +19,7 @@ export const diagramFragment = `
 fragment diagramFragment on Diagram {
   id
   targetObjectId
+  paletteConfigurationKey
   metadata {
     label
     kind

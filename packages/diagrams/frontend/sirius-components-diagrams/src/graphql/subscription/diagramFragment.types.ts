@@ -18,6 +18,7 @@ import { GQLNode, GQLNodeStyle, GQLPosition, GQLSize } from './nodeFragment.type
 export interface GQLDiagram {
   id: string;
   targetObjectId: string;
+  paletteConfigurationKey?: string;
   metadata: GQLRepresentationMetadata;
   nodes: GQLNode<GQLNodeStyle>[];
   edges: GQLEdge[];

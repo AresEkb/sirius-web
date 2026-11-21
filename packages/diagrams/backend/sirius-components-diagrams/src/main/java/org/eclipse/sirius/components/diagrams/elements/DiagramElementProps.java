@@ -37,6 +37,8 @@ public final class DiagramElementProps implements IProps {
 
     private String descriptionId;
 
+    private String paletteConfigurationKey = "";
+
     private DiagramStyle style;
 
     private List<Element> children;
@@ -55,6 +57,10 @@ public final class DiagramElementProps implements IProps {
 
     public String getDescriptionId() {
         return this.descriptionId;
+    }
+
+    public String getPaletteConfigurationKey() {
+        return this.paletteConfigurationKey;
     }
 
     public DiagramStyle getStyle() {
@@ -90,6 +96,8 @@ public final class DiagramElementProps implements IProps {
 
         private String descriptionId;
 
+        private String paletteConfigurationKey = "";
+
         private DiagramStyle style;
 
         private List<Element> children;
@@ -108,6 +116,11 @@ public final class DiagramElementProps implements IProps {
             return this;
         }
 
+        public Builder paletteConfigurationKey(String paletteConfigurationKey) {
+            this.paletteConfigurationKey = Objects.requireNonNull(paletteConfigurationKey);
+            return this;
+        }
+
         public Builder style(DiagramStyle style) {
             this.style = Objects.requireNonNull(style);
             return this;
@@ -123,6 +136,7 @@ public final class DiagramElementProps implements IProps {
             diagramElementProps.id = Objects.requireNonNull(this.id);
             diagramElementProps.targetObjectId = Objects.requireNonNull(this.targetObjectId);
             diagramElementProps.descriptionId = Objects.requireNonNull(this.descriptionId);
+            diagramElementProps.paletteConfigurationKey = this.paletteConfigurationKey;
             diagramElementProps.children = Objects.requireNonNull(this.children);
             diagramElementProps.style = Objects.requireNonNull(this.style);
             return diagramElementProps;
