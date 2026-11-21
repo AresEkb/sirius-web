@@ -11,10 +11,10 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
-import { Node, NodeChange, NodeDimensionChange, NodePositionChange } from '@xyflow/react';
+import { Edge, Node, NodeChange, NodeDimensionChange, NodePositionChange } from '@xyflow/react';
 import { useCallback } from 'react';
 import { useStore } from '../../representation/useStore';
-import { NodeData } from '../DiagramRenderer.types';
+import { EdgeData, NodeData } from '../DiagramRenderer.types';
 import { RawDiagram } from '../layout/layout.types';
 import { useLayout } from '../layout/useLayout';
 import { useSynchronizeLayoutData } from '../layout/useSynchronizeLayoutData';
@@ -24,7 +24,7 @@ import { UseLayoutOnBoundsChangeValue } from './useLayoutOnBoundsChange.types';
 export const useLayoutOnBoundsChange = (): UseLayoutOnBoundsChangeValue => {
   const { layout } = useLayout();
   const { synchronizeLayoutData } = useSynchronizeLayoutData();
-  const { getEdges, getNodes } = useStore();
+  const { getNodes } = useStore();
 
   const isMoveFinished = (
     change: NodeChange<Node<NodeData>>,
@@ -64,12 +64,16 @@ export const useLayoutOnBoundsChange = (): UseLayoutOnBoundsChangeValue => {
   };
 
   const layoutOnBoundsChange = useCallback(
-    (changes: NodeChange<Node<NodeData>>[], nodes: Node<NodeData, DiagramNodeType>[]): void => {
+    (
+      changes: NodeChange<Node<NodeData>>[],
+      nodes: Node<NodeData, DiagramNodeType>[],
+      edges: Edge<EdgeData>[]
+    ): void => {
       const change = isBoundsChangeFinished(changes, getNodes());
       if (change) {
         const diagramToLayout: RawDiagram = {
           nodes,
-          edges: getEdges(),
+          edges,
         };
 
         layout(diagramToLayout, diagramToLayout, null, 'UNDEFINED', (laidOutDiagram) => {

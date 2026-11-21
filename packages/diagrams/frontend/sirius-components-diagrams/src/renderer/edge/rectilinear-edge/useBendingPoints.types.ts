@@ -23,6 +23,7 @@ export type LocalBendingPointsSetter = (
 ) => void;
 
 export interface UseBendingPointsValue {
+  segmentDragInProgress: import('react').MutableRefObject<boolean>;
   localBendingPoints: BendPointData[];
   setLocalBendingPoints: LocalBendingPointsSetter;
   onBendingPointDragStop: (eventData: DraggableData, index: number) => void;

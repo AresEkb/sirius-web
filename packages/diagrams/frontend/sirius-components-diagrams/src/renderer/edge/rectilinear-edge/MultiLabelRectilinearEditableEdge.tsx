@@ -66,6 +66,7 @@ export const MultiLabelRectilinearEditableEdge = memo(
     const {
       localBendingPoints,
       isBendingPointDragged,
+      segmentDragInProgress,
       setLocalBendingPoints,
       onBendingPointDragStop,
       onBendingPointDrag,
@@ -100,7 +101,8 @@ export const MultiLabelRectilinearEditableEdge = memo(
         targetHandleId ?? '',
         targetPosition,
         target,
-        setTarget
+        setTarget,
+        segmentDragInProgress
       );
 
     const edgeStyle = useMemo(() => multiLabelEdgeStyle(theme, style, selected, faded), [style, selected, faded]);

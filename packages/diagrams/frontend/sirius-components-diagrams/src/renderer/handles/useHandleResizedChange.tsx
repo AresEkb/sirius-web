@@ -20,9 +20,9 @@ import {
   useStoreApi,
   XYPosition,
 } from '@xyflow/react';
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { EdgeData, NodeData } from '../DiagramRenderer.types';
-import { DEFAULT_HANDLE_SIZE } from '../edge/EdgeLayout';
+import { DEFAULT_HANDLE_SIZE, HANDLE_OFFSET } from '../edge/EdgeLayout';
 import { DiagramNodeType } from '../node/NodeTypes.types';
 import { ConnectionHandle } from './ConnectionHandles.types';
 import { UseHandleResizedChangeValue } from './useHandleResizedChange.types';
@@ -70,60 +70,43 @@ const isResize = (change: NodeChange<Node<NodeData>>): change is NodeDimensionCh
 
 export const useHandleResizedChange = (): UseHandleResizedChangeValue => {
   const storeApi = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
-  const { nodeLookup } = storeApi.getState();
-
-  const initialDimensionsRef = useRef<{
-    initialWidth: Map<string, number>;
-    initialHeight: Map<string, number>;
-  }>({
-    initialWidth: new Map(),
-    initialHeight: new Map(),
-  });
-
   const applyResizeHandleChange = useCallback(
     (
       changes: NodeChange<Node<NodeData>>[],
       nodes: Node<NodeData, DiagramNodeType>[]
     ): Node<NodeData, DiagramNodeType>[] => {
-      const updatedConnectionHandles: Map<string, ConnectionHandle[]> = new Map();
-      changes.forEach((change: NodeChange<Node<NodeData>>) => {
-        if (isResize(change)) {
-          const resizedNode = nodeLookup.get(change.id);
-          if (resizedNode) {
-            const resizedNodeInitialHeight = initialDimensionsRef.current.initialHeight.get(resizedNode.id);
-            const resizedNodeInitialWidth = initialDimensionsRef.current.initialWidth.get(resizedNode.id);
-
-            if (!resizedNodeInitialHeight && !resizedNodeInitialWidth && !!change.resizing) {
-              initialDimensionsRef.current.initialWidth.set(resizedNode.id, resizedNode.width ?? 0);
-              initialDimensionsRef.current.initialHeight.set(resizedNode.id, resizedNode.height ?? 0);
-            } else if (resizedNodeInitialHeight && resizedNodeInitialWidth && !change.resizing) {
-              const coefHeight = (change.dimensions?.height ?? 0) / resizedNodeInitialHeight;
-              const coefWidth = (change.dimensions?.width ?? 0) / resizedNodeInitialWidth;
-              const connectionHandles: ConnectionHandle[] = resizedNode.data.connectionHandles.map((handle) => {
-                if (handle.XYPosition) {
-                  const XYPosition = getHandlePosition(
-                    resizedNode,
-                    handle.position,
-                    coefWidth * handle.XYPosition.x,
-                    coefHeight * handle.XYPosition.y
-                  );
-                  return {
-                    ...handle,
-                    XYPosition: {
-                      x: XYPosition.x,
-                      y: XYPosition.y,
-                    },
-                  };
-                }
-                return handle;
-              });
-              updatedConnectionHandles.set(resizedNode.id, connectionHandles);
-              initialDimensionsRef.current.initialWidth.delete(resizedNode.id);
-              initialDimensionsRef.current.initialHeight.delete(resizedNode.id);
-            }
-          }
+      const { nodeLookup } = storeApi.getState();
+      const updatedConnectionHandles = new Map<string, ConnectionHandle[]>();
+      const nodesById = new Map(nodes.map((node) => [node.id, node]));
+      for (const change of changes) {
+        if (!isResize(change) || typeof change.resizing !== 'boolean' || !change.dimensions) {
+          continue;
         }
-      });
+        const previous = nodeLookup.get(change.id);
+        const next = nodesById.get(change.id);
+        if (!previous?.width || !previous.height || !next) {
+          continue;
+        }
+        const widthRatio = change.dimensions.width / previous.width;
+        const heightRatio = change.dimensions.height / previous.height;
+        if (widthRatio === 1 && heightRatio === 1) {
+          continue;
+        }
+        updatedConnectionHandles.set(
+          change.id,
+          next.data.connectionHandles.map((handle) => ({
+            ...handle,
+            XYPosition: handle.XYPosition
+              ? getHandlePosition(
+                  previous,
+                  handle.position,
+                  (handle.XYPosition.x + HANDLE_OFFSET) * widthRatio - HANDLE_OFFSET,
+                  (handle.XYPosition.y + HANDLE_OFFSET) * heightRatio - HANDLE_OFFSET
+                )
+              : handle.XYPosition,
+          }))
+        );
+      }
 
       if (updatedConnectionHandles.size > 0) {
         return nodes.map((node) => {

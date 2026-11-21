@@ -39,12 +39,14 @@ export const useEdgeDragStopHandler = (): UseEdgeDragStopHandlerValue => {
     targetPosition: Position,
     isSourceSegment: boolean,
     isTargetSegment: boolean,
-    localBendingPoints: BendPointData[]
+    localBendingPoints: BendPointData[],
+    preserveSegmentRoute = false
   ) => {
     const edges = store.getState().edges;
     const edge = store.getState().edgeLookup.get(edgeId);
     if (edge?.data) {
-      const newBendingPoint = cleanBendPoint([...localBendingPoints].sort((a, b) => a.pathOrder - b.pathOrder));
+      const ordered = [...localBendingPoints].sort((a, b) => a.pathOrder - b.pathOrder);
+      const newBendingPoint = preserveSegmentRoute ? ordered.map(({ x, y }) => ({ x, y })) : cleanBendPoint(ordered);
       edge.data.bendingPoints = newBendingPoint;
       let nodes = getNodes();
 
@@ -59,11 +61,11 @@ export const useEdgeDragStopHandler = (): UseEdgeDragStopHandlerValue => {
           setSource(newSource);
         }
         let newPosition: Position | null = null;
-        if (newBendingPoint[0]) {
+        if (newBendingPoint[0] || preserveSegmentRoute) {
           newPosition = getHandlePositionFromXYPosition(
             sourceNode,
             newSource,
-            determineSegmentAxis(newSource, newBendingPoint[0])
+            determineSegmentAxis(newSource, newBendingPoint[0] ?? target)
           );
         }
         nodes = getNodesUpdatedWithHandles(
@@ -88,11 +90,11 @@ export const useEdgeDragStopHandler = (): UseEdgeDragStopHandlerValue => {
         }
         let newPosition: Position | null = null;
         const lastBendingPoint = newBendingPoint[newBendingPoint.length - 1];
-        if (lastBendingPoint) {
+        if (lastBendingPoint || preserveSegmentRoute) {
           newPosition = getHandlePositionFromXYPosition(
             targetNode,
             newTarget,
-            determineSegmentAxis(newTarget, lastBendingPoint)
+            determineSegmentAxis(newTarget, lastBendingPoint ?? source)
           );
         }
         nodes = getNodesUpdatedWithHandles(

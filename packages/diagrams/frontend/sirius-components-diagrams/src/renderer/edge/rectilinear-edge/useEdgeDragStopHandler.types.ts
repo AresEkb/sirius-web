@@ -29,6 +29,7 @@ export interface UseEdgeDragStopHandlerValue {
     targetPosition: Position,
     isSourceSegment: boolean,
     isTargetSegment: boolean,
-    localBendingPoints: BendPointData[]
+    localBendingPoints: BendPointData[],
+    preserveSegmentRoute?: boolean
   ) => void;
 }

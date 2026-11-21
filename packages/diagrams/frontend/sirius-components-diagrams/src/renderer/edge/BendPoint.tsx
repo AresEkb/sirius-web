@@ -63,13 +63,14 @@ export const TemporaryMovingLine = ({
 }: TemporaryMovingLineProps) => {
   const zoom = useStore(zoomSelector);
   const nodeRef = useRef<SVGRectElement>(null);
+  const moved = useRef(false);
   const { readOnly } = useContext<DiagramContextValue>(DiagramContext);
 
   if (readOnly) {
     return null;
   }
 
-  const segmentLengthWithoutBoundaries = segmentLength - 2;
+  const segmentLengthWithoutBoundaries = Math.max(0, segmentLength - 12);
 
   const minSegmentSize: number = 1;
   const baseSegmentSize: number = 8;
@@ -77,10 +78,6 @@ export const TemporaryMovingLine = ({
 
   const width = direction === 'x' ? segmentLengthWithoutBoundaries : segmentSize;
   const height = direction === 'y' ? segmentLengthWithoutBoundaries : segmentSize;
-
-  if (width < 0 || height < 0) {
-    return null;
-  }
 
   const offsetX = direction === 'x' ? -width / 2 : -segmentSize / 2;
   const offsetY = direction === 'y' ? -height / 2 : -segmentSize / 2;
@@ -90,13 +87,37 @@ export const TemporaryMovingLine = ({
       positionOffset={{ x: offsetX, y: offsetY }}
       scale={zoom}
       axis={direction === 'x' ? 'y' : 'x'}
-      onStart={onDragStart}
-      onDrag={(_e, eventData: DraggableData) => onDrag(eventData, index, direction)}
-      onStop={(_e, eventData: DraggableData) => onDragStop(eventData, index)}
+      onStart={() => {
+        moved.current = false;
+        onDragStart();
+      }}
+      onDrag={(_event, eventData) => {
+        moved.current ||= eventData.deltaX !== 0 || eventData.deltaY !== 0;
+        onDrag(eventData, index, direction);
+      }}
+      onStop={(event, eventData) => {
+        const ownerDocument = nodeRef.current?.ownerDocument;
+        if (moved.current && ownerDocument && event.type === 'mouseup' && 'button' in event) {
+          // A segment can shrink beneath the pointer. Ignore the resulting pane click, not the next user click.
+          const { button, clientX, clientY } = event;
+          const suppressReleaseClick = (click: MouseEvent) => {
+            if (click.detail > 0 && click.button === button && click.clientX === clientX && click.clientY === clientY) {
+              click.preventDefault();
+              click.stopPropagation();
+              cleanup();
+            }
+          };
+          const cleanup = () => ownerDocument.removeEventListener('click', suppressReleaseClick, true);
+          ownerDocument.addEventListener('click', suppressReleaseClick, true);
+          setTimeout(cleanup, 0);
+        }
+        onDragStop(eventData, index);
+      }}
       nodeRef={nodeRef as unknown as RefObject<HTMLElement>}>
       <rect
         style={{
-          pointerEvents: 'all',
+          pointerEvents: segmentLengthWithoutBoundaries > 0 ? 'all' : 'none',
+          visibility: segmentLengthWithoutBoundaries > 0 ? 'visible' : 'hidden',
           cursor: `${direction === 'x' ? 'ns-resize' : 'ew-resize'}`,
         }}
         width={width}

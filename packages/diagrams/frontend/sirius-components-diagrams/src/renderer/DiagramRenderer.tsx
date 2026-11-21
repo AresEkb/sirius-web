@@ -11,6 +11,11 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
+import {
+  isBoundsGestureChange,
+  reclipEdgesOnBoundsChange,
+  toRouteNodes,
+} from './edge/rectilinear-edge/reclipEdgesOnBoundsChange';
 import { useData, useSelection } from '@eclipse-sirius/sirius-components-core';
 import { usePalette } from '@eclipse-sirius/sirius-components-palette';
 import {
@@ -256,6 +261,9 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
   const { applyHandleChange } = useHandleChange();
   const { applyResizeHandleChange } = useHandleResizedChange();
   const { layoutOnBoundsChange } = useLayoutOnBoundsChange();
+  const boundsGesture = useRef<{ nodes: ReturnType<typeof toRouteNodes>; edges: Map<string, Edge<EdgeData>> } | null>(
+    null
+  );
   const { filterReadOnlyChanges } = useFilterReadOnlyChanges();
   const { horizontalHelperLine, verticalHelperLine, applyHelperLines, resetHelperLines } = useHelperLines();
   const { onSelectionChange, selectedElementsIds } = useDiagramSelection();
@@ -289,11 +297,41 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
 
         let newNodes = applyNodeChanges(transformedNodeChanges, nodes);
         newNodes = applyMoveChange(transformedNodeChanges, newNodes);
-        newNodes = applyHandleChange(transformedNodeChanges, newNodes);
         newNodes = applyResizeHandleChange(transformedNodeChanges, newNodes);
+        newNodes = applyHandleChange(transformedNodeChanges, newNodes);
         newNodes = applyResizeByUserState(transformedNodeChanges, newNodes);
 
-        layoutOnBoundsChange(transformedNodeChanges, newNodes);
+        const boundsChanges = transformedNodeChanges.filter(isBoundsGestureChange);
+        let nextEdges = getEdges();
+        if (boundsChanges.length > 0) {
+          if (!boundsGesture.current) {
+            boundsGesture.current = {
+              nodes: toRouteNodes(nodes),
+              edges: new Map(nextEdges.map((edge) => [edge.id, edge])),
+            };
+          }
+          const clipped = reclipEdgesOnBoundsChange(
+            transformedNodeChanges,
+            newNodes,
+            nextEdges,
+            boundsGesture.current,
+            diagramDescription.arrangeLayoutDirection
+          );
+          newNodes = clipped.nodes;
+          if (nextEdges !== clipped.edges) {
+            nextEdges = clipped.edges;
+            setEdges(nextEdges);
+          }
+          if (
+            !boundsChanges.some(
+              (change) =>
+                (change.type === 'position' && change.dragging) || (change.type === 'dimensions' && change.resizing)
+            )
+          ) {
+            boundsGesture.current = null;
+          }
+        }
+        layoutOnBoundsChange(transformedNodeChanges, newNodes, nextEdges);
 
         setNodes((previousNodes) => {
           return newNodes.map((newNode) => {
@@ -309,7 +347,7 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
         });
       }
     },
-    [layoutOnBoundsChange, getNodes, getEdges, selectedElementsIds]
+    [layoutOnBoundsChange, getNodes, getEdges, selectedElementsIds, diagramDescription.arrangeLayoutDirection]
   );
 
   const { onEdgeSelectedChange } = useSelectEdgeChange();

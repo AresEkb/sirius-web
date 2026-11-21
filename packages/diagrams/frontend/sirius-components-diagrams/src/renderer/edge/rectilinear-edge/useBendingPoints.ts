@@ -12,7 +12,7 @@
  *******************************************************************************/
 
 import { InternalNode, Node, Position, XYPosition } from '@xyflow/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DraggableData } from 'react-draggable';
 import { NodeData } from '../../DiagramRenderer.types';
 import { XYPositionSetter } from './MultiLabelRectilinearEditableEdge.types';
@@ -41,6 +41,7 @@ export const useBendingPoints = (
   customEdge: boolean
 ): UseBendingPointsValue => {
   const { handleDragStop } = useEdgeDragStopHandler();
+  const segmentDragInProgress = useRef(false);
 
   const [localBendingPoints, setLocalBendingPoints] = useState<BendPointData[]>(
     originalBendingPoints.map((bendingPoint: XYPosition, index: number) => ({ ...bendingPoint, pathOrder: index }))
@@ -53,7 +54,7 @@ export const useBendingPoints = (
 
   useEffect(() => {
     setLocalBendingPoints(originalBendingPoints.map((bendingPoint, index) => ({ ...bendingPoint, pathOrder: index })));
-  }, [originalBendingPoints.map((point) => point.x + point.y).join()]);
+  }, [originalBendingPoints.map((point) => `${point.x}:${point.y}`).join()]);
 
   const onBendingPointDragStop = (_eventData: DraggableData) => {
     handleDragStop(
@@ -208,56 +209,31 @@ export const useBendingPoints = (
   };
 
   useEffect(() => {
-    if (customEdge && !state.dragInProgress) {
-      const newPoints = [...originalBendingPoints];
-      const firstPoint = newPoints[0];
-      const secondPoint = newPoints[1];
-      if (firstPoint && secondPoint) {
-        if (determineSegmentAxis(firstPoint, secondPoint) === 'x') {
-          firstPoint.x = source.x;
-        } else {
-          firstPoint.y = source.y;
-        }
-      } else {
-        if (firstPoint) {
-          if (determineSegmentAxis(firstPoint, source) === 'x') {
-            firstPoint.y = source.y;
-          } else {
-            firstPoint.x = source.x;
-          }
-        }
+    if (customEdge && !state.dragInProgress && !segmentDragInProgress.current) {
+      const points = originalBendingPoints.map((point) => ({ ...point }));
+      const first = points[0];
+      const last = points[points.length - 1];
+      if (first && last) {
+        const startAxis = determineSegmentAxis(source, first);
+        const endAxis = determineSegmentAxis(target, last);
+        first[startAxis === 'x' ? 'y' : 'x'] = source[startAxis === 'x' ? 'y' : 'x'];
+        last[endAxis === 'x' ? 'y' : 'x'] = target[endAxis === 'x' ? 'y' : 'x'];
       }
-      setLocalBendingPoints(newPoints.map((bendingPoint, index) => ({ ...bendingPoint, pathOrder: index })));
+      setLocalBendingPoints(points.map((point, pathOrder) => ({ ...point, pathOrder })));
     }
-  }, [source.x, source.y, originalBendingPoints.map((point) => point.x + point.y).join(), customEdge]);
-
-  useEffect(() => {
-    if (customEdge && !state.dragInProgress) {
-      const newPoints = [...originalBendingPoints];
-      const lastPoint = newPoints[newPoints.length - 1];
-      const penultimatePoint = newPoints[newPoints.length - 2];
-      if (lastPoint && penultimatePoint) {
-        if (determineSegmentAxis(penultimatePoint, lastPoint) === 'x') {
-          lastPoint.x = target.x;
-        } else {
-          lastPoint.y = target.y;
-        }
-      } else {
-        if (lastPoint) {
-          if (determineSegmentAxis(target, lastPoint) === 'x') {
-            lastPoint.y = target.y;
-          } else {
-            lastPoint.x = target.x;
-          }
-        }
-      }
-      setLocalBendingPoints(newPoints.map((bendingPoint, index) => ({ ...bendingPoint, pathOrder: index })));
-    }
-  }, [target.x, target.y, originalBendingPoints.map((point) => point.x + point.y).join(), customEdge]);
+  }, [
+    source.x,
+    source.y,
+    target.x,
+    target.y,
+    originalBendingPoints.map((point) => `${point.x}:${point.y}`).join(),
+    customEdge,
+  ]);
 
   return {
     localBendingPoints,
     setLocalBendingPoints,
+    segmentDragInProgress,
     onBendingPointDragStop,
     onBendingPointDrag,
     isBendingPointDragged: state.dragInProgress,
