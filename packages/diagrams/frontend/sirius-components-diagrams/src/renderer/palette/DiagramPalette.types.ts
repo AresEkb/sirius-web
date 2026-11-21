@@ -14,4 +14,5 @@
 export interface DiagramPaletteProps {
   diagramId: string;
   diagramTargetObjectId: string;
+  contextActionsOnly?: boolean;
 }

@@ -12,11 +12,12 @@
  *******************************************************************************/
 
 import { ReactFlowState, useStore } from '@xyflow/react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import {
   ConnectorPaletteContextProviderProps,
   ConnectorPaletteContextProviderState,
   ConnectorPaletteContextValue,
+  CreationCandidates,
 } from './ConnectorPaletteContext.types';
 
 const defaultValue: ConnectorPaletteContextValue = {
@@ -28,6 +29,7 @@ const defaultValue: ConnectorPaletteContextValue = {
   candidateDescriptionIds: [],
   isConnectionInProgress: false,
   setCandidateDescriptionIds: () => {},
+  setCreationCandidates: () => {},
   hideConnectorPalette: () => {},
   showConnectorPalette: () => {},
 };
@@ -37,6 +39,7 @@ const isConnectionInProgressSelector = (state: ReactFlowState) =>
 export const ConnectorPaletteContext = React.createContext<ConnectorPaletteContextValue>(defaultValue);
 
 export const ConnectorPaletteContextProvider = ({ children }: ConnectorPaletteContextProviderProps) => {
+  const [creationCandidates, setCreationCandidates] = useState<CreationCandidates | null>(null);
   const [state, setState] = useState<ConnectorPaletteContextProviderState>({
     x: null,
     y: null,
@@ -82,13 +85,26 @@ export const ConnectorPaletteContextProvider = ({ children }: ConnectorPaletteCo
         isOpened: state.isOpened,
         sourceDiagramElementId: state.sourceDiagramElementId,
         targetDiagramElementId: state.targetDiagramElementId,
-        candidateDescriptionIds: state.candidateDescriptionIds,
-        isConnectionInProgress,
+        candidateDescriptionIds: creationCandidates?.descriptionIds ?? state.candidateDescriptionIds,
+        candidateElementIds: creationCandidates?.elementIds,
+        isConnectionInProgress: creationCandidates !== null || isConnectionInProgress,
+        setCreationCandidates,
         showConnectorPalette: showPalette,
         hideConnectorPalette: hidePalette,
         setCandidateDescriptionIds,
       }}>
       {children}
     </ConnectorPaletteContext.Provider>
+  );
+};
+
+/** Send candidates to the existing connection feedback; null restores native feedback. */
+export const useCreationFeedback = () => {
+  const { setCreationCandidates } = useContext(ConnectorPaletteContext);
+  return useCallback(
+    (descriptionIds: string[] | null, elementIds?: string[]) => {
+      setCreationCandidates(descriptionIds === null ? null : { descriptionIds, elementIds });
+    },
+    [setCreationCandidates]
   );
 };

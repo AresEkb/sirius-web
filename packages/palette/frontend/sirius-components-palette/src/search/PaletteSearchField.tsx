@@ -34,7 +34,7 @@ const usePaletteSearchFieldStyle = makeStyles()((theme) => ({
   },
 }));
 
-export const PaletteSearchField = ({ onValueChanged }: PaletteSearchFieldProps) => {
+export const PaletteSearchField = ({ onValueChanged, autoFocus = true }: PaletteSearchFieldProps) => {
   const [state, setState] = useState<PaletteSearchFieldState>({ value: '' });
   const ref = useRef<HTMLDivElement | null>(null);
   const { t } = useTranslation('sirius-components-palette', { keyPrefix: 'paletteSearchField' });
@@ -56,7 +56,7 @@ export const PaletteSearchField = ({ onValueChanged }: PaletteSearchFieldProps) 
 
   return (
     <TextField
-      autoFocus
+      autoFocus={autoFocus}
       value={state.value}
       size="small"
       onClick={(event) => event.stopPropagation()}

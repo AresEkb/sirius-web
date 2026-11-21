@@ -105,3 +105,8 @@ export { svgExportIElementSVGExportHandlerExtensionPoint } from './renderer/tool
 export type { GQLToolVariable, GQLToolVariableType } from './renderer/tools/useInvokePaletteTool.types';
 export { DiagramRepresentation } from './representation/DiagramRepresentation';
 export type { GQLDiagramDescription } from './representation/DiagramRepresentation.types';
+
+export { DiagramPalette } from './renderer/palette/DiagramPalette';
+export type { DiagramPaletteProps } from './renderer/palette/DiagramPalette.types';
+export { useDiagramRefresh } from './contexts/DiagramRefreshContext';
+export { useCreationFeedback } from './renderer/connector/context/ConnectorPaletteContext';

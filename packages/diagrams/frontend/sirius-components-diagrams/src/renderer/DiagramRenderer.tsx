@@ -11,6 +11,7 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
+import { DiagramRefreshContext } from '../contexts/DiagramRefreshContext';
 import { useData, useSelection } from '@eclipse-sirius/sirius-components-core';
 import { usePalette } from '@eclipse-sirius/sirius-components-palette';
 import {
@@ -435,5 +436,9 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
     reactFlowProps = customizer(reactFlowProps);
   });
 
-  return <ReactFlow {...reactFlowProps} ref={ref} />;
+  return (
+    <DiagramRefreshContext.Provider value={diagramRefreshedEventPayload}>
+      <ReactFlow {...reactFlowProps} ref={ref} />
+    </DiagramRefreshContext.Provider>
+  );
 });

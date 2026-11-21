@@ -104,7 +104,11 @@ export const MultiLabelRectilinearEditableEdge = memo(
       );
 
     const edgeStyle = useMemo(() => multiLabelEdgeStyle(theme, style, selected, faded), [style, selected, faded]);
-    const { style: connectionFeedbackStyle } = useConnectorEdgeStyle(data ? data.descriptionId : '', !!data?.isHovered);
+    const { style: connectionFeedbackStyle } = useConnectorEdgeStyle(
+      data ? data.descriptionId : '',
+      !!data?.isHovered,
+      id
+    );
 
     const edgeCenter: { position: XYPosition; segmentDirection: 'x' | 'y' | null } = useMemo(() => {
       let pointsSource = bendingPoints.map((bendingPoint) => ({ x: bendingPoint.x, y: bendingPoint.y }));

@@ -11,6 +11,11 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
+export interface CreationCandidates {
+  descriptionIds: string[];
+  elementIds?: string[];
+}
+
 export interface ConnectorPaletteContextValue {
   x: number | null;
   y: number | null;
@@ -18,7 +23,9 @@ export interface ConnectorPaletteContextValue {
   sourceDiagramElementId: string | null;
   targetDiagramElementId: string | null;
   candidateDescriptionIds: string[];
+  candidateElementIds?: string[];
   isConnectionInProgress: boolean;
+  setCreationCandidates: (candidates: CreationCandidates | null) => void;
   showConnectorPalette: (x: number, y: number, sourceDiagramElementId: string, targetDiagramElementId: string) => void;
   hideConnectorPalette: () => void;
   setCandidateDescriptionIds: (candidateDescriptionIds: string[]) => void;

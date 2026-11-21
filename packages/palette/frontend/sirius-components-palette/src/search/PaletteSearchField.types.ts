@@ -12,6 +12,7 @@
  *******************************************************************************/
 
 export interface PaletteSearchFieldProps {
+  autoFocus?: boolean;
   onValueChanged: (newValue: string) => void;
 }
 

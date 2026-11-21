@@ -30,6 +30,7 @@ export { paletteToolOverrideExtensionPoint } from './extensions/PaletteToolOverr
 export { isPaletteDivider, isSingleClickOnDiagramElementTool, isTool, isToolSection, Palette } from './Palette';
 export type {
   GQLPalette,
+  GQLPaletteEntry,
   GQLPaletteDivider,
   GQLSingleClickOnDiagramElementTool,
   GQLTool,

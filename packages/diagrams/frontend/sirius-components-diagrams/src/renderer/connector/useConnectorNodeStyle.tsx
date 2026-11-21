@@ -21,13 +21,15 @@ import { UseConnectorNodeStyleValue } from './useConnectorStyle.types';
 
 export const useConnectorNodeStyle = (nodeId: string, descriptionId: string): UseConnectorNodeStyleValue => {
   const theme = useTheme();
-  const { candidateDescriptionIds, isConnectionInProgress } =
+  const { candidateDescriptionIds, candidateElementIds, isConnectionInProgress } =
     useContext<ConnectorPaletteContextValue>(ConnectorPaletteContext);
   const { hoveredNode } = useContext<NodeContextValue>(NodeContext);
   const style: React.CSSProperties = {};
 
   if (isConnectionInProgress) {
-    const isConnectionCompatibleNode = candidateDescriptionIds.includes(descriptionId);
+    const isConnectionCompatibleNode = candidateElementIds
+      ? candidateElementIds.includes(nodeId ?? '')
+      : candidateDescriptionIds.includes(descriptionId);
     const isSelectedNode = hoveredNode?.id === nodeId;
     if (isConnectionCompatibleNode) {
       if (isSelectedNode) {
@@ -44,7 +46,7 @@ export const useConnectorNodeStyle = (nodeId: string, descriptionId: string): Us
 
   const memoizedStyle = useMemo(
     () => style,
-    [candidateDescriptionIds.join('-'), isConnectionInProgress, hoveredNode?.id]
+    [candidateDescriptionIds, candidateElementIds, nodeId, isConnectionInProgress, hoveredNode?.id]
   );
 
   return { style: memoizedStyle };

@@ -17,14 +17,20 @@ import { ConnectorPaletteContext } from './context/ConnectorPaletteContext';
 import { ConnectorPaletteContextValue } from './context/ConnectorPaletteContext.types';
 import { UseConnectorEdgeStyleValue } from './useConnectorEdgeStyle.types';
 
-export const useConnectorEdgeStyle = (descriptionId: string, isHovered: boolean): UseConnectorEdgeStyleValue => {
+export const useConnectorEdgeStyle = (
+  descriptionId: string,
+  isHovered: boolean,
+  edgeId?: string
+): UseConnectorEdgeStyleValue => {
   const theme = useTheme();
-  const { candidateDescriptionIds, isConnectionInProgress } =
+  const { candidateDescriptionIds, candidateElementIds, isConnectionInProgress } =
     useContext<ConnectorPaletteContextValue>(ConnectorPaletteContext);
 
   const style: React.CSSProperties = {};
   if (isConnectionInProgress) {
-    const isConnectionCompatibleNode = candidateDescriptionIds.includes(descriptionId);
+    const isConnectionCompatibleNode = candidateElementIds
+      ? candidateElementIds.includes(edgeId ?? '')
+      : candidateDescriptionIds.includes(descriptionId);
 
     if (isConnectionCompatibleNode) {
       if (isHovered) {
@@ -39,7 +45,10 @@ export const useConnectorEdgeStyle = (descriptionId: string, isHovered: boolean)
     }
   }
 
-  const memoizedStyle = useMemo(() => style, [candidateDescriptionIds.join('-'), isConnectionInProgress, isHovered]);
+  const memoizedStyle = useMemo(
+    () => style,
+    [candidateDescriptionIds, candidateElementIds, edgeId, isConnectionInProgress, isHovered]
+  );
 
   return { style: memoizedStyle };
 };
