@@ -11,13 +11,13 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
-import { useUpdateNodeInternals } from '@xyflow/react';
+import { scheduleHandleRefresh } from './scheduleHandleRefresh';
+import { useStoreApi, useUpdateNodeInternals } from '@xyflow/react';
 import { useEffect } from 'react';
 export const useRefreshTargetHandles = (id: string, shouldRefresh: boolean) => {
   const updateNodeInternals = useUpdateNodeInternals();
+  const { getState } = useStoreApi();
   useEffect(() => {
-    if (shouldRefresh) {
-      updateNodeInternals(id);
-    }
+    return shouldRefresh ? scheduleHandleRefresh(getState, updateNodeInternals, id) : undefined;
   }, [shouldRefresh]);
 };

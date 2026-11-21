@@ -38,54 +38,54 @@ const isConnectionInProgressSelector = (state: ReactFlowState) => state.connecti
 
 export const ConnectionTargetHandle = memo(({ nodeId }: ConnectionTargetHandleProps) => {
   const isConnectionInProgress = useStore((state) => isConnectionInProgressSelector(state));
-  useRefreshTargetHandles(nodeId, isConnectionInProgress);
+  return isConnectionInProgress ? <ActiveConnectionTargetHandles nodeId={nodeId} /> : null;
+});
+
+const ActiveConnectionTargetHandles = ({ nodeId }: Pick<ConnectionTargetHandleProps, 'nodeId'>) => {
+  useRefreshTargetHandles(nodeId, true);
 
   return (
     <>
-      {isConnectionInProgress ? (
-        <>
-          <Handle
-            id={`handle--${nodeId}--temp--top`}
-            type="target"
-            position={Position.Top}
-            style={targetTempHandleStyle}
-            isConnectableEnd={false}
-            isConnectableStart={false}
-          />
-          <Handle
-            id={`handle--${nodeId}--temp--bottom`}
-            type="target"
-            position={Position.Bottom}
-            style={targetTempHandleStyle}
-            isConnectableEnd={false}
-            isConnectableStart={false}
-          />
-          <Handle
-            id={`handle--${nodeId}--temp--left`}
-            type="target"
-            position={Position.Left}
-            style={targetTempHandleStyle}
-            isConnectableEnd={false}
-            isConnectableStart={false}
-          />
-          <Handle
-            id={`handle--${nodeId}--temp--right`}
-            type="target"
-            position={Position.Right}
-            style={targetTempHandleStyle}
-            isConnectableEnd={false}
-            isConnectableStart={false}
-          />
-          <Handle
-            id={`handle--${nodeId}--target`}
-            type="target"
-            position={Position.Top}
-            style={targetHandleNodeStyle}
-            isConnectableEnd={true}
-            isConnectableStart={false}
-          />
-        </>
-      ) : null}
+      <Handle
+        id={`handle--${nodeId}--temp--top`}
+        type="target"
+        position={Position.Top}
+        style={targetTempHandleStyle}
+        isConnectableEnd={false}
+        isConnectableStart={false}
+      />
+      <Handle
+        id={`handle--${nodeId}--temp--bottom`}
+        type="target"
+        position={Position.Bottom}
+        style={targetTempHandleStyle}
+        isConnectableEnd={false}
+        isConnectableStart={false}
+      />
+      <Handle
+        id={`handle--${nodeId}--temp--left`}
+        type="target"
+        position={Position.Left}
+        style={targetTempHandleStyle}
+        isConnectableEnd={false}
+        isConnectableStart={false}
+      />
+      <Handle
+        id={`handle--${nodeId}--temp--right`}
+        type="target"
+        position={Position.Right}
+        style={targetTempHandleStyle}
+        isConnectableEnd={false}
+        isConnectableStart={false}
+      />
+      <Handle
+        id={`handle--${nodeId}--target`}
+        type="target"
+        position={Position.Top}
+        style={targetHandleNodeStyle}
+        isConnectableEnd={true}
+        isConnectableStart={false}
+      />
     </>
   );
-});
+};

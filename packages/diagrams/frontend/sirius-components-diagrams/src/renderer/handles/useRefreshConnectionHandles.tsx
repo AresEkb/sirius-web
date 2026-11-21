@@ -11,12 +11,14 @@
  *     Obeo - initial API and implementation
  *******************************************************************************/
 
-import { useUpdateNodeInternals } from '@xyflow/react';
+import { scheduleHandleRefresh } from './scheduleHandleRefresh';
+import { useStoreApi, useUpdateNodeInternals } from '@xyflow/react';
 import { useEffect, useRef } from 'react';
 import { ConnectionHandle } from './ConnectionHandles.types';
 
 export const useRefreshConnectionHandles = (id: string, connectionHandles: ConnectionHandle[]) => {
   const updateNodeInternals = useUpdateNodeInternals();
+  const { getState } = useStoreApi();
   const firstUpdate = useRef<boolean>(true);
 
   const connectionHandlesIdentity = connectionHandles
@@ -27,10 +29,10 @@ export const useRefreshConnectionHandles = (id: string, connectionHandles: Conne
     .join(', ');
 
   useEffect(() => {
-    if (firstUpdate.current && firstUpdate) {
+    if (firstUpdate.current) {
       firstUpdate.current = false;
-    } else {
-      updateNodeInternals(id);
+      return undefined;
     }
+    return scheduleHandleRefresh(getState, updateNodeInternals, id);
   }, [connectionHandlesIdentity]);
 };
