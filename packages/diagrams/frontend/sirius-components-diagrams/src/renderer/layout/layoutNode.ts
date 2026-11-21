@@ -681,10 +681,12 @@ export const computeNewlyNodePosition = (
 ): Node<NodeData, DiagramNodeType>[] => {
   let newlyAddedNodes: Node<NodeData, DiagramNodeType>[] = [];
   if (referencePosition) {
+    const previousIds = new Set(previousNodes.map((node) => node.id));
+    const referenceNode = nodes.find((node) => node.id === referencePosition.parentId);
     newlyAddedNodes = nodes
-      .filter((node) => !previousNodes.map((n) => n.id).find((n) => n === node.id))
+      .filter((node) => !node.id || !previousIds.has(node.id))
       .filter((node) => {
-        const referencedNode = nodes.find((n) => n.id === referencePosition?.parentId);
+        const referencedNode = referenceNode;
         return (
           (!referencedNode && !node.parentId) ||
           referencedNode?.parentId === node.parentId ||

@@ -76,6 +76,7 @@ import { useSynchronizeLayoutData } from './layout/useSynchronizeLayoutData';
 import { MiniMapContext } from './mini-map/MiniMapContext';
 import { MiniMapContextValue } from './mini-map/MiniMapContext.types';
 import { useMoveChange } from './move/useMoveChange';
+import { preserveNodeInteractionState } from './node/preserveNodeInteractionState';
 import { useNodeType } from './node/useNodeType';
 import { DiagramPalette } from './palette/DiagramPalette';
 import { useReconnectEdge } from './reconnect-edge/useReconnectEdge';
@@ -295,18 +296,7 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
 
         layoutOnBoundsChange(transformedNodeChanges, newNodes);
 
-        setNodes((previousNodes) => {
-          return newNodes.map((newNode) => {
-            const previousNode = previousNodes.find((n) => n.id === newNode.id);
-            if (previousNode) {
-              newNode.data.isDraggedNode = previousNode.data.isDraggedNode;
-              newNode.data.isDragNodeSource = previousNode.data.isDragNodeSource;
-              newNode.data.isDropNodeTarget = previousNode.data.isDropNodeTarget;
-              newNode.data.isDropNodeCandidate = previousNode.data.isDropNodeCandidate;
-            }
-            return newNode;
-          });
-        });
+        setNodes((previousNodes) => preserveNodeInteractionState(newNodes, previousNodes));
       }
     },
     [layoutOnBoundsChange, getNodes, getEdges, selectedElementsIds]

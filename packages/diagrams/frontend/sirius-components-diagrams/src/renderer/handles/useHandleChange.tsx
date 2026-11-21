@@ -150,46 +150,38 @@ export const useHandleChange = (): UseHandleChangeValue => {
         }
       });
 
-      return nodes.reduce((updatedNodes: Node<NodeData>[], node: Node<NodeData>, _index, nodeArray) => {
+      const updatedNodes: Node<NodeData, DiagramNodeType>[] = [];
+      for (const node of nodes) {
         const connectionHandles = nodeId2ConnectionHandles.get(node.id);
         if (connectionHandles) {
-          return [
-            ...updatedNodes,
-            {
-              ...node,
-              data: {
-                ...node.data,
-                connectionHandles: connectionHandles,
-              },
-            },
-          ];
+          updatedNodes.push({ ...node, data: { ...node.data, connectionHandles } });
+          continue;
         }
         const newBorderNodePosition = borderNodeId2NewPosition.get(node.id);
         if (newBorderNodePosition !== undefined) {
-          const newXYPosition = computeBorderNodeXYPositionFromBorderNodePosition(
+          const position = computeBorderNodeXYPositionFromBorderNodePosition(
             node,
-            nodeArray,
+            nodes,
             updatedNodes,
             newBorderNodePosition,
             nodeLookup
           );
-          if (newXYPosition) {
-            return [
-              ...updatedNodes,
-              {
-                ...node,
-                position: newXYPosition,
-                data: {
-                  ...node.data,
-                  connectionHandles: borderNodeId2ConnectionHandles.get(node.id) || node.data.connectionHandles,
-                  borderNodePosition: newBorderNodePosition,
-                },
+          if (position) {
+            updatedNodes.push({
+              ...node,
+              position,
+              data: {
+                ...node.data,
+                connectionHandles: borderNodeId2ConnectionHandles.get(node.id) ?? node.data.connectionHandles,
+                borderNodePosition: newBorderNodePosition,
               },
-            ];
+            });
+            continue;
           }
         }
-        return [...updatedNodes, node];
-      }, []);
+        updatedNodes.push(node);
+      }
+      return updatedNodes;
     },
     [getEdges]
   );

@@ -20,7 +20,11 @@ import { ILayoutEngine, INodeLayoutHandler } from './LayoutEngine.types';
 import { ListNodeLayoutHandler } from './ListNodeLayoutHandler';
 import { RawDiagram } from './layout.types';
 
+type LayoutNode = Node<NodeData, DiagramNodeType>;
+
 export class LayoutEngine implements ILayoutEngine {
+  private childrenIndex: { nodes: LayoutNode[]; byParent: Map<string, LayoutNode[]> } | null = null;
+
   nodeLayoutHandlers: INodeLayoutHandler<NodeData>[] = [
     new FreeFormNodeLayoutHandler(),
     new ListNodeLayoutHandler(),
@@ -34,29 +38,52 @@ export class LayoutEngine implements ILayoutEngine {
     newlyAddedNodes: Node<NodeData, DiagramNodeType>[],
     forceDimensions?: Dimensions
   ) {
-    nodesToLayout.forEach((node) => {
-      const nodeLayoutHandler: INodeLayoutHandler<NodeData> | undefined = this.nodeLayoutHandlers.find((handler) =>
-        handler.canHandle(node)
-      );
-      if (nodeLayoutHandler) {
-        const directChildren = visibleNodes.filter((visibleNode) => visibleNode.parentId === node.id);
-        nodeLayoutHandler.handle(
-          this,
-          previousDiagram,
-          node,
-          visibleNodes,
-          directChildren,
-          newlyAddedNodes,
-          forceDimensions
-        );
-
-        node.style = {
-          ...node.style,
-          width: `${node.width}px`,
-          height: `${node.height}px`,
-        };
+    const previousIndex = this.childrenIndex;
+    let index = previousIndex;
+    if (index?.nodes !== visibleNodes) {
+      const byParent = new Map<string, LayoutNode[]>();
+      for (const node of visibleNodes) {
+        const parentId = node.parentId;
+        if (parentId !== undefined) {
+          const children = byParent.get(parentId);
+          if (children) {
+            children.push(node);
+          } else {
+            byParent.set(parentId, [node]);
+          }
+        }
       }
-    });
+      index = { nodes: visibleNodes, byParent };
+    }
+    this.childrenIndex = index;
+    const { byParent } = index;
+    try {
+      nodesToLayout.forEach((node) => {
+        const nodeLayoutHandler: INodeLayoutHandler<NodeData> | undefined = this.nodeLayoutHandlers.find((handler) =>
+          handler.canHandle(node)
+        );
+        if (nodeLayoutHandler) {
+          const directChildren = byParent.get(node.id)?.slice() ?? [];
+          nodeLayoutHandler.handle(
+            this,
+            previousDiagram,
+            node,
+            visibleNodes,
+            directChildren,
+            newlyAddedNodes,
+            forceDimensions
+          );
+
+          node.style = {
+            ...node.style,
+            width: `${node.width}px`,
+            height: `${node.height}px`,
+          };
+        }
+      });
+    } finally {
+      this.childrenIndex = previousIndex;
+    }
   }
 
   public registerNodeLayoutHandlerContribution(nodeLayoutHandlerContribution: INodeLayoutHandler<NodeData>) {
