@@ -71,7 +71,7 @@ import { useDiagramKeyBinding } from './key-binding/useDiagramKeyBinding';
 import { useFilterReadOnlyChanges } from './layout-events/useFilterReadOnlyChanges';
 import { useLayoutOnBoundsChange } from './layout-events/useLayoutOnBoundsChange';
 import { RawDiagram } from './layout/layout.types';
-import { useLayout } from './layout/useLayout';
+import { hasManualCreationPosition, useLayout } from './layout/useLayout';
 import { useSynchronizeLayoutData } from './layout/useSynchronizeLayoutData';
 import { MiniMapContext } from './mini-map/MiniMapContext';
 import { MiniMapContextValue } from './mini-map/MiniMapContext.types';
@@ -208,6 +208,12 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
         return previousNode;
       });
 
+      const manuallyPositionedCreation = hasManualCreationPosition(
+        previousDiagram,
+        convertedDiagram,
+        diagramRefreshedEventPayload.referencePosition,
+        diagramDescription.layoutOption
+      );
       layout(
         previousDiagram,
         convertedDiagram,
@@ -238,7 +244,12 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
           setNodes(laidOutDiagram.nodes);
 
           if (!readOnly) {
-            synchronizeLayoutData(diagramRefreshedEventPayload.id, 'refresh', laidOutDiagram, 'UNCHANGED');
+            synchronizeLayoutData(
+              diagramRefreshedEventPayload.id,
+              'refresh',
+              laidOutDiagram,
+              manuallyPositionedCreation ? 'DEACTIVATE' : 'UNCHANGED'
+            );
           }
         }
       );

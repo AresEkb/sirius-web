@@ -18,7 +18,7 @@ import { NodeTypeContext } from '../../contexts/NodeContext';
 import { NodeTypeContextValue } from '../../contexts/NodeContext.types';
 import { useDiagramDescription } from '../../contexts/useDiagramDescription';
 import { GQLReferencePosition } from '../../graphql/subscription/diagramEventSubscription.types';
-import { GQLArrangeLayoutDirection } from '../../representation/DiagramRepresentation.types';
+import { GQLArrangeLayoutDirection, GQLDiagramLayoutOption } from '../../representation/DiagramRepresentation.types';
 import { EdgeData, NodeData } from '../DiagramRenderer.types';
 import { useLayoutConfigurations } from './arrange-all/useLayoutConfigurations';
 import { useElkLayout } from './elk/useElkLayout';
@@ -40,6 +40,30 @@ const initialState: UseLayoutState = {
 
 const isHandleReferencePosition = (causedBy: string) =>
   causedBy === 'InvokeSingleClickOnTwoDiagramElementsToolInput' || causedBy === 'ReconnectEdgeInput';
+
+export const hasManualCreationPosition = (
+  previousDiagram: RawDiagram | null,
+  diagram: RawDiagram,
+  referencePosition: GQLReferencePosition | null,
+  layoutOption: GQLDiagramLayoutOption | undefined
+): boolean => {
+  if (
+    layoutOption !== 'AUTO_UNTIL_MANUAL' ||
+    !referencePosition ||
+    isHandleReferencePosition(referencePosition.causedBy) ||
+    referencePosition.positions.length === 0 ||
+    !referencePosition.positions.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y))
+  ) {
+    return false;
+  }
+  const previousIds = new Set(previousDiagram?.nodes.map((node) => node.id));
+  const reference = diagram.nodes.find((node) => node.id === referencePosition.parentId);
+  return diagram.nodes.some(
+    (node) =>
+      !previousIds.has(node.id) &&
+      (reference ? reference.parentId === node.parentId || reference.id === node.parentId : !node.parentId)
+  );
+};
 
 export const useLayout = (): UseLayoutValue => {
   const { httpOrigin } = useContext<ServerContextValue>(ServerContext);
@@ -64,7 +88,9 @@ export const useLayout = (): UseLayoutValue => {
     callback: (laidoutDiagram: RawDiagram) => void
   ) => {
     if (state.currentStep === 'INITIAL_STEP') {
-      let processedReferencePosition: GQLReferencePosition | null = referencePosition;
+      const processedReferencePosition = referencePosition
+        ? { ...referencePosition, positions: referencePosition.positions.map((position) => ({ ...position })) }
+        : null;
       if (processedReferencePosition && !isHandleReferencePosition(processedReferencePosition.causedBy)) {
         let parentNode = reactFlowInstance.getNode(processedReferencePosition.parentId ?? '');
         while (parentNode) {
@@ -101,7 +127,14 @@ export const useLayout = (): UseLayoutValue => {
       if (
         layoutConfigurations[0] &&
         (diagramDescription?.layoutOption === 'AUTO_LAYOUT' ||
-          (diagramDescription?.layoutOption === 'AUTO_UNTIL_MANUAL' && state.diagramToLayout.autoLaidOut))
+          (diagramDescription?.layoutOption === 'AUTO_UNTIL_MANUAL' &&
+            state.diagramToLayout.autoLaidOut &&
+            !hasManualCreationPosition(
+              state.previousDiagram,
+              state.diagramToLayout,
+              state.referencePosition,
+              diagramDescription.layoutOption
+            )))
       ) {
         prepareListNodeLayout(state.previousDiagram, state.diagramToLayout);
         const postLaidoutDiagram = layout(
