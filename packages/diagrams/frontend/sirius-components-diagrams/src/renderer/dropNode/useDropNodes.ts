@@ -76,7 +76,9 @@ const getNodeDepth = (node: Node<NodeData>, intersections: Node<NodeData>[]): nu
 };
 
 const useDropNodesMutation = () => {
-  const { t } = useTranslation('sirius-components-diagrams', { keyPrefix: 'useDropNodeMutation' });
+  const { t } = useTranslation('sirius-components-diagrams', {
+    keyPrefix: 'useDropNodeMutation',
+  });
   const { diagramId, editingContextId, readOnly } = useContext<DiagramContextValue>(DiagramContext);
   const { addErrorMessage, addMessages } = useMultiToast();
   const [dropMutation, { data: dropNodesData, error: dropNodesError }] = useMutation<
@@ -179,21 +181,34 @@ export const useDropNodes = (): UseDropNodesValue => {
         draggedNodes.some((node) => node.data.descriptionId === entry.droppedNodeDescriptionId)
       );
 
-      const compatibleTargetNodes = getNodes()
+      const compatibleTargetNodes = (draggedNodes.length > 0 ? getNodes() : [])
         .filter(
           (candidate) =>
             // Only consider visible nodes
             !candidate.hidden &&
+            candidate.data.acceptsChildNodes !== false &&
             // A node cannot be dropped on itself or one of its descendants
             !draggedNodes.some((draggedNode) =>
               isDescendantOf(draggedNode, candidate, storeApi.getState().nodeLookup)
             ) &&
             // Check declared compatibility
-            dropDataEntries.some((entry) => entry.droppableOnNodeTypes.includes(candidate.data.descriptionId))
+            draggedNodes.every((node) =>
+              dropDataEntries.some(
+                (entry) =>
+                  entry.droppedNodeDescriptionId === node.data.descriptionId &&
+                  entry.droppableOnNodeTypes.includes(candidate.data.descriptionId)
+              )
+            )
         )
         .map((candidate) => candidate.id);
 
-      const droppableOnDiagram: boolean = dropDataEntries.some((entry) => entry.droppableOnDiagram);
+      const droppableOnDiagram =
+        draggedNodes.length > 0 &&
+        draggedNodes.every((node) =>
+          dropDataEntries.some(
+            (entry) => entry.droppedNodeDescriptionId === node.data.descriptionId && entry.droppableOnDiagram
+          )
+        );
 
       initializeDrop({
         initialPositions,

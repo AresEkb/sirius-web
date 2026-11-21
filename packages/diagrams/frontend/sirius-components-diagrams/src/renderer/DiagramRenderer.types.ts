@@ -37,6 +37,7 @@ export type OutsideLabelLocation = 'BOTTOM_BEGIN' | 'BOTTOM_MIDDLE' | 'BOTTOM_EN
 export type OutsideLabels = Partial<Record<OutsideLabelLocation, OutsideLabel>>;
 
 export interface NodeData extends Record<string, unknown> {
+  acceptsChildNodes?: boolean;
   targetObjectId: string;
   targetObjectKind: string;
   targetObjectLabel: string;
