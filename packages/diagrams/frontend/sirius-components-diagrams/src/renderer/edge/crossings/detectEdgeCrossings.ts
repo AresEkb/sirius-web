@@ -161,7 +161,7 @@ type NodeWithPosition = Node<NodeData> & {
  * The helper inspects both explicit width/height and default values coming from the
  * node description so it also works for collapsed nodes.
  */
-const getNodeBounds = (node?: Node<NodeData>): NodeBounds | null => {
+export const getNodeBounds = (node?: Node<NodeData>): NodeBounds | null => {
   if (!node) {
     return null;
   }
@@ -293,6 +293,74 @@ const recordWindow = (
   map.set(edge.edge.id, windows);
 };
 
+export type CachedPath = ReturnType<typeof parseSegments> & { path: string };
+type Bounds = { minX: number; minY: number; maxX: number; maxY: number };
+type BoundsEntry = Bounds & { index: number };
+type BoundsTree = { bounds: Bounds } & ({ entries: BoundsEntry[] } | { left: BoundsTree; right: BoundsTree });
+
+const emptyBounds = (): Bounds => ({ minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+const overlaps = (a: Bounds, b: Bounds): boolean =>
+  a.minX <= b.maxX && b.minX <= a.maxX && a.minY <= b.maxY && b.minY <= a.maxY;
+
+const buildCrossingIndex = (entries: BoundsEntry[]): BoundsTree => {
+  const bounds = entries.reduce<Bounds>(
+    (a, b) => ({
+      minX: Math.min(a.minX, b.minX),
+      minY: Math.min(a.minY, b.minY),
+      maxX: Math.max(a.maxX, b.maxX),
+      maxY: Math.max(a.maxY, b.maxY),
+    }),
+    emptyBounds()
+  );
+  if (entries.length <= 8) {
+    return { bounds, entries };
+  }
+  const useX = bounds.maxX - bounds.minX >= bounds.maxY - bounds.minY;
+  const center = (entry: Bounds) => (useX ? entry.minX + entry.maxX : entry.minY + entry.maxY);
+  entries.sort((a, b) => center(a) - center(b));
+  const middle = Math.floor(entries.length / 2);
+  return {
+    bounds,
+    left: buildCrossingIndex(entries.slice(0, middle)),
+    right: buildCrossingIndex(entries.slice(middle)),
+  };
+};
+
+const shouldIndexCrossings = (entries: BoundsEntry[]): boolean => {
+  if (entries.length <= 8) {
+    return false;
+  }
+  // When most boxes overlap, a broad phase adds sorting without removing many pairs.
+  const sampleCount = 8;
+  const overlapLimit = (sampleCount * entries.length) / 2;
+  let overlapCount = 0;
+  for (let sample = 0; sample < sampleCount; sample++) {
+    const entry = entries[Math.floor((sample * entries.length) / sampleCount)]!;
+    for (const candidate of entries) {
+      if (overlaps(entry, candidate) && ++overlapCount >= overlapLimit) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
+const findCrossingCandidates = (tree: BoundsTree, entry: BoundsEntry, candidates: number[]): void => {
+  if (!overlaps(tree.bounds, entry)) {
+    return;
+  }
+  if ('entries' in tree) {
+    for (const candidate of tree.entries) {
+      if (candidate.index > entry.index && overlaps(candidate, entry)) {
+        candidates.push(candidate.index);
+      }
+    }
+  } else {
+    findCrossingCandidates(tree.left, entry, candidates);
+    findCrossingCandidates(tree.right, entry, candidates);
+  }
+};
+
 /**
  * Produce crossing windows for a set of edges and nodes.
  *
@@ -301,14 +369,15 @@ const recordWindow = (
  * @param fadeWindowLength - Length (pixels) of the fade window centered on each crossing.
  * @returns A map keyed by edge id with all windows that should be rendered.
  *
- * The function parses every SVG path, tests all possible segment pairs, filters out
+ * The function filters candidate pairs by path bounds and then filters out
  * near-endpoint and near-node intersections, and records the winning edge for each crossing.
  * The caller later normalizes the windows and injects them back into the edge data.
  */
 export const detectEdgeCrossings = (
   edges: Edge<MultiLabelEdgeData>[],
   nodeLookup: Map<string, Node<NodeData>>,
-  fadeWindowLength = DEFAULT_WINDOW_LENGTH
+  fadeWindowLength = DEFAULT_WINDOW_LENGTH,
+  pathCache?: Map<string, CachedPath>
 ): EdgeCrossingMap => {
   if (!edges.length) {
     return new Map();
@@ -317,21 +386,55 @@ export const detectEdgeCrossings = (
   const parsedEdges: ParsedEdge[] = edges
     .filter((edge) => !edge.hidden)
     .map((edge) => {
-      const { segments, totalLength } = parseSegments(edge.data?.edgePath ?? '');
+      const path = edge.data?.edgePath ?? '';
+      const cached = pathCache?.get(edge.id);
+      const geometry = cached?.path === path ? cached : { path, ...parseSegments(path) };
+      pathCache?.set(edge.id, geometry);
+      const { segments, totalLength } = geometry;
       return { edge, segments, totalLength };
     })
     .filter((entry) => entry.segments.length > 0 && entry.totalLength > 0);
 
+  if (pathCache) {
+    const active = new Set(edges.filter((edge) => !edge.hidden).map((edge) => edge.id));
+    for (const id of pathCache.keys()) {
+      if (!active.has(id)) {
+        pathCache.delete(id);
+      }
+    }
+  }
+
+  const bounds = parsedEdges.map(({ segments }, index) => ({
+    index,
+    ...segments.reduce<Bounds>(
+      (result, { start, end }) => ({
+        minX: Math.min(result.minX, start.x, end.x),
+        minY: Math.min(result.minY, start.y, end.y),
+        maxX: Math.max(result.maxX, start.x, end.x),
+        maxY: Math.max(result.maxY, start.y, end.y),
+      }),
+      emptyBounds()
+    ),
+  }));
+  const index = shouldIndexCrossings(bounds) ? buildCrossingIndex(bounds.slice()) : null;
   const result: EdgeCrossingMap = new Map();
   const seenKeys = new Set<string>();
 
-  // Walk every pair of parsed edges; each guard keeps the nested loops readable even when edges are undefined.
   for (let i = 0; i < parsedEdges.length; i++) {
     const first = parsedEdges[i];
-    if (!first) {
+    const firstBounds = bounds[i];
+    if (!first || !firstBounds) {
       continue;
     }
-    for (let j = i + 1; j < parsedEdges.length; j++) {
+    const candidates: number[] = [];
+    if (index) {
+      findCrossingCandidates(index, firstBounds, candidates);
+      // Retain the original pair order to preserve tie-breaking for shared windows.
+      candidates.sort((a, b) => a - b);
+    }
+    const possiblePairs = index ? candidates.length : parsedEdges.length - i - 1;
+    for (let pair = 0; pair < possiblePairs; pair++) {
+      const j = index ? candidates[pair]! : i + pair + 1;
       const second = parsedEdges[j];
       if (!second) {
         continue;

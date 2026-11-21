@@ -12,27 +12,29 @@
  *******************************************************************************/
 
 import { Edge, Node, useStoreApi } from '@xyflow/react';
-import { useContext, useEffect, useMemo } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { useStore } from '../../../representation/useStore';
 import { MultiLabelEdgeData, EdgeCrossingGap } from '../MultiLabelEdge.types';
 import { NodeData } from '../../DiagramRenderer.types';
-import { detectEdgeCrossings } from './detectEdgeCrossings';
-import { EdgeCrossingWindow } from './edgeCrossing.types';
+import { CachedPath, detectEdgeCrossings, getNodeBounds } from './detectEdgeCrossings';
+import { EdgeCrossingMap, EdgeCrossingWindow } from './edgeCrossing.types';
 import { DropNodeContext } from '../../dropNode/DropNodeContext';
 import { DropNodeContextValue } from '../../dropNode/DropNodeContext.types';
 
-/**
- * Build a signature string representing the current edge topology + path definitions.
- *
- * @param edges - Edges currently stored in the diagram store.
- * @returns A string that changes whenever an edge path or its endpoints change.
- *
- * React Flow edges can re-render frequently. Using a memoized signature ensures the effect
- * only re-runs crossing detection when the path geometry actually changed.
- */
-const buildSignature = (edges: Edge<MultiLabelEdgeData>[]): string => {
-  return edges.map((edge) => `${edge.id}:${edge.data?.edgePath ?? ''}:${edge.source}->${edge.target}`).join('|');
-};
+// Only detector inputs; interactions and visual-only gap updates can use the previous result.
+const buildSignature = (edges: Edge<MultiLabelEdgeData>[], nodes: Map<string, Node<NodeData>>): string =>
+  JSON.stringify(
+    edges.map((edge) => [
+      edge.id,
+      edge.hidden,
+      edge.data?.edgePath,
+      edge.source,
+      edge.target,
+      edge.zIndex,
+      getNodeBounds(nodes.get(edge.source)),
+      getNodeBounds(nodes.get(edge.target)),
+    ])
+  );
 
 /**
  * Sanitize, shrink and sort the raw windows so they can be stored back on the edge data.
@@ -83,21 +85,33 @@ const areGapsEqual = (first?: EdgeCrossingGap[], second?: EdgeCrossingGap[]): bo
  * the computation entirely to avoid wasteful work, then recompute right after the drag ends.
  */
 export const useEdgeCrossingFades = (): void => {
-  const { getEdges, setEdges } = useStore();
+  const { getEdges, getNodes, setEdges } = useStore();
   const edges = getEdges() as Edge<MultiLabelEdgeData>[];
   const { dragging } = useContext<DropNodeContextValue>(DropNodeContext);
   const store = useStoreApi<Node<NodeData>, Edge<MultiLabelEdgeData>>();
 
-  const signature = useMemo(() => buildSignature(edges), [edges]);
+  const nodes = getNodes();
+  const pathCache = useRef(new Map<string, CachedPath>());
+  const crossingCache = useRef<{ signature: string; windows: EdgeCrossingMap } | null>(null);
 
   useEffect(() => {
     // When a drag is ongoing we skip the entire detection pass so we do not flood
     // React Flow with state updates while coordinates are still changing.
-    if (!edges.length || dragging) {
+    if (!edges.length) {
+      crossingCache.current = null;
+      pathCache.current.clear();
+      return;
+    }
+    if (dragging) {
       return;
     }
     const { nodeLookup } = store.getState();
-    const crossingWindows = detectEdgeCrossings(edges, nodeLookup);
+    const signature = buildSignature(edges, nodeLookup);
+    const crossingWindows =
+      crossingCache.current?.signature === signature
+        ? crossingCache.current.windows
+        : detectEdgeCrossings(edges, nodeLookup, undefined, pathCache.current);
+    crossingCache.current = { signature, windows: crossingWindows };
     let requiresUpdate = false;
     edges.forEach((edge) => {
       const existingGaps = edge.data?.crossingGaps;
@@ -118,6 +132,9 @@ export const useEdgeCrossingFades = (): void => {
           return edge;
         }
         const nextGaps = normalizeWindows(crossingWindows.get(edge.id));
+        if (areGapsEqual(edgeData.crossingGaps, nextGaps)) {
+          return edge;
+        }
         if (!nextGaps.length) {
           if (!edgeData.crossingGaps || edgeData.crossingGaps.length === 0) {
             return edge;
@@ -139,5 +156,5 @@ export const useEdgeCrossingFades = (): void => {
         };
       })
     );
-  }, [dragging, edges, setEdges, signature, store]);
+  }, [dragging, edges, nodes, setEdges, store]);
 };

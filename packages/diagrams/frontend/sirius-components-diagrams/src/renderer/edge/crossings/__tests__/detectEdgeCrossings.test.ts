@@ -124,6 +124,22 @@ const buildNodeLookup = (...nodes: TestNode[]): Map<string, TestNode> => {
 };
 
 describe('detectEdgeCrossings', () => {
+  it('keeps the visible crossing when routes are indexed and invalidates changed cached paths', () => {
+    const vertical = buildEdge('vertical', 'M 0 0 L 0 60', { zIndex: 1 });
+    const horizontal = buildEdge('horizontal', 'M -30 30 L 30 30', { zIndex: 2 });
+    const isolated = Array.from({ length: 10 }, (_, index) =>
+      buildEdge(`isolated-${index}`, `M ${100 + index * 20} 0 L ${100 + index * 20} 60`)
+    );
+    const cache = new Map();
+    const routes = [vertical, horizontal, ...isolated];
+    const expected = detectEdgeCrossings([vertical, horizontal], new Map());
+    assert.strictEqual(expected.size, 1);
+    assert.deepEqual(detectEdgeCrossings(routes, new Map(), undefined, cache), expected);
+
+    const moved = buildEdge('horizontal', 'M -30 130 L 30 130', { zIndex: 2 });
+    assert.strictEqual(detectEdgeCrossings([vertical, moved, ...isolated], new Map(), undefined, cache).size, 0);
+  });
+
   it('identifies orthogonal crossings and fades the higher z-index edge', () => {
     // Arrange a vertical and a horizontal edge crossing at (0, 20) with distinct z-indexes.
     const verticalEdge = buildEdge('vertical', 'M 0 0 L 0 40', { zIndex: 1 });
