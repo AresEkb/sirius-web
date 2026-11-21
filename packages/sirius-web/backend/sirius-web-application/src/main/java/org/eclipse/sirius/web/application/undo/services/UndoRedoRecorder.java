@@ -52,6 +52,10 @@ public class UndoRedoRecorder implements IInputPreProcessor, IInputPostProcessor
     @Override
     public IInput preProcess(IEditingContext editingContext, IInput input, Sinks.Many<ChangeDescription> changeDescriptionSink) {
         if (editingContext instanceof EditingContext siriusEditingContext && this.canHandle(input)) {
+            // Each input starts from the current model. Reusing attached adapters retains
+            // the recorder's original-target set from earlier inputs, so objects created
+            // later are still treated as new and lose their feature changes when deleted.
+            siriusEditingContext.getChangeRecorder().dispose();
             siriusEditingContext.getChangeRecorder().beginRecording(siriusEditingContext.getDomain().getResourceSet().getResources());
         }
         return input;
