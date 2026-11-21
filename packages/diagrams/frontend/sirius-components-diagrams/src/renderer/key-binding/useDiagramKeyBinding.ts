@@ -17,7 +17,7 @@ import {
   isSingleClickOnDiagramElementTool,
   isToolSection,
 } from '@eclipse-sirius/sirius-components-palette';
-import { Edge, Node, useReactFlow, useStoreApi, useViewport, Viewport, XYPosition } from '@xyflow/react';
+import { Edge, Node, useReactFlow, useStoreApi, Viewport, XYPosition } from '@xyflow/react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { DiagramContext } from '../../contexts/DiagramContext';
 import { DiagramContextValue } from '../../contexts/DiagramContext.types';
@@ -65,13 +65,12 @@ const toolHasKeyBinding = (tool: GQLSingleClickOnDiagramElementTool, event: Reac
 
 export const useDiagramKeyBinding = (diagramTargetObjectId: string): UseDiagramKeyBindingValue => {
   const { editingContextId, diagramId } = useContext<DiagramContextValue>(DiagramContext);
-  const { getNodes, getNode, getEdges, getEdge } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
+  const { getNodes, getNode, getEdges, getEdge, getViewport } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
   const [state, setState] = useState<UseDiagramKeyBindingState>({
     currentEvent: null,
   });
 
   const { getMousePosition } = useMousePosition();
-  const viewport = useViewport();
   const store = useStoreApi<Node<NodeData>, Edge<EdgeData>>();
   const { addErrorMessage } = useMultiToast();
 
@@ -105,7 +104,7 @@ export const useDiagramKeyBinding = (diagramTargetObjectId: string): UseDiagramK
       const { domNode } = store.getState();
       const domElement = domNode?.getBoundingClientRect();
       const mousePosition = getMousePosition();
-      const { x, y } = computeCursorPosition(mousePosition, viewport, domElement);
+      const { x, y } = computeCursorPosition(mousePosition, getViewport(), domElement);
       const targetObjectId = getTargetObjectId(elementIds);
 
       if (toolToExecute.length === 1 && toolToExecute[0]) {

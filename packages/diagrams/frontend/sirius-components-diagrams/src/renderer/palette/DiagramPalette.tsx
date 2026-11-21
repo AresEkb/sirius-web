@@ -17,7 +17,7 @@ import {
   PaletteExtensionSectionProps,
   usePalette,
 } from '@eclipse-sirius/sirius-components-palette';
-import { Edge, Node, useReactFlow, useViewport } from '@xyflow/react';
+import { Edge, Node, useReactFlow } from '@xyflow/react';
 import { memo, useCallback, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DiagramContext } from '../../contexts/DiagramContext';
@@ -42,8 +42,7 @@ export const DiagramPalette = memo(({ diagramId, diagramTargetObjectId }: Diagra
   const { isOpened, x: paletteX, y: paletteY, representationElementIds, hidePalette } = usePalette();
   const { executeTool } = useContext<DiagramToolExecutorContextValue>(DiagramToolExecutorContext);
   const { setCurrentlyEditedLabelId, currentlyEditedLabelId } = useDiagramDirectEdit();
-  const { x: viewportX, y: viewportY, zoom: viewportZoom } = useViewport();
-  const { getNode, getEdge } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
+  const { getNode, getEdge, getViewport } = useReactFlow<Node<NodeData>, Edge<EdgeData>>();
   const { t } = useTranslation('sirius-components-diagrams', { keyPrefix: 'diagramPalette' });
 
   const elementId = representationElementIds[0] ? representationElementIds[0] : diagramId;
@@ -94,6 +93,7 @@ export const DiagramPalette = memo(({ diagramId, diagramTargetObjectId }: Diagra
         diagramTargetObjectId;
 
   const onToolClick = (tool: GQLTool) => {
+    const { x: viewportX, y: viewportY, zoom: viewportZoom } = getViewport();
     let x: number = 0;
     let y: number = 0;
     if (viewportZoom !== 0 && paletteX && paletteY) {
