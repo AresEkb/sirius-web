@@ -287,6 +287,8 @@ export const DiagramRenderer = memo(({ diagramRefreshedEventPayload }: DiagramRe
         transformedNodeChanges = transformMultiSelectResizeNodeChanges(transformedNodeChanges);
         transformedNodeChanges = transformResizeListNodeChanges(transformedNodeChanges);
 
+        // Measurements can arrive after undo/redo replaced the render-time nodes.
+        const nodes = getNodes();
         let newNodes = applyNodeChanges(transformedNodeChanges, nodes);
         newNodes = applyMoveChange(transformedNodeChanges, newNodes);
         newNodes = applyHandleChange(transformedNodeChanges, newNodes);
